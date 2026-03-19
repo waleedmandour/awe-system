@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a5f2a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="AWE System">
+  
+  <title>AWE System - Install App | Sultan Qaboos University</title>
+  
+  <meta name="description" content="Install the AWE System app for AI-powered essay assessment at Sultan Qaboos University. Available for iOS and Android devices.">
+  <meta name="keywords" content="AWE, Sultan Qaboos University, SQU, Writing Evaluation, Essay Assessment, PWA">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="AWE System - Sultan Qaboos University">
+  <meta property="og:description" content="AI-powered essay assessment for Foundation and Post-Foundation students">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/squ_logo.png">
+  
+  <!-- Styles -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --squ-green: #1a5f2a;
+      --squ-green-light: #2a7f3a;
+      --squ-green-dark: #0a4f1a;
+      --squ-gold: #c9a227;
+      --squ-gold-light: #d9b237;
+      --squ-gold-dark: #a98217;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b7280;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f5;
+      --border-color: #e5e7eb;
+      --safe-area-top: env(safe-area-inset-top, 0px);
+      --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: 100dvh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px;
+      padding-top: calc(20px + var(--safe-area-top));
+      padding-bottom: calc(20px + var(--safe-area-bottom));
+    }
+    
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 40px 0 30px;
+    }
+    
+    .logo-container {
+      display: inline-block;
+      position: relative;
+      margin-bottom: 24px;
+    }
+    
+    .logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(26, 95, 42, 0.2);
+      object-fit: contain;
+      background: white;
+      padding: 8px;
+    }
+    
+    .badge {
+      position: absolute;
+      bottom: -8px;
+      right: -8px;
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--squ-gold), var(--squ-gold-light));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(201, 162, 39, 0.4);
+    }
+    
+    .badge svg {
+      width: 18px;
+      height: 18px;
+      color: white;
+    }
+    
+    .app-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--squ-green);
+      margin-bottom: 8px;
+    }
+    
+    .app-subtitle {
+      font-size: 16px;
+      color: var(--squ-gold);
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+    
+    .app-description {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 320px;
+      margin: 0 auto;
+    }
+    
+    /* Install Card */
+    .install-card {
+      background: linear-gradient(135deg, var(--squ-green), var(--squ-green-light));
+      border-radius: 20px;
+      padding: 24px;
+      margin: 30px 0;
+      color: white;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(26, 95, 42, 0.3);
+    }
+    
+    .install-card h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .install-card p {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 20px;
+    }
+    
+    .install-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: white;
+      color: var(--squ-green);
+      border: none;
+      padding: 14px 32px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+      max-width: 280px;
+    }
+    
+    .install-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .install-btn:active {
+      transform: scale(0.98);
+    }
+    
+    .install-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    /* Platform Cards */
+    .platform-section {
+      margin: 30px 0;
+    }
+    
+    .platform-section h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+    
+    .platform-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .platform-card {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+      border: 1px solid var(--border-color);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .platform-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+    
+    .platform-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      background: white;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    
+    .platform-icon svg {
+      width: 28px;
+      height: 28px;
+    }
+    
+    .platform-card h4 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .platform-card p {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    /* Instructions */
+    .instructions {
+      margin: 30px 0;
+    }
+    
+    .instructions h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    
+    .instruction-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .tab-btn {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid var(--border-color);
+      background: white;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .tab-btn.active {
+      border-color: var(--squ-green);
+      background: rgba(26, 95, 42, 0.05);
+      color: var(--squ-green);
+    }
+    
+    .tab-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+    
+    .tab-content {
+      display: none;
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 20px;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+      align-items: flex-start;
+    }
+    
+    .step:last-child {
+      margin-bottom: 0;
+    }
+    
+    .step-number {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      background: var(--squ-green);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .step-content h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .step-content p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    /* Features */
+    .features {
+      margin: 30px 0;
+    }
+    
+    .features h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .feature-item {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+    
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      background: linear-gradient(135deg, var(--squ-green), var(--squ-green-light));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .feature-icon svg {
+      width: 22px;
+      height: 22px;
+      color: white;
+    }
+    
+    .feature-text h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
+    .feature-text p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 30px 0;
+      border-top: 1px solid var(--border-color);
+      margin-top: 30px;
+    }
+    
+    .footer-logo {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 12px;
+      opacity: 0.8;
+    }
+    
+    .footer p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    
+    .footer-link {
+      color: var(--squ-green);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .footer-link:hover {
+      text-decoration: underline;
+    }
+    
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .animate-in {
+      animation: fadeInUp 0.5s ease-out forwards;
+    }
+    
+    .delay-1 { animation-delay: 0.1s; opacity: 0; }
+    .delay-2 { animation-delay: 0.2s; opacity: 0; }
+    .delay-3 { animation-delay: 0.3s; opacity: 0; }
+    .delay-4 { animation-delay: 0.4s; opacity: 0; }
+    
+    /* Responsive */
+    @media (max-width: 360px) {
+      .app-title {
+        font-size: 24px;
+      }
+      
+      .platform-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header animate-in">
+      <div class="logo-container">
+        <img src="/squ_logo.png" alt="Sultan Qaboos University Logo" class="logo">
+        <div class="badge">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+      </div>
+      <h1 class="app-title">AWE System</h1>
+      <p class="app-subtitle">Automated Writing Evaluation</p>
+      <p class="app-description">AI-powered essay assessment for Foundation and Post-Foundation students at Sultan Qaboos University</p>
+    </header>
+    
+    <!-- Install Card -->
+    <div class="install-card animate-in delay-1">
+      <h2>Install the App</h2>
+      <p>Add to your home screen for quick access and offline use</p>
+      <button class="install-btn" id="installBtn">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Install Now
+      </button>
+    </div>
+    
+    <!-- Platform Cards -->
+    <div class="platform-section animate-in delay-2">
+      <h3>Available On</h3>
+      <div class="platform-grid">
+        <div class="platform-card">
+          <div class="platform-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+            </svg>
+          </div>
+          <h4>iOS</h4>
+          <p>Safari on iPhone & iPad</p>
+        </div>
+        <div class="platform-card">
+          <div class="platform-icon">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.523 2.047c-.262-.022-.526-.037-.793-.037-2.312 0-4.442.91-6.037 2.385-1.595-1.475-3.725-2.385-6.037-2.385-.267 0-.531.015-.793.037C1.632 2.387.0 4.32.0 6.607c0 3.463 2.307 6.327 5.425 7.222.042.765.08 1.53.12 2.294.118 2.342.24 4.684.36 7.026.026.468.408.834.875.834h5.4c.467 0 .849-.366.875-.834.12-2.342.242-4.684.36-7.026.04-.764.078-1.529.12-2.294 3.118-.895 5.425-3.759 5.425-7.222 0-2.287-1.632-4.22-3.837-4.56zM3.683 8.773c-.414-.686-.656-1.489-.656-2.35 0-1.185.457-2.263 1.203-3.076.145.45.22.928.22 1.422 0 1.656-.97 3.088-2.376 3.754-.13.075-.26.158-.391.25zm16.634 0c-.13-.092-.26-.175-.39-.25-1.407-.666-2.377-2.098-2.377-3.754 0-.494.076-.972.22-1.422.747.813 1.204 1.891 1.204 3.076 0 .861-.242 1.664-.657 2.35z"/>
+            </svg>
+          </div>
+          <h4>Android</h4>
+          <p>Chrome on phones & tablets</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Instructions -->
+    <div class="instructions animate-in delay-3">
+      <h3>How to Install</h3>
+      <div class="instruction-tabs">
+        <button class="tab-btn active" data-tab="ios">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+          </svg>
+          iOS
+        </button>
+        <button class="tab-btn" data-tab="android">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M17.523 2.047c-.262-.022-.526-.037-.793-.037-2.312 0-4.442.91-6.037 2.385-1.595-1.475-3.725-2.385-6.037-2.385-.267 0-.531.015-.793.037C1.632 2.387.0 4.32.0 6.607c0 3.463 2.307 6.327 5.425 7.222.042.765.08 1.53.12 2.294.118 2.342.24 4.684.36 7.026.026.468.408.834.875.834h5.4c.467 0 .849-.366.875-.834.12-2.342.242-4.684.36-7.026.04-.764.078-1.529.12-2.294 3.118-.895 5.425-3.759 5.425-7.222 0-2.287-1.632-4.22-3.837-4.56z"/>
+          </svg>
+          Android
+        </button>
+      </div>
+      
+      <div class="tab-content active" id="ios">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Open in Safari</h4>
+            <p>Make sure you're using Safari browser on your iPhone or iPad</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Tap the Share button</h4>
+            <p>Look for the share icon (square with arrow) at the bottom of the screen</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Select "Add to Home Screen"</h4>
+            <p>Scroll down and tap "Add to Home Screen" option</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Tap "Add" in the top right</h4>
+            <p>The app will now appear on your home screen</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="tab-content" id="android">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Open in Chrome</h4>
+            <p>Make sure you're using Chrome browser on your Android device</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Tap the Menu button</h4>
+            <p>Look for the three dots (⋮) in the top right corner</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Select "Add to Home screen"</h4>
+            <p>Or tap "Install app" if prompted at the bottom</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Tap "Install"</h4>
+            <p>The app will be added to your home screen</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Features -->
+    <div class="features animate-in delay-4">
+      <h3>What You Can Do</h3>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </div>
+          <div class="feature-text">
+            <h4>Scan Handwritten Essays</h4>
+            <p>Take photos of your handwritten work for instant digitization</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <div class="feature-text">
+            <h4>AI-Powered Assessment</h4>
+            <p>Get detailed evaluation based on IELTS criteria</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div class="feature-text">
+            <h4>Track Your Progress</h4>
+            <p>View your assessment history and improvement over time</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+      <img src="/squ_logo.png" alt="SQU Logo" class="footer-logo">
+      <p><strong>AWE System</strong> © 2025 Sultan Qaboos University</p>
+      <p>Developed by Dr. Waleed Mandour</p>
+      <p style="margin-top: 12px;">
+        <a href="/" class="footer-link">Open App →</a>
+      </p>
+    </footer>
+  </div>
+  
+  <script>
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        
+        // Update buttons
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Update content
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(tab).classList.add('active');
+      });
+    });
+    
+    // Install button
+    let deferredPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+    
+    document.getElementById('installBtn').addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+      } else {
+        // Show instructions
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const tab = isIOS ? 'ios' : 'android';
+        
+        document.querySelector(`[data-tab="${tab}"]`).click();
+        document.querySelector('.instructions').scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+    
+    // Check if running as PWA
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      // Already installed, redirect to app
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>

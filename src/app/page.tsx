@@ -1644,7 +1644,7 @@ const BottomNav = ({ currentStep, onNavigate }: { currentStep: string; onNavigat
 };
 
 // Main App Component
-export default function Home() {
+export default function AWEApp() {
   const {
     currentStep,
     setStep,

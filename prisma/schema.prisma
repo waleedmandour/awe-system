@@ -1,0 +1,132 @@
+// AWE System - Automated Writing Evaluation Database Schema
+// Sultan Qaboos University - Foundation & Post-Foundation Programs
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Course information
+model Course {
+  id          String   @id @default(cuid())
+  code        String   @unique  // e.g., "0230", "0340", "LANC2160"
+  name        String            // e.g., "English Language Foundation I"
+  program     String            // "foundation" or "post-foundation"
+  description String?
+  
+  // Assessment criteria for this course
+  criteria    Criterion[]
+  essays      Essay[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Assessment criteria definitions
+model Criterion {
+  id          String   @id @default(cuid())
+  name        String            // e.g., "Task Response", "Coherence & Cohesion"
+  maxScore    Int               // Maximum score (e.g., 6 for foundation, 5 for post-foundation)
+  description String?           // Detailed description of the criterion
+  weight      Float   @default(1.0)
+  
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  scores      Score[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Student essays (submitted handwritten essays)
+model Essay {
+  id            String   @id @default(cuid())
+  
+  // Student information (optional - can be anonymous)
+  studentId     String?  // Student ID (optional)
+  studentName   String?  // Student name (optional)
+  
+  // Essay content
+  originalText  String   // OCR-extracted text
+  editedText    String?  // Student-edited version
+  imageData     String?  // Base64 encoded image (for reference)
+  
+  // Essay metadata
+  topic         String?  // Essay topic/prompt
+  wordCount     Int      @default(0)
+  
+  // Status tracking
+  status        String   @default("pending")  // pending, processing, assessed, error
+  
+  // Relationships
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id])
+  assessment    Assessment?
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Assessment results
+model Assessment {
+  id            String   @id @default(cuid())
+  
+  // Overall score
+  totalScore    Float    // Sum of all criterion scores
+  maxScore      Float    // Maximum possible score
+  percentage    Float    // Percentage score
+  bandScore     Float?   // IELTS-style band (for display)
+  
+  // AI-generated feedback
+  overallFeedback String? // General feedback summary
+  
+  // Detailed scores
+  scores        Score[]
+  
+  // Relationship
+  essayId       String   @unique
+  essay         Essay    @relation(fields: [essayId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Individual criterion scores
+model Score {
+  id            String   @id @default(cuid())
+  score         Float    // Actual score
+  maxScore      Float    // Maximum for this criterion
+  feedback      String?  // Specific feedback for this criterion
+  
+  // Relationships
+  assessmentId  String
+  assessment    Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  criterionId   String
+  criterion     Criterion  @relation(fields: [criterionId], references: [id])
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// App settings (stored per device/browser)
+model Settings {
+  id            String   @id @default(cuid())
+  deviceId      String   @unique
+  
+  // API Keys (stored locally)
+  geminiApiKey  String?
+  visionApiKey  String?
+  
+  // Preferences
+  theme         String   @default("system")  // light, dark, system
+  language      String   @default("en")
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

@@ -1649,6 +1649,7 @@ export default function AWEApp() {
     currentStep,
     setStep,
     geminiApiKey,
+    visionApiKey,
     selectedCourse,
     setSelectedCourse,
     extractedText,
@@ -1656,7 +1657,10 @@ export default function AWEApp() {
     currentAssessment,
     setCurrentAssessment,
     resetAssessment,
+    setProcessing,
   } = useAppStore();
+
+  const { toast } = useToast();
 
   const [direction, setDirection] = useState<'left' | 'right'>('right');
   const [showBottomNav, setShowBottomNav] = useState(true);
@@ -1682,27 +1686,71 @@ export default function AWEApp() {
     }
   };
 
-  // Handle image upload and OCR simulation
+  // Handle image upload and OCR processing
   const handleImageUpload = async (imageData: string) => {
+    const { visionApiKey, geminiApiKey } = useAppStore.getState();
+
+    // Check if at least one API key is available
+    if (!visionApiKey && !geminiApiKey) {
+      toast({
+        title: 'API Key Required',
+        description: 'Please configure a Vision API key or Gemini API key in settings.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setStep('processing');
-    // Simulate OCR processing - in real app, call API
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    setProcessing(true, 'Extracting text from image...');
 
-    // Mock extracted text
-    const mockText = `The Importance of Environmental Conservation
+    try {
+      // Call the OCR API endpoint
+      const response = await fetch('/api/ocr', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: imageData,
+          apiKey: visionApiKey || undefined,
+          geminiApiKey: geminiApiKey || undefined,
+          useGemini: !visionApiKey && !!geminiApiKey, // Use Gemini if no Vision key
+        }),
+      });
 
-Environmental conservation has become one of the most pressing issues of our time. As human activities continue to impact the natural world, it is essential that we take immediate action to protect our planet for future generations.
+      const result = await response.json();
 
-Firstly, environmental conservation is crucial for maintaining biodiversity. Many species are currently facing extinction due to habitat destruction, pollution, and climate change. By protecting natural habitats and implementing sustainable practices, we can help preserve the delicate balance of ecosystems.
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to process image');
+      }
 
-Secondly, conservation efforts are vital for human health and well-being. Clean air, clean water, and healthy food supplies all depend on a healthy environment. Pollution and environmental degradation can lead to serious health problems, including respiratory diseases and waterborne illnesses.
+      // Use the actual extracted text from the API
+      const extractedText = result.text || '';
 
-Furthermore, environmental conservation plays a key role in mitigating climate change. Forests act as carbon sinks, absorbing carbon dioxide from the atmosphere. Protecting and restoring forests can help reduce greenhouse gas emissions and slow the rate of global warming.
+      if (!extractedText.trim()) {
+        toast({
+          title: 'No Text Found',
+          description: 'Could not extract any text from the image. Please try a clearer image.',
+          variant: 'destructive',
+        });
+        setProcessing(false);
+        setStep('upload');
+        return;
+      }
 
-In conclusion, environmental conservation is not just about protecting nature for its own sake. It is about ensuring a sustainable future for all living beings on Earth. We must all take responsibility for our actions and work together to preserve our planet.`;
-
-    setExtractedText(mockText);
-    setStep('review');
+      setExtractedText(extractedText);
+      setProcessing(false);
+      setStep('review');
+    } catch (error) {
+      console.error('OCR processing error:', error);
+      setProcessing(false);
+      toast({
+        title: 'OCR Failed',
+        description: error instanceof Error ? error.message : 'Failed to extract text from image.',
+        variant: 'destructive',
+      });
+      setStep('upload');
+    }
   };
 
   // Handle assessment submission

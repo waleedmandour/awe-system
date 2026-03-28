@@ -86,6 +86,17 @@ function buildFoundationPrompt(text: string, topic: string | null, wordCount: nu
 
   return `You are an expert IELTS writing examiner assessing a Foundation level student essay.
 
+IMPORTANT CONTEXT: Students at this level are at CEFR A1-A2 level (Basic User). Your feedback MUST be appropriate for this proficiency level:
+- A1 (Breakthrough): Can understand and use familiar everyday expressions and very basic phrases aimed at the satisfaction of needs of a concrete type.
+- A2 (Waystage): Can understand sentences and frequently used expressions related to areas of most immediate relevance. Can communicate in simple and routine tasks requiring a simple and direct exchange of information.
+
+When providing feedback:
+- Use simple, clear language that A1-A2 learners can understand
+- Focus on fundamental writing skills appropriate for this level
+- Provide concrete, achievable improvement suggestions
+- Avoid overly technical linguistic terminology
+- Be encouraging while maintaining appropriate standards for the level
+
 ${topic ? `Essay Topic: ${topic}` : 'No specific topic provided.'}
 
 Student Essay:
@@ -139,6 +150,17 @@ function buildCreditPrompt(text: string, topic: string | null, wordCount: number
   const totalMaxScore = criteria.reduce((sum, c) => sum + c.maxScore, 0);
 
   return `You are an expert IELTS writing examiner assessing a Credit/Post-foundation level student essay.
+
+IMPORTANT CONTEXT: Students at this level are at CEFR A1-A2 level (Basic User). Your feedback MUST be appropriate for this proficiency level:
+- A1 (Breakthrough): Can understand and use familiar everyday expressions and very basic phrases aimed at the satisfaction of needs of a concrete type.
+- A2 (Waystage): Can understand sentences and frequently used expressions related to areas of most immediate relevance. Can communicate in simple and routine tasks requiring a simple and direct exchange of information.
+
+When providing feedback:
+- Use simple, clear language that A1-A2 learners can understand
+- Focus on fundamental writing skills appropriate for this level
+- Provide concrete, achievable improvement suggestions
+- Avoid overly technical linguistic terminology
+- Be encouraging while maintaining appropriate standards for the level
 
 ${topic ? `Essay Topic: ${topic}` : 'No specific topic provided.'}
 
@@ -217,7 +239,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: 'You are an expert writing assessment AI specializing in IELTS-style evaluation for Foundation and Credit level university courses. You respond only with valid JSON. No markdown formatting or code blocks. Be thorough, fair, and constructive in your feedback.'
+          content: 'You are an expert writing assessment AI specializing in IELTS-style evaluation for Foundation and Credit level university courses. All students are at CEFR A1-A2 level (Basic User). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. You respond only with valid JSON. No markdown formatting or code blocks.'
         },
         {
           role: 'user',

@@ -33,8 +33,8 @@ const defaultCourses = [
     id: 'course-lanc2160',
     code: 'LANC2160',
     name: 'Academic English: Summary Writing',
-    program: 'post-foundation',
-    description: 'Post-foundation course focusing on academic summary writing',
+    program: 'credit',
+    description: 'Credit course focusing on academic summary writing',
     criteria: [
       { id: 'cr-9', name: 'Task Achievement', maxScore: 5, description: 'How well the summary captures the main points' },
       { id: 'cr-10', name: 'Coherence & Cohesion', maxScore: 5, description: 'Logical organization and linking of ideas' },
@@ -47,7 +47,7 @@ const defaultCourses = [
 // GET /api/courses - Get all courses with their criteria
 export async function GET() {
   try {
-    // If database is not available, return default courses
+    // If the database is not available, return default courses
     if (!isDatabaseAvailable()) {
       return NextResponse.json({ courses: defaultCourses });
     }

@@ -47,7 +47,7 @@ const defaultCourses = [
 // GET /api/courses - Get all courses with their criteria
 export async function GET() {
   try {
-    // If database is not available, return default courses
+    // If the database is not available, return default courses
     if (!isDatabaseAvailable()) {
       return NextResponse.json({ courses: defaultCourses });
     }

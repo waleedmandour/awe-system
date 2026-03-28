@@ -1,5 +1,5 @@
 // AWE System - Automated Writing Evaluation Database Schema
-// Sultan Qaboos University - Foundation & Post-Foundation Programs
+// Sultan Qaboos University - Foundation & Credit Programs
 
 generator client {
   provider = "prisma-client-js"
@@ -15,7 +15,7 @@ model Course {
   id          String   @id @default(cuid())
   code        String   @unique  // e.g., "0230", "0340", "LANC2160"
   name        String            // e.g., "English Language Foundation I"
-  program     String            // "foundation" or "post-foundation"
+  program     String            // "foundation" or "credit"
   description String?
   
   // Assessment criteria for this course
@@ -30,7 +30,7 @@ model Course {
 model Criterion {
   id          String   @id @default(cuid())
   name        String            // e.g., "Task Response", "Coherence & Cohesion"
-  maxScore    Int               // Maximum score (e.g., 6 for foundation, 5 for post-foundation)
+  maxScore    Int               // Maximum score (e.g., 6 for foundation, 5 for credit)
   description String?           // Detailed description of the criterion
   weight      Float   @default(1.0)
   

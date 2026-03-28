@@ -84,7 +84,7 @@ function buildFoundationPrompt(text: string, topic: string | null, wordCount: nu
     return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
   }).join('\n\n');
 
-  return `You are an expert IELTS writing examiner assessing a Foundation level student essay.
+  return `You are an expert writing assessor evaluating a Foundation level student essay for Sultan Qaboos University's Center for Preparatory Studies.
 
 IMPORTANT CONTEXT: Students at this level are at CEFR A1-A2 level (Basic User). Your feedback MUST be appropriate for this proficiency level:
 - A1 (Breakthrough): Can understand and use familiar everyday expressions and very basic phrases aimed at the satisfaction of needs of a concrete type.
@@ -116,13 +116,20 @@ ${rubrics.specialRules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
 SCORING INSTRUCTIONS:
 1. For each criterion, carefully read the rubric descriptors and determine which band best matches the student's performance.
 2. Assign a specific score within the band (you may use 0.5 increments between 0-6).
-3. Provide detailed, constructive feedback that:
-   - Explains WHY the score was assigned using specific language from the rubric
-   - Cites specific examples from the student's text
-   - Offers actionable suggestions for improvement
+3. For each criterion, provide structured feedback that includes:
+   - A brief positive comment on what the student did well
+   - SPECIFIC MISTAKES OR ERRORS found in the text (quote the exact words/phrases from the essay)
+   - Clear explanation of why each is a mistake
+   - Concrete suggestions for improvement
 4. Calculate the total score as the sum of all criterion scores (max 24).
 5. Calculate the percentage as (totalScore / 24) * 100.
-6. Calculate an approximate IELTS-style band score (scale of 4-9) based on the overall performance.
+
+FEEDBACK FORMAT: Structure each criterion's feedback as:
+**Strengths:** [What was done well]
+**Mistakes Found:**
+- "[exact quote from text]" - [explanation of the error]
+- "[another exact quote]" - [explanation]
+**Suggestions:** [How to improve]
 
 Respond in the following JSON format ONLY (no additional text or markdown):
 {
@@ -131,14 +138,13 @@ Respond in the following JSON format ONLY (no additional text or markdown):
       "criterionName": "Task Response",
       "score": 4,
       "maxScore": 6,
-      "feedback": "Your detailed feedback here with specific examples..."
+      "feedback": "**Strengths:** ...\\n**Mistakes Found:**\\n- \\"...\\",\\n**Suggestions:** ..."
     }
   ],
   "totalScore": 16,
   "maxScore": 24,
   "percentage": 66.67,
-  "bandScore": 5.5,
-  "overallFeedback": "Your comprehensive overall feedback summarizing strengths and areas for improvement...",
+  "overallFeedback": "Your comprehensive overall feedback summarizing strengths and main areas for improvement...",
   "wordCount": ${wordCount},
   "wordCountPenalty": false
 }`;
@@ -149,7 +155,7 @@ function buildCreditPrompt(text: string, topic: string | null, wordCount: number
   const criteria = CREDIT_CRITERIA;
   const totalMaxScore = criteria.reduce((sum, c) => sum + c.maxScore, 0);
 
-  return `You are an expert IELTS writing examiner assessing a Credit/Post-foundation level student essay.
+  return `You are an expert writing assessor evaluating a Credit level student essay for Sultan Qaboos University's Center for Preparatory Studies.
 
 IMPORTANT CONTEXT: Students at this level are at CEFR A1-A2 level (Basic User). Your feedback MUST be appropriate for this proficiency level:
 - A1 (Breakthrough): Can understand and use familiar everyday expressions and very basic phrases aimed at the satisfaction of needs of a concrete type.
@@ -176,10 +182,20 @@ ${criteria.map(c => `- ${c.name} (0-${c.maxScore}): ${c.description}`).join('\n'
 
 SCORING INSTRUCTIONS:
 1. For each criterion, assess the student's performance and assign a score (0-${criteria[0].maxScore}).
-2. Provide detailed, constructive feedback with specific examples from the text.
+2. For each criterion, provide structured feedback that includes:
+   - A brief positive comment on what the student did well
+   - SPECIFIC MISTAKES OR ERRORS found in the text (quote the exact words/phrases from the essay)
+   - Clear explanation of why each is a mistake
+   - Concrete suggestions for improvement
 3. Calculate the total score as the sum of all criterion scores (max ${totalMaxScore}).
 4. Calculate the percentage as (totalScore / ${totalMaxScore}) * 100.
-5. Provide an approximate IELTS-style band score.
+
+FEEDBACK FORMAT: Structure each criterion's feedback as:
+**Strengths:** [What was done well]
+**Mistakes Found:**
+- "[exact quote from text]" - [explanation of the error]
+- "[another exact quote]" - [explanation]
+**Suggestions:** [How to improve]
 
 Respond in the following JSON format ONLY (no additional text or markdown):
 {
@@ -188,13 +204,12 @@ Respond in the following JSON format ONLY (no additional text or markdown):
       "criterionName": "Task Achievement",
       "score": 4,
       "maxScore": 5,
-      "feedback": "Your detailed feedback here..."
+      "feedback": "**Strengths:** ...\\n**Mistakes Found:**\\n- \\"...\\",\\n**Suggestions:** ..."
     }
   ],
   "totalScore": 16,
   "maxScore": ${totalMaxScore},
   "percentage": 80,
-  "bandScore": 6,
   "overallFeedback": "Your comprehensive overall feedback..."
 }`;
 }
@@ -239,7 +254,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'system',
-          content: 'You are an expert writing assessment AI specializing in IELTS-style evaluation for Foundation and Credit level university courses. All students are at CEFR A1-A2 level (Basic User). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. You respond only with valid JSON. No markdown formatting or code blocks.'
+          content: 'You are an expert writing assessment AI for Foundation and Credit level university courses at Sultan Qaboos University. All students are at CEFR A1-A2 level (Basic User). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. Always highlight specific mistakes by quoting exact words from the student\'s text. You respond only with valid JSON. No markdown formatting or code blocks.'
         },
         {
           role: 'user',
@@ -247,7 +262,7 @@ export async function POST(request: NextRequest) {
         }
       ],
       temperature: 0.3,
-      max_tokens: 3000,
+      max_tokens: 4000,
     });
 
     const responseText = completion.choices?.[0]?.message?.content || '';
@@ -292,6 +307,11 @@ export async function POST(request: NextRequest) {
         });
       });
     }
+
+    // Recalculate total score to ensure accuracy
+    assessment.totalScore = assessment.scores.reduce((sum: number, s: any) => sum + s.score, 0);
+    assessment.maxScore = assessment.scores.reduce((sum: number, s: any) => sum + s.maxScore, 0);
+    assessment.percentage = (assessment.totalScore / assessment.maxScore) * 100;
 
     // Add word count info
     assessment.wordCount = wordCount;

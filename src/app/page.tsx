@@ -1309,6 +1309,47 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
   );
 };
 
+// Helper function to parse structured feedback
+const parseFeedback = (feedback: string) => {
+  const sections = {
+    strengths: '',
+    mistakes: [] as { quote: string; explanation: string }[],
+    suggestions: ''
+  };
+
+  try {
+    // Extract strengths
+    const strengthsMatch = feedback.match(/\*\*Strengths:\*\*\s*([\s\S]*?)(?=\*\*Mistakes|$)/i);
+    if (strengthsMatch) {
+      sections.strengths = strengthsMatch[1].trim();
+    }
+
+    // Extract mistakes
+    const mistakesMatch = feedback.match(/\*\*Mistakes Found:\*\*\s*([\s\S]*?)(?=\*\*Suggestions|$)/i);
+    if (mistakesMatch) {
+      const mistakesText = mistakesMatch[1];
+      const mistakeLines = mistakesText.match(/-\s*"[^"]+"\s*-\s*[^\n]+/g) || [];
+      mistakeLines.forEach((line: string) => {
+        const match = line.match(/-\s*"([^"]+)"\s*-\s*(.+)/);
+        if (match) {
+          sections.mistakes.push({ quote: match[1], explanation: match[2].trim() });
+        }
+      });
+    }
+
+    // Extract suggestions
+    const suggestionsMatch = feedback.match(/\*\*Suggestions:\*\*\s*([\s\S]*?)$/i);
+    if (suggestionsMatch) {
+      sections.suggestions = suggestionsMatch[1].trim();
+    }
+  } catch (e) {
+    // If parsing fails, return the raw feedback
+    sections.strengths = feedback;
+  }
+
+  return sections;
+};
+
 // Results Screen Component
 const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: Assessment | null; onNewAssessment: () => void; onBack: () => void }) => {
   const { selectedCourse, extractedText } = useAppStore();
@@ -1499,7 +1540,7 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
               </div>
             </motion.div>
 
-            {/* Band Score */}
+            {/* Total Score Box */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -1507,9 +1548,9 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
               className="text-center"
             >
               <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mb-2">
-                <span className="text-3xl font-bold">{assessment.bandScore}</span>
+                <span className="text-2xl font-bold">{assessment.totalScore}/{assessment.maxScore}</span>
               </div>
-              <p className="text-sm opacity-80">Band Score</p>
+              <p className="text-sm opacity-80">Total Score</p>
               <Badge className="mt-2 bg-[#c9a227] text-white border-0">
                 {assessment.percentage! >= 80 ? 'Excellent' : assessment.percentage! >= 60 ? 'Good' : 'Needs Work'}
               </Badge>
@@ -1555,8 +1596,8 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                   <Card>
                     <CardContent className="p-4 text-center">
                       <TrendingUp className="w-8 h-8 mx-auto mb-2 text-[#1a5f2a]" />
-                      <p className="text-2xl font-bold">{assessment.bandScore}</p>
-                      <p className="text-xs text-muted-foreground">Band Score</p>
+                      <p className="text-2xl font-bold">{Math.round(assessment.percentage)}%</p>
+                      <p className="text-xs text-muted-foreground">Percentage</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -1597,43 +1638,78 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-3"
               >
-                {assessment.scores.map((score, index) => (
-                  <motion.div
-                    key={score.criterionId}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
-                              style={{
-                                background: `linear-gradient(135deg, ${
-                                  (score.score / score.maxScore) * 100 >= 70 ? '#1a5f2a' : '#c9a227'
-                                }, ${
-                                  (score.score / score.maxScore) * 100 >= 70 ? '#2a7f3a' : '#d9b237'
-                                })`,
-                              }}
-                            >
-                              {score.score}
+                {assessment.scores.map((score, index) => {
+                  const parsedFeedback = parseFeedback(score.feedback || '');
+                  return (
+                    <motion.div
+                      key={score.criterionId}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
+                                style={{
+                                  background: `linear-gradient(135deg, ${
+                                    (score.score / score.maxScore) * 100 >= 70 ? '#1a5f2a' : '#c9a227'
+                                  }, ${
+                                    (score.score / score.maxScore) * 100 >= 70 ? '#2a7f3a' : '#d9b237'
+                                  })`,
+                                }}
+                              >
+                                {score.score}
+                              </div>
+                              <div>
+                                <h4 className="font-semibold">{score.criterionName}</h4>
+                                <p className="text-xs text-muted-foreground">out of {score.maxScore}</p>
+                              </div>
                             </div>
-                            <div>
-                              <h4 className="font-semibold">{score.criterionName}</h4>
-                              <p className="text-xs text-muted-foreground">out of {score.maxScore}</p>
-                            </div>
+                            <Badge variant="secondary">
+                              {Math.round((score.score / score.maxScore) * 100)}%
+                            </Badge>
                           </div>
-                          <Badge variant="secondary">
-                            {Math.round((score.score / score.maxScore) * 100)}%
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{score.feedback}</p>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
+                          
+                          {/* Structured Feedback */}
+                          {parsedFeedback.strengths && (
+                            <div className="mb-3">
+                              <p className="text-xs font-medium text-[#1a5f2a] mb-1">Strengths:</p>
+                              <p className="text-sm text-muted-foreground">{parsedFeedback.strengths}</p>
+                            </div>
+                          )}
+                          
+                          {parsedFeedback.mistakes.length > 0 && (
+                            <div className="mb-3">
+                              <p className="text-xs font-medium text-red-600 mb-1">Mistakes Found:</p>
+                              <div className="space-y-2">
+                                {parsedFeedback.mistakes.map((mistake, i) => (
+                                  <div key={i} className="bg-red-50 dark:bg-red-950/20 p-2 rounded-lg">
+                                    <p className="text-sm font-medium text-red-700 dark:text-red-400">"{mistake.quote}"</p>
+                                    <p className="text-xs text-muted-foreground mt-1">{mistake.explanation}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {parsedFeedback.suggestions && (
+                            <div>
+                              <p className="text-xs font-medium text-[#c9a227] mb-1">Suggestions:</p>
+                              <p className="text-sm text-muted-foreground">{parsedFeedback.suggestions}</p>
+                            </div>
+                          )}
+                          
+                          {!parsedFeedback.strengths && !parsedFeedback.mistakes.length && !parsedFeedback.suggestions && (
+                            <p className="text-sm text-muted-foreground">{score.feedback}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
               </motion.div>
             )}
 
@@ -1652,37 +1728,31 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm leading-relaxed">{assessment.overallFeedback}</p>
+                    <p className="text-sm leading-relaxed">{assessment.overallFeedback || 'No overall feedback provided.'}</p>
                   </CardContent>
                 </Card>
 
-                {/* Suggestions */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-2">
-                      <Target className="w-5 h-5 text-[#c9a227]" />
-                      <CardTitle className="text-base">Areas for Improvement</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {[
-                      'Expand your vocabulary with more academic terms',
-                      'Use more complex sentence structures',
-                      'Add more specific examples to support your arguments',
-                    ].map((suggestion, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="flex items-start gap-2 p-2 bg-muted/50 rounded-lg"
-                      >
-                        <ChevronRight className="w-4 h-4 text-[#1a5f2a] mt-0.5" />
-                        <span className="text-sm">{suggestion}</span>
-                      </motion.div>
-                    ))}
-                  </CardContent>
-                </Card>
+                {/* Word Count Info */}
+                {assessment.wordCount && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-[#c9a227]" />
+                        <CardTitle className="text-base">Word Count</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl font-bold">{assessment.wordCount}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {assessment.targetWordCount 
+                            ? `Target: ${assessment.targetWordCount.min}-${assessment.targetWordCount.max} words` 
+                            : 'words'}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </motion.div>
             )}
           </div>

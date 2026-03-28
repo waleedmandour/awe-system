@@ -30,9 +30,10 @@ export interface Assessment {
   totalScore: number;
   maxScore: number;
   percentage: number;
-  bandScore?: number;
   overallFeedback?: string;
   scores: Score[];
+  wordCount?: number;
+  targetWordCount?: { min: number; max: number; ideal: number } | null;
   createdAt: string;
 }
 

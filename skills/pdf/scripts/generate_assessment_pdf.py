@@ -174,6 +174,12 @@ def build_pdf(assessment, course, essay_text, output_path):
     
     date_str = datetime.now().strftime("%B %d, %Y")
     story.append(Paragraph(f"<b>Date:</b> {date_str}", styles['BodyText']))
+    
+    # Word count
+    word_count = assessment.get('wordCount', 0)
+    if word_count:
+        story.append(Paragraph(f"<b>Word Count:</b> {word_count} words", styles['BodyText']))
+    
     story.append(Spacer(1, 20))
     
     # Horizontal line
@@ -188,22 +194,19 @@ def build_pdf(assessment, course, essay_text, output_path):
     total_score = assessment.get('totalScore', 0)
     max_score = assessment.get('maxScore', 24)
     percentage = assessment.get('percentage', 0)
-    band_score = assessment.get('bandScore', 0)
     score_label = get_score_label(percentage)
     
-    # Create score display
+    # Create score display (without band score)
     score_data = [
         [Paragraph('<b>Total Score</b>', styles['BodyText']), 
          Paragraph('<b>Percentage</b>', styles['BodyText']),
-         Paragraph('<b>Band Score</b>', styles['BodyText']),
          Paragraph('<b>Performance</b>', styles['BodyText'])],
         [Paragraph(f'<font size="18" color="#1a5f2a"><b>{total_score}/{max_score}</b></font>', styles['BodyText']),
          Paragraph(f'<font size="18" color="#1a5f2a"><b>{percentage:.1f}%</b></font>', styles['BodyText']),
-         Paragraph(f'<font size="18" color="#c9a227"><b>{band_score}</b></font>', styles['BodyText']),
          Paragraph(f'<font size="14" color="#1a5f2a"><b>{score_label}</b></font>', styles['BodyText'])]
     ]
     
-    score_table = Table(score_data, colWidths=[3.5*cm, 3.5*cm, 3.5*cm, 4*cm])
+    score_table = Table(score_data, colWidths=[5*cm, 4*cm, 5*cm])
     score_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), PRIMARY_GREEN),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),

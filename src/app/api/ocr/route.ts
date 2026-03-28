@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// IMPORTANT: This prevents Vercel from timing out the OCR process after 10 seconds
+export const maxDuration = 60;
+
 // POST Endpoint for routing OCR requests
 export async function POST(request: NextRequest) {
   try {
@@ -127,13 +130,13 @@ async function performGeminiOCR(image: string, geminiApiKey: string) {
     // 1. Initialize official Gemini Client with the User's API Key
     const genAI = new GoogleGenerativeAI(geminiApiKey);
     
-    // Using gemini-1.5-pro as it provides the highest accuracy for complex OCR tasks
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    // 2. Use Gemini 3.0 Flash as requested for the latest speed and accuracy
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.0-flash' });
 
-    // 2. Extract Data
+    // 3. Extract Data
     const { base64Data, mimeType } = extractBase64AndMimeType(image);
 
-    // 3. Prepare the request payload
+    // 4. Prepare the request payload
     const prompt = 'Extract ALL text from this image exactly as it appears. Preserve the original formatting, line breaks, and structure. Output ONLY the extracted text with no additional commentary or explanations.';
     
     const imagePart = {
@@ -143,7 +146,7 @@ async function performGeminiOCR(image: string, geminiApiKey: string) {
       }
     };
 
-    // 4. Call the API
+    // 5. Call the API
     const result = await model.generateContent([prompt, imagePart]);
     const extractedText = result.response.text();
     

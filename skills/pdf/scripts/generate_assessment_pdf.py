@@ -70,7 +70,7 @@ def create_styles():
     
     # Body text
     styles.add(ParagraphStyle(
-        name='BodyText',
+        name='BodyTextCustom',
         fontName='Times New Roman',
         fontSize=11,
         textColor=DARK_GRAY,
@@ -170,15 +170,15 @@ def build_pdf(assessment, course, essay_text, output_path):
     
     # Course info
     course_info = f"<b>Course:</b> {course.get('name', 'Unknown')} ({course.get('code', 'N/A')})"
-    story.append(Paragraph(course_info, styles['BodyText']))
+    story.append(Paragraph(course_info, styles['BodyTextCustom']))
     
     date_str = datetime.now().strftime("%B %d, %Y")
-    story.append(Paragraph(f"<b>Date:</b> {date_str}", styles['BodyText']))
+    story.append(Paragraph(f"<b>Date:</b> {date_str}", styles['BodyTextCustom']))
     
     # Word count
     word_count = assessment.get('wordCount', 0)
     if word_count:
-        story.append(Paragraph(f"<b>Word Count:</b> {word_count} words", styles['BodyText']))
+        story.append(Paragraph(f"<b>Word Count:</b> {word_count} words", styles['BodyTextCustom']))
     
     story.append(Spacer(1, 20))
     
@@ -198,12 +198,12 @@ def build_pdf(assessment, course, essay_text, output_path):
     
     # Create score display (without band score)
     score_data = [
-        [Paragraph('<b>Total Score</b>', styles['BodyText']), 
-         Paragraph('<b>Percentage</b>', styles['BodyText']),
-         Paragraph('<b>Performance</b>', styles['BodyText'])],
-        [Paragraph(f'<font size="18" color="#1a5f2a"><b>{total_score}/{max_score}</b></font>', styles['BodyText']),
-         Paragraph(f'<font size="18" color="#1a5f2a"><b>{percentage:.1f}%</b></font>', styles['BodyText']),
-         Paragraph(f'<font size="14" color="#1a5f2a"><b>{score_label}</b></font>', styles['BodyText'])]
+        [Paragraph('<b>Total Score</b>', styles['BodyTextCustom']), 
+         Paragraph('<b>Percentage</b>', styles['BodyTextCustom']),
+         Paragraph('<b>Performance</b>', styles['BodyTextCustom'])],
+        [Paragraph(f'<font size="18" color="#1a5f2a"><b>{int(total_score)}/{int(max_score)}</b></font>', styles['BodyTextCustom']),
+         Paragraph(f'<font size="18" color="#1a5f2a"><b>{int(percentage)}%</b></font>', styles['BodyTextCustom']),
+         Paragraph(f'<font size="14" color="#1a5f2a"><b>{score_label}</b></font>', styles['BodyTextCustom'])]
     ]
     
     score_table = Table(score_data, colWidths=[5*cm, 4*cm, 5*cm])
@@ -230,6 +230,8 @@ def build_pdf(assessment, course, essay_text, output_path):
         criterion_score = score.get('score', 0)
         criterion_max = score.get('maxScore', 6)
         feedback = score.get('feedback', 'No feedback provided.')
+        # Ensure whole numbers for display
+        criterion_score = int(round(criterion_score))
         score_percentage = (criterion_score / criterion_max) * 100 if criterion_max > 0 else 0
         
         # Criterion header with score
@@ -267,7 +269,7 @@ def build_pdf(assessment, course, essay_text, output_path):
     
     overall_feedback = assessment.get('overallFeedback', 'No overall feedback provided.')
     story.append(Paragraph("Overall Feedback", styles['SectionHeader']))
-    story.append(Paragraph(overall_feedback, styles['BodyText']))
+    story.append(Paragraph(overall_feedback, styles['BodyTextCustom']))
     
     # === ESSAY TEXT (if provided) ===
     if essay_text:

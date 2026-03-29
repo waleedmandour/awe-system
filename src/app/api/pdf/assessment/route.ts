@@ -7,6 +7,9 @@ import { tmpdir } from 'os';
 
 const execAsync = promisify(exec);
 
+// Prevent Vercel/serverless from timing out the PDF generation
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

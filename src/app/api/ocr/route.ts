@@ -39,6 +39,33 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Clean OCR output into proper running lines for editing and assessment
+// - Removes excessive whitespace and blank lines
+// - Joins hyphenated word breaks across lines (e.g. "won-\nderful" → "wonderful")
+// - Removes single-word orphan lines caused by line-break noise
+// - Normalizes spacing while preserving real paragraph structure
+function cleanExtractedText(raw: string): string {
+  let text = raw.trim();
+  // Replace multiple spaces with single space (but keep newlines)
+  text = text.replace(/[ \t]+/g, ' ');
+  // Fix hyphenated line breaks: if a line ends with a hyphen followed by newline,
+  // join the two parts (e.g. "won-\nderful" → "wonderful")
+  text = text.replace(/-\n(\w)/g, '$1');
+  // Remove newlines that are NOT followed by another newline
+  // (these are line-break artifacts from column/text detection, not real paragraphs)
+  // Real paragraphs are separated by blank lines (double newline)
+  text = text.replace(/([^\n])\n([^\n])/g, '$1 $2');
+  // Collapse multiple blank lines into exactly one blank line
+  text = text.replace(/\n{3,}/g, '\n\n');
+  // Trim each line
+  text = text
+    .split('\n')
+    .map(line => line.trim())
+    .join('\n');
+  // Final trim
+  return text.trim();
+}
+
 // Helper function for bulletproof Base64 parsing
 function extractBase64AndMimeType(imageString: string) {
   let base64Data = imageString;
@@ -103,9 +130,10 @@ async function performVisionOCR(image: string, apiKey: string) {
     
     // Extract text from the response safely
     const textAnnotations = result.responses?.[0]?.textAnnotations;
-    const extractedText = textAnnotations?.[0]?.description || '';
+    const rawText = textAnnotations?.[0]?.description || '';
+    const extractedText = cleanExtractedText(rawText);
     
-    const wordCount = extractedText.trim().split(/\s+/).filter(Boolean).length;
+    const wordCount = extractedText.split(/\s+/).filter(Boolean).length;
     const confidence = result.responses?.[0]?.fullTextAnnotation?.pages?.[0]?.confidence || 0.9;
 
     return NextResponse.json({
@@ -166,10 +194,11 @@ async function performGeminiOCR(image: string, geminiApiKey: string) {
       } as any
     });
 
-    const extractedText = result.response.text();
+    const rawText = result.response.text();
+    const extractedText = cleanExtractedText(rawText);
     
     // Calculate word count
-    const wordCount = extractedText.trim().split(/\s+/).filter(Boolean).length;
+    const wordCount = extractedText.split(/\s+/).filter(Boolean).length;
 
     return NextResponse.json({
       success: true,

@@ -115,7 +115,7 @@ ${rubrics.specialRules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
 
 SCORING INSTRUCTIONS:
 1. For each criterion, carefully read the rubric descriptors and determine which band best matches the student's performance.
-2. Assign a specific score within the band (you may use 0.5 increments between 0-6).
+2. Assign a WHOLE NUMBER score (0, 1, 2, 3, 4, 5, or 6). Do NOT use decimals or half-points.
 3. For each criterion, provide structured feedback that includes:
    - A brief positive comment on what the student did well
    - SPECIFIC MISTAKES OR ERRORS found in the text (quote the exact words/phrases from the essay)
@@ -143,7 +143,7 @@ Respond in the following JSON format ONLY:
   ],
   "totalScore": 16,
   "maxScore": 24,
-  "percentage": 66.67,
+  "percentage": 67,
   "overallFeedback": "Your comprehensive overall feedback summarizing strengths and main areas for improvement...",
   "wordCount": ${wordCount},
   "wordCountPenalty": false
@@ -181,7 +181,7 @@ ASSESSMENT CRITERIA (Credit Course - LANC2160):
 ${criteria.map(c => `- ${c.name} (0-${c.maxScore}): ${c.description}`).join('\n')}
 
 SCORING INSTRUCTIONS:
-1. For each criterion, assess the student's performance and assign a score (0-${criteria[0].maxScore}).
+1. For each criterion, assess the student's performance and assign a WHOLE NUMBER score (0-${criteria[0].maxScore}). Do NOT use decimals or half-points.
 2. For each criterion, provide structured feedback that includes:
    - A brief positive comment on what the student did well
    - SPECIFIC MISTAKES OR ERRORS found in the text (quote the exact words/phrases from the essay)
@@ -308,10 +308,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Round all scores to whole numbers
+    assessment.scores.forEach((s: any) => {
+      s.score = Math.round(s.score);
+    });
+
     // Recalculate total score to ensure accuracy
-    assessment.totalScore = assessment.scores.reduce((sum: number, s: any) => sum + s.score, 0);
+    assessment.totalScore = assessment.scores.reduce((sum: number, s: any) => sum + Math.round(s.score), 0);
     assessment.maxScore = assessment.scores.reduce((sum: number, s: any) => sum + s.maxScore, 0);
-    assessment.percentage = (assessment.totalScore / assessment.maxScore) * 100;
+    assessment.percentage = Math.round((assessment.totalScore / assessment.maxScore) * 100);
 
     // Add word count info
     assessment.wordCount = wordCount;

@@ -658,32 +658,131 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
   );
 };
 
-// Upload Screen Component — supports up to 2 images (Page 1 + Page 2)
-const UploadScreen = ({ onUpload, onBack }: { onUpload: (images: string[]) => void; onBack: () => void }) => {
-  const [page1Image, setPage1Image] = useState<string | null>(null);
-  const [page2Image, setPage2Image] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const activeFileSlot = useRef<'page1' | 'page2'>('page1');
-  const { toast } = useToast();
+/**
+ * Convert and resize an image file to JPEG using an off-screen canvas.
+ * This handles:
+ *  - HEIC/HEIF detection (unsupported format, gives clear error)
+ *  - Oversized images (resizes to max dimension while preserving aspect ratio)
+ *  - Non-standard MIME types (normalizes to JPEG)
+ *  - Returns a clean data:image/jpeg;base64,... string
+ */
+function processImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // Detect HEIC/HEIF early — canvas cannot load these
+    const mimeType = (file.type || '').toLowerCase();
+    if (mimeType === 'image/heic' || mimeType === 'image/heif') {
+      reject(new Error(
+        'HEIC/HEIF format is not supported. ' +
+        'On iPhone: go to Settings \u2192 Camera \u2192 Formats \u2192 select \"Most Compatible\". ' +
+        'Or take a screenshot of the image and upload that instead.'
+      ));
+      return;
+    }
 
-  const handleFileSelect = (file: File, slot: 'page1' | 'page2') => {
+    // Check if it's a valid image type
     if (!file.type.startsWith('image/')) {
-      toast({
-        title: 'Invalid File',
-        description: 'Please select an image file.',
-        variant: 'destructive',
-      });
+      reject(new Error('Please select an image file (JPEG, PNG, or WEBP).'));
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (slot === 'page1') setPage1Image(result);
-      else setPage2Image(result);
+      const dataUri = e.target?.result as string;
+      if (!dataUri) {
+        reject(new Error('Failed to read image file.'));
+        return;
+      }
+
+      // Load into an Image element to get dimensions and enable canvas resize
+      const img = new Image();
+      img.onload = () => {
+        const MAX_DIMENSION = 2000; // Max width or height in pixels — keeps file under ~3MB
+        let { width, height } = img;
+
+        if (width <= MAX_DIMENSION && height <= MAX_DIMENSION) {
+          // No resize needed — return the original data URI
+          // but ensure it's a standard JPEG data URI
+          if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') {
+            resolve(dataUri);
+            return;
+          }
+          // Convert non-JPEG to JPEG via canvas
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) { reject(new Error('Canvas not supported')); return; }
+          ctx.drawImage(img, 0, 0);
+          const jpegDataUri = canvas.toDataURL('image/jpeg', 0.92);
+          resolve(jpegDataUri);
+        } else {
+          // Resize to fit within MAX_DIMENSION
+          const scale = MAX_DIMENSION / Math.max(width, height);
+          const newWidth = Math.round(width * scale);
+          const newHeight = Math.round(height * scale);
+
+          const canvas = document.createElement('canvas');
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) { reject(new Error('Canvas not supported')); return; }
+          ctx.drawImage(img, 0, 0, newWidth, newHeight);
+          const jpegDataUri = canvas.toDataURL('image/jpeg', 0.92);
+          resolve(jpegDataUri);
+        }
+      };
+      img.onerror = () => {
+        reject(new Error(
+          'Failed to load image. The file may be corrupted or in an unsupported format. ' +
+          'Try converting to JPEG and uploading again.'
+        ));
+      };
+      img.src = dataUri;
+    };
+    reader.onerror = () => {
+      reject(new Error('Failed to read the file. Please try again.'));
     };
     reader.readAsDataURL(file);
+  });
+}
+
+// Upload Screen Component — supports up to 2 images (Page 1 + Page 2)
+const UploadScreen = ({ onUpload, onBack }: { onUpload: (images: string[]) => void; onBack: () => void }) => {
+  const [page1Image, setPage1Image] = useState<string | null>(null);
+  const [page2Image, setPage2Image] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const activeFileSlot = useRef<'page1' | 'page2'>('page1');
+  const { toast } = useToast();
+
+  const handleFileSelect = async (file: File, slot: 'page1' | 'page2') => {
+    // Validate file type first
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid File',
+        description: 'Please select an image file (JPEG, PNG, or WEBP).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      // Process image: resize, convert to JPEG, detect HEIC
+      const processedDataUri = await processImageFile(file);
+      if (slot === 'page1') setPage1Image(processedDataUri);
+      else setPage2Image(processedDataUri);
+    } catch (error) {
+      toast({
+        title: 'Image Error',
+        description: error instanceof Error ? error.message : 'Failed to process image.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent, slot: 'page1' | 'page2') => {
@@ -693,10 +792,19 @@ const UploadScreen = ({ onUpload, onBack }: { onUpload: (images: string[]) => vo
     if (file) handleFileSelect(file, slot);
   };
 
+  // Open file picker WITHOUT camera — lets user choose gallery or camera
   const openFilePicker = (slot: 'page1' | 'page2') => {
     activeFileSlot.current = slot;
     if (fileInputRef.current) {
       fileInputRef.current.click();
+    }
+  };
+
+  // Open camera directly for quick photo capture
+  const openCamera = (slot: 'page1' | 'page2') => {
+    activeFileSlot.current = slot;
+    if (cameraInputRef.current) {
+      cameraInputRef.current.click();
     }
   };
 
@@ -785,7 +893,7 @@ const UploadScreen = ({ onUpload, onBack }: { onUpload: (images: string[]) => vo
                         <Camera className="w-7 h-7 text-white" />
                       </div>
                       <h3 className="font-medium text-sm mb-1">Add Page 1</h3>
-                      <p className="text-xs text-muted-foreground text-center">Tap to take a photo or upload from gallery</p>
+                      <p className="text-xs text-muted-foreground text-center">Tap to upload or take a photo</p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -855,26 +963,47 @@ const UploadScreen = ({ onUpload, onBack }: { onUpload: (images: string[]) => vo
             </div>
 
             {/* Tips */}
-            <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+              {/* Processing overlay */}
+              {isProcessing && (
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#1a5f2a]" />
+                  <span className="text-sm text-muted-foreground">Processing image...</span>
+                </div>
+              )}
+
+              <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
               <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
               <AlertDescription className="text-sm text-amber-700 dark:text-amber-300">
-                <strong>Tips for best results:</strong> Use good lighting, hold the camera steady, and ensure all text is clearly visible. If your essay has two pages, add both — they will be combined in the correct order.
+                <strong>Tips for best results:</strong> Use good lighting, hold the camera steady, and ensure all text is clearly visible. If your essay has two pages, add both — they will be combined in the correct order. <strong>iPhone users:</strong> ensure your camera is set to JPEG (Settings → Camera → Formats → Most Compatible).
               </AlertDescription>
             </Alert>
           </div>
         </ScrollArea>
 
-        {/* Hidden file input (shared by both slots) */}
+        {/* Hidden file input for gallery/file picker — NO capture attribute */}
+        {/* This allows users to choose between gallery and camera */}
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleFileSelect(file, activeFileSlot.current);
+            e.target.value = '';
+          }}
+        />
+
+        {/* Hidden camera input — capture attribute forces camera directly */}
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
           capture="environment"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) handleFileSelect(file, activeFileSlot.current);
-            // Reset so the same file can be re-selected if needed
             e.target.value = '';
           }}
         />

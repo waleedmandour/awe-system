@@ -657,14 +657,16 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
   );
 };
 
-// Upload Screen Component
-const UploadScreen = ({ onUpload, onBack }: { onUpload: (imageData: string) => void; onBack: () => void }) => {
+// Upload Screen Component — supports up to 2 images (Page 1 + Page 2)
+const UploadScreen = ({ onUpload, onBack }: { onUpload: (images: string[]) => void; onBack: () => void }) => {
+  const [page1Image, setPage1Image] = useState<string | null>(null);
+  const [page2Image, setPage2Image] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeFileSlot = useRef<'page1' | 'page2'>('page1');
   const { toast } = useToast();
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = (file: File, slot: 'page1' | 'page2') => {
     if (!file.type.startsWith('image/')) {
       toast({
         title: 'Invalid File',
@@ -677,30 +679,36 @@ const UploadScreen = ({ onUpload, onBack }: { onUpload: (imageData: string) => v
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
-      setPreviewImage(result);
+      if (slot === 'page1') setPage1Image(result);
+      else setPage2Image(result);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent, slot: 'page1' | 'page2') => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file) handleFileSelect(file);
+    if (file) handleFileSelect(file, slot);
   };
 
-  const handleCameraCapture = async () => {
-    // For mobile, we use the file input with capture attribute
+  const openFilePicker = (slot: 'page1' | 'page2') => {
+    activeFileSlot.current = slot;
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
   const handleConfirm = () => {
-    if (previewImage) {
-      onUpload(previewImage);
+    const images: string[] = [];
+    if (page1Image) images.push(page1Image);
+    if (page2Image) images.push(page2Image);
+    if (images.length > 0) {
+      onUpload(images);
     }
   };
+
+  const imageCount = (page1Image ? 1 : 0) + (page2Image ? 1 : 0);
 
   return (
     <PageTransition>
@@ -718,124 +726,144 @@ const UploadScreen = ({ onUpload, onBack }: { onUpload: (imageData: string) => v
             </Button>
             <div>
               <h2 className="font-semibold text-lg">Upload Essay</h2>
-              <p className="text-sm text-muted-foreground">Scan or upload your handwritten essay</p>
+              <p className="text-sm text-muted-foreground">Scan or upload your handwritten essay (up to 2 pages)</p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-4">
-          {previewImage ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="h-full flex flex-col"
-            >
-              <Card className="flex-1 overflow-hidden border-0 shadow-lg">
-                <CardContent className="p-0 h-full">
-                  <div className="relative h-full min-h-[300px] bg-muted">
-                    <img
-                      src={previewImage}
-                      alt="Essay preview"
-                      className="w-full h-full object-contain"
-                    />
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-3 right-3 h-10 w-10 rounded-full shadow-lg"
-                      onClick={() => setPreviewImage(null)}
-                    >
-                      <X className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              <p className="text-center text-sm text-muted-foreground mt-4">
-                Review your image and tap "Process" to extract text
-              </p>
-            </motion.div>
-          ) : (
-            <div className="h-full flex flex-col gap-4">
-              {/* Camera Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex-1"
-              >
-                <Card
-                  className={`h-full border-2 border-dashed transition-all duration-200 cursor-pointer ${
-                    isDragging ? 'border-[#1a5f2a] bg-[#1a5f2a]/5' : 'border-muted-foreground/30'
-                  }`}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsDragging(true);
-                  }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={handleDrop}
-                  onClick={handleCameraCapture}
-                >
-                  <CardContent className="h-full flex flex-col items-center justify-center p-6">
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#1a5f2a] to-[#2a7f3a] flex items-center justify-center mb-4 shadow-lg">
-                      <Camera className="w-10 h-10 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-lg mb-2">Take Photo</h3>
-                    <p className="text-sm text-muted-foreground text-center">
-                      Tap to open camera and photograph your handwritten essay
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Divider */}
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-sm text-muted-foreground">or</span>
-                <div className="flex-1 h-px bg-border" />
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-4">
+            {/* Page 1 (Required) */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge className="bg-[#1a5f2a] text-white border-0 text-xs">Page 1</Badge>
+                <span className="text-xs text-muted-foreground">Required</span>
               </div>
-
-              {/* Gallery Upload */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <Card
-                  className="border-2 border-dashed border-muted-foreground/30 hover:border-[#1a5f2a]/50 transition-colors cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
+              {page1Image ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
                 >
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center">
-                      <Upload className="w-7 h-7 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Upload from Gallery</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Select an existing photo
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              {/* Tips */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="mt-4"
-              >
-                <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
-                  <Info className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <AlertDescription className="text-sm text-amber-700 dark:text-amber-300">
-                    <strong>Tips for best results:</strong> Use good lighting, hold the camera steady, and ensure all text is clearly visible.
-                  </AlertDescription>
-                </Alert>
-              </motion.div>
+                  <Card className="border-0 shadow-md overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="relative bg-muted">
+                        <img
+                          src={page1Image}
+                          alt="Page 1 preview"
+                          className="w-full h-[220px] object-contain"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-md"
+                          onClick={() => setPage1Image(null)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <Card
+                    className={`border-2 border-dashed transition-all duration-200 cursor-pointer ${
+                      isDragging ? 'border-[#1a5f2a] bg-[#1a5f2a]/5' : 'border-muted-foreground/30'
+                    }`}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => handleDrop(e, 'page1')}
+                    onClick={() => openFilePicker('page1')}
+                  >
+                    <CardContent className="flex flex-col items-center justify-center p-8">
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1a5f2a] to-[#2a7f3a] flex items-center justify-center mb-3 shadow-md">
+                        <Camera className="w-7 h-7 text-white" />
+                      </div>
+                      <h3 className="font-medium text-sm mb-1">Add Page 1</h3>
+                      <p className="text-xs text-muted-foreground text-center">Tap to take a photo or upload from gallery</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Hidden file input */}
+            {/* Page 2 (Optional) */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="secondary" className="text-xs">Page 2</Badge>
+                <span className="text-xs text-muted-foreground">Optional — for multi-page essays</span>
+              </div>
+              {page2Image ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  <Card className="border-0 shadow-md overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="relative bg-muted">
+                        <img
+                          src={page2Image}
+                          alt="Page 2 preview"
+                          className="w-full h-[220px] object-contain"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-md"
+                          onClick={() => setPage2Image(null)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <Card
+                    className="border-2 border-dashed border-muted-foreground/30 hover:border-[#c9a227]/60 transition-colors cursor-pointer"
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => handleDrop(e, 'page2')}
+                    onClick={() => openFilePicker('page2')}
+                  >
+                    <CardContent className="flex flex-col items-center justify-center p-8">
+                      <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center mb-3">
+                        <Plus className="w-7 h-7 text-muted-foreground" />
+                      </div>
+                      <h3 className="font-medium text-sm mb-1">Add Page 2</h3>
+                      <p className="text-xs text-muted-foreground text-center">Optional — only if essay spans two pages</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Page count indicator */}
+            <div className="flex items-center justify-center gap-3 py-1">
+              <div className={`w-2.5 h-2.5 rounded-full ${page1Image ? 'bg-[#1a5f2a]' : 'bg-muted-foreground/30'}`} />
+              <div className={`w-2.5 h-2.5 rounded-full ${page2Image ? 'bg-[#1a5f2a]' : 'bg-muted-foreground/30'}`} />
+            </div>
+
+            {/* Tips */}
+            <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+              <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <AlertDescription className="text-sm text-amber-700 dark:text-amber-300">
+                <strong>Tips for best results:</strong> Use good lighting, hold the camera steady, and ensure all text is clearly visible. If your essay has two pages, add both — they will be combined in the correct order.
+              </AlertDescription>
+            </Alert>
+          </div>
+        </ScrollArea>
+
+        {/* Hidden file input (shared by both slots) */}
         <input
           ref={fileInputRef}
           type="file"
@@ -844,7 +872,9 @@ const UploadScreen = ({ onUpload, onBack }: { onUpload: (imageData: string) => v
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) handleFileSelect(file);
+            if (file) handleFileSelect(file, activeFileSlot.current);
+            // Reset so the same file can be re-selected if needed
+            e.target.value = '';
           }}
         />
 
@@ -852,11 +882,12 @@ const UploadScreen = ({ onUpload, onBack }: { onUpload: (imageData: string) => v
         <div className="p-4 border-t bg-white/80 backdrop-blur-sm">
           <Button
             onClick={handleConfirm}
-            disabled={!previewImage}
+            disabled={!page1Image}
             className="w-full h-12 bg-[#1a5f2a] hover:bg-[#1a5f2a]/90 rounded-xl ios-press"
           >
             <Zap className="w-4 h-4 mr-2" />
-            Process Image
+            {imageCount === 2 ? 'Process 2 Pages' : 'Process Essay'}
+            <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
       </div>
@@ -1889,8 +1920,8 @@ export default function AWEApp() {
     }
   };
 
-  // Handle image upload and OCR processing
-  const handleImageUpload = async (imageData: string) => {
+  // Handle image upload and OCR processing — supports single or multi-page (up to 2)
+  const handleImageUpload = async (images: string[]) => {
     const { visionApiKey, geminiApiKey } = useAppStore.getState();
 
     // Check if at least one API key is available
@@ -1904,20 +1935,21 @@ export default function AWEApp() {
     }
 
     setStep('processing');
-    setProcessing(true, 'Extracting text from image...');
+    const pageCount = images.length;
+    setProcessing(true, `Extracting text from ${pageCount} page${pageCount > 1 ? 's' : ''}...`);
 
     try {
-      // Call the OCR API endpoint
+      // Call the OCR API endpoint with array of images (processed in order)
       const response = await fetch('/api/ocr', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          image: imageData,
+          images, // Array of base64/data-uri image strings, in page order
           apiKey: visionApiKey || undefined,
           geminiApiKey: geminiApiKey || undefined,
-          useGemini: !visionApiKey && !!geminiApiKey, // Use Gemini if no Vision key
+          useGemini: !visionApiKey && !!geminiApiKey,
         }),
       });
 
@@ -1927,7 +1959,7 @@ export default function AWEApp() {
         throw new Error(result.error || 'Failed to process image');
       }
 
-      // Use the actual extracted text from the API
+      // Use the actual extracted text from the API (already combined in page order)
       const extractedText = result.text || '';
 
       if (!extractedText.trim()) {

@@ -471,16 +471,118 @@ export async function POST(request: NextRequest) {
     // 3. Generate Content — do NOT use responseMimeType because
     //    gemini-3-flash-preview doesn't reliably support it.
     //    Instead, ask for JSON in the prompt and parse robustly.
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 8192,
-      }
-    });
+    //
+    //    SAFETY: Lower safety thresholds to prevent student essay content
+    //    (e.g., essays about smoking, pollution, social issues) from being
+    //    blocked by Gemini's default safety filters.
+    const safetySettings = [
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_ONLY_HIGH' },
+    ];
 
-    const responseText = result.response.text() || '';
-    
+    // Try generation with increasing token limits on truncation
+    let responseText = '';
+    let parsedOk = false;
+    const tokenLimits = [8192, 16384, 32768];
+
+    for (const maxTokens of tokenLimits) {
+      try {
+        const result = await model.generateContent({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: maxTokens,
+          },
+          safetySettings,
+        });
+
+        // ── Check for prompt-level blocking ──
+        const promptFeedback = (result.response as any)?.promptFeedback;
+        if (promptFeedback?.blockReason) {
+          const reason = promptFeedback.blockReason;
+          console.error(`Gemini prompt blocked: ${reason}`);
+          return NextResponse.json(
+            { error: 'AI content filter blocked the submission. Please try rephrasing your essay or contact your instructor.', details: `Prompt blocked: ${reason}` },
+            { status: 422 }
+          );
+        }
+
+        // ── Check for response-level blocking / truncation ──
+        const candidate = (result.response as any)?.candidates?.[0];
+        const finishReason = candidate?.finishReason;
+
+        // SAFETY / RECITATION / LANGUAGE — content is blocked entirely
+        if (finishReason === 'SAFETY' || finishReason === 'RECITATION' || finishReason === 'LANGUAGE') {
+          console.error(`Gemini response blocked, finishReason: ${finishReason}`);
+          return NextResponse.json(
+            { error: 'AI content filter blocked the assessment response. This may happen if the essay discusses sensitive topics. Please try rephrasing or contact your instructor.', details: `Response blocked: ${finishReason}` },
+            { status: 422 }
+          );
+        }
+
+        // Extract text — handle null/undefined safely
+        const rawText = result.response?.text?.() || '';
+        if (!rawText || rawText.trim().length === 0) {
+          console.error('Gemini returned empty response. finishReason:', finishReason);
+          return NextResponse.json(
+            { error: 'AI returned an empty response. Please try again.', details: `Empty response, finishReason: ${finishReason || 'unknown'}` },
+            { status: 500 }
+          );
+        }
+
+        // MAX_TOKENS — response is truncated, may cause JSON parse failure
+        if (finishReason === 'MAX_TOKENS') {
+          console.warn(`Response truncated at ${maxTokens} tokens, attempting to parse anyway...`);
+        }
+
+        // Try to parse the JSON
+        try {
+          const assessment = extractJSON(rawText);
+          if (assessment && assessment.scores && Array.isArray(assessment.scores)) {
+            responseText = rawText;
+            parsedOk = true;
+            // If it parsed successfully even with MAX_TOKENS, use it
+            break;
+          }
+        } catch (_e) {
+          // JSON parse failed — if truncated, try next token limit
+          if (finishReason === 'MAX_TOKENS' && maxTokens !== tokenLimits[tokenLimits.length - 1]) {
+            console.warn(`JSON parse failed after truncation at ${maxTokens} tokens, retrying with higher limit...`);
+            continue;
+          }
+          // Otherwise, fall through to error
+          console.error('Failed to parse assessment response. Raw text (first 500 chars):', rawText.substring(0, 500));
+          return NextResponse.json(
+            { error: 'Failed to parse AI assessment response. The AI returned an invalid format. Please try again.', details: 'The AI response could not be parsed. This is a temporary issue — retrying usually works.' },
+            { status: 500 }
+          );
+        }
+
+        // Parsed OK with STOP
+        responseText = rawText;
+        parsedOk = true;
+        break;
+
+      } catch (genError: any) {
+        // If this is the last attempt, throw
+        if (maxTokens === tokenLimits[tokenLimits.length - 1]) {
+          throw genError;
+        }
+        console.warn(`Generation error with ${maxTokens} tokens:`, genError.message);
+        continue;
+      }
+    }
+
+    if (!parsedOk) {
+      return NextResponse.json(
+        { error: 'Failed to get a valid assessment from the AI after multiple attempts. Please try again.' },
+        { status: 500 }
+      );
+    }
+
     // Parse the JSON response with aggressive cleanup
     let assessment;
     try {

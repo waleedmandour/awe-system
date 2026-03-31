@@ -274,6 +274,15 @@ async function performGeminiOCR(images: { base64: string; mimeType: string }[], 
 
     const parts: any[] = [...imageParts, { text: prompt }];
 
+    // Safety settings: lower thresholds to prevent blocking of handwritten essays
+    const safetySettings = [
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+      { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_ONLY_HIGH' },
+    ];
+
     const result = await model.generateContent({
       contents: [{
         role: 'user',
@@ -283,10 +292,42 @@ async function performGeminiOCR(images: { base64: string; mimeType: string }[], 
         temperature: 0.1,
         mediaResolution: 'MEDIA_RESOLUTION_HIGH',
         maxOutputTokens: 8192,
-      } as any
+      } as any,
+      safetySettings,
     });
 
-    const rawText = result.response.text();
+    // ── Check for blocking / truncation ──
+    const promptFeedback = (result.response as any)?.promptFeedback;
+    if (promptFeedback?.blockReason) {
+      return NextResponse.json(
+        { error: 'AI content filter blocked the image. Please try a different image or rephrase the content.', details: `Prompt blocked: ${promptFeedback.blockReason}` },
+        { status: 422 }
+      );
+    }
+
+    const candidate = (result.response as any)?.candidates?.[0];
+    const finishReason = candidate?.finishReason;
+
+    if (finishReason === 'SAFETY' || finishReason === 'RECITATION' || finishReason === 'LANGUAGE') {
+      return NextResponse.json(
+        { error: 'AI content filter blocked the OCR response. The essay may contain sensitive topics. Please try again or use the Vision API instead.', details: `Response blocked: ${finishReason}` },
+        { status: 422 }
+      );
+    }
+
+    // Handle null/undefined response safely
+    const rawText = result.response?.text?.() || '';
+    if (!rawText || rawText.trim().length === 0) {
+      return NextResponse.json(
+        { error: 'AI returned an empty response for the image. Please try again or use the Vision API instead.', details: `Empty response, finishReason: ${finishReason || 'unknown'}` },
+        { status: 500 }
+      );
+    }
+
+    if (finishReason === 'MAX_TOKENS') {
+      console.warn('Gemini OCR response was truncated (MAX_TOKENS). The extracted text may be incomplete.');
+    }
+
     const extractedText = cleanExtractedText(rawText);
     const wordCount = extractedText.split(/\s+/).filter(Boolean).length;
 

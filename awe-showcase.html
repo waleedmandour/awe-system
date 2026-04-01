@@ -1284,6 +1284,372 @@
         }
 
         /* ============================================
+           COMPARISON SECTION
+           ============================================ */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            max-width: 900px;
+            margin: 0 auto 48px;
+        }
+
+        .compare-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            border: 2px solid transparent;
+            position: relative;
+        }
+
+        .compare-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .compare-card.featured {
+            border-color: var(--primary);
+        }
+
+        .compare-card.featured::before {
+            content: 'RECOMMENDED';
+            position: absolute;
+            top: 16px;
+            right: -32px;
+            background: var(--primary);
+            color: var(--white);
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            padding: 6px 40px;
+            transform: rotate(45deg);
+            z-index: 2;
+        }
+
+        .compare-card-header {
+            padding: 28px 28px 20px;
+            text-align: center;
+        }
+
+        .compare-card-header.green-bg {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+            color: var(--white);
+        }
+
+        .compare-card-header.blue-bg {
+            background: linear-gradient(135deg, #1a3a5f, #2a5a8f);
+            color: var(--white);
+        }
+
+        .compare-card-header i {
+            font-size: 2.2rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .compare-card-header h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .compare-card-header p {
+            font-size: 0.85rem;
+            opacity: 0.85;
+            font-weight: 400;
+        }
+
+        .compare-card-body {
+            padding: 28px;
+        }
+
+        .compare-feature {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .compare-feature:last-child {
+            border-bottom: none;
+        }
+
+        .compare-feature i {
+            margin-top: 3px;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .compare-feature i.fa-check {
+            color: var(--primary);
+        }
+
+        .compare-feature i.fa-times {
+            color: var(--text-light);
+        }
+
+        .compare-feature i.fa-minus {
+            color: var(--gold-dark);
+        }
+
+        .compare-card-footer {
+            padding: 0 28px 28px;
+            text-align: center;
+        }
+
+        .compare-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .compare-btn.green {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: var(--white);
+            box-shadow: 0 4px 15px rgba(26, 95, 42, 0.3);
+        }
+
+        .compare-btn.green:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(26, 95, 42, 0.4);
+        }
+
+        .compare-btn.blue {
+            background: linear-gradient(135deg, #1a3a5f, #2a5a8f);
+            color: var(--white);
+            box-shadow: 0 4px 15px rgba(26, 58, 95, 0.3);
+        }
+
+        .compare-btn.blue:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(26, 58, 95, 0.4);
+        }
+
+        /* Feature comparison table */
+        .comparison-table-wrap {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        .comparison-table thead {
+            background: var(--light-bg);
+        }
+
+        .comparison-table th {
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .comparison-table th:nth-child(2) {
+            color: var(--primary);
+        }
+
+        .comparison-table th:nth-child(3) {
+            color: #1a3a5f;
+        }
+
+        .comparison-table td {
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            color: var(--text-dark);
+            vertical-align: top;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(26, 95, 42, 0.02);
+        }
+
+        .comparison-table .feature-label {
+            font-weight: 600;
+            color: var(--dark);
+            min-width: 180px;
+        }
+
+        .comparison-table .check {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .comparison-table .cross {
+            color: var(--text-light);
+        }
+
+        .comparison-table .partial {
+            color: var(--gold-dark);
+            font-weight: 600;
+        }
+
+        /* Try section */
+        .try-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .try-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 36px 28px;
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            transition: var(--transition);
+        }
+
+        .try-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .try-card-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 1.5rem;
+        }
+
+        .try-card-icon.teacher {
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--white);
+        }
+
+        .try-card-icon.student {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: var(--white);
+        }
+
+        .try-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .try-card p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+
+        .try-card-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .try-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .try-link.green {
+            background: rgba(26, 95, 42, 0.08);
+            color: var(--primary);
+        }
+
+        .try-link.green:hover {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .try-link.blue {
+            background: rgba(26, 58, 95, 0.08);
+            color: #1a3a5f;
+        }
+
+        .try-link.blue:hover {
+            background: #1a3a5f;
+            color: var(--white);
+        }
+
+        /* ============================================
+           RESPONSIVE - COMPARISON
+           ============================================ */
+        @media (max-width: 1024px) {
+            .compare-grid {
+                grid-template-columns: 1fr;
+                max-width: 480px;
+            }
+            .try-grid {
+                grid-template-columns: 1fr;
+                max-width: 440px;
+            }
+            .comparison-table-wrap {
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .compare-grid {
+                max-width: 440px;
+                margin-left: auto;
+                margin-right: auto;
+                margin-bottom: 40px;
+            }
+            .comparison-table th,
+            .comparison-table td {
+                padding: 10px 14px;
+                font-size: 0.82rem;
+            }
+            .comparison-table .feature-label {
+                min-width: 140px;
+            }
+        }
+
+        /* ============================================
            ACCESSIBILITY
            ============================================ */
         @media (prefers-reduced-motion: reduce) {
@@ -1316,8 +1682,9 @@
                 <li><a href="#how-it-works" onclick="closeMenu()">How It Works</a></li>
                 <li><a href="#courses" onclick="closeMenu()">Courses</a></li>
                 <li><a href="#features" onclick="closeMenu()">Features</a></li>
+                <li><a href="#compare" onclick="closeMenu()">Compare Systems</a></li>
                 <li><a href="#architecture" onclick="closeMenu()">Architecture</a></li>
-                <li><a href="#submit" class="nav-cta" onclick="closeMenu()">Submit Writing</a></li>
+                <li><a href="#try" class="nav-cta" onclick="closeMenu()">Try Now</a></li>
             </ul>
             <button class="mobile-toggle" id="mobileToggle" aria-label="Open menu">
                 <i class="fas fa-bars"></i>
@@ -1356,13 +1723,13 @@
             <p class="hero-subtitle">Automated Writing Evaluation</p>
             <p class="hero-tagline">AI-Powered Formative Assessment for Student Writing</p>
             <div class="hero-buttons">
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzxyTLFTeixGxX06tcaC6vQrgwhVQimOiHE7z97wxOrNn9qQ/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-                    <i class="fas fa-paper-plane"></i>
-                    Submit Your Writing
+                <a href="https://awe-system.vercel.app" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                    <i class="fas fa-mobile-alt"></i>
+                    Launch PWA App
                 </a>
-                <a href="#features" class="btn btn-secondary">
-                    <i class="fas fa-compass"></i>
-                    Explore Features
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzxyTLFTeixGxX06tcaC6vQrgwhVQimOiHE7z97wxOrNn9qQ/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+                    <i class="fab fa-google"></i>
+                    Google Form
                 </a>
             </div>
             <div class="hero-squ">
@@ -1383,7 +1750,7 @@
             </div>
 
             <div class="about-text fade-up stagger-1">
-                The <strong>AWE (Automated Writing Evaluation)</strong> system is a multimodal, LLM-based platform designed to provide formative assessment for student writing at the Center for Preparatory Studies, Sultan Qaboos University. Students submit their handwritten essays via a Google Form, the system uses the <strong>Google Vision API</strong> to extract text through optical character recognition (OCR), and then either <strong>Gemini</strong> or <strong>OpenAI</strong> evaluates the writing against IELTS-aligned rubrics calibrated to <strong>CEFR A1&ndash;A2 proficiency levels</strong>. The result is a detailed, actionable assessment report delivered in seconds.
+                The <strong>AWE (Automated Writing Evaluation)</strong> system is a multimodal, LLM-based platform designed to provide formative assessment for student writing at the Center for Preparatory Studies, Sultan Qaboos University. It is available in <strong>two complementary formats</strong>: a full-featured <strong>Progressive Web App (PWA)</strong> that can be installed on any device for an app-like experience with instant results, and a <strong>Google Forms-based system</strong> that offers a quick, no-installation submission workflow. Both systems use OCR to extract text from handwritten essays and evaluate the writing against IELTS-aligned rubrics calibrated to <strong>CEFR A1&ndash;A2 proficiency levels</strong>, delivering detailed, actionable assessment reports in seconds.
             </div>
 
             <div class="stats-row">
@@ -1396,8 +1763,8 @@
                     <div class="stat-label">Assessment Criteria</div>
                 </div>
                 <div class="stat-card fade-up stagger-3">
-                    <div class="stat-number">IELTS</div>
-                    <div class="stat-label">Aligned Rubrics</div>
+                    <div class="stat-number">2</div>
+                    <div class="stat-label">Available Systems</div>
                 </div>
             </div>
         </div>
@@ -1614,22 +1981,237 @@
     </section>
 
     <!-- ==========================================
-         CTA SECTION
+         COMPARE SYSTEMS SECTION
          ========================================== -->
-    <section class="cta-section" id="submit">
+    <section class="section" id="compare">
         <div class="container">
-            <div class="cta-content fade-up">
+            <div class="section-header fade-up">
+                <div class="section-label">Compare</div>
+                <h2 class="section-title">Two Systems, One Goal</h2>
+                <p class="section-desc">Choose the system that best fits your needs. Both deliver the same rigorous AI-powered assessment aligned to CEFR A1&ndash;A2 rubrics.</p>
+            </div>
+
+            <div class="compare-grid">
+                <!-- PWA System Card -->
+                <div class="compare-card featured fade-left stagger-1">
+                    <div class="compare-card-header green-bg">
+                        <i class="fas fa-mobile-screen-button"></i>
+                        <h3>AWE PWA App</h3>
+                        <p>Progressive Web Application</p>
+                    </div>
+                    <div class="compare-card-body">
+                        <div class="compare-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Install on any device &mdash; works like a native app</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Direct camera capture for handwritten essays</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Instant on-screen results with detailed feedback</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Assessment history saved locally on device</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Offline-capable interface (requires internet for AI)</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Course &amp; exam-type selection (FP0340 mid/final)</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-check"></i>
+                            <span>0.5 decimal scoring for borderline cases</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Powered by Gemini AI</span>
+                        </div>
+                    </div>
+                    <div class="compare-card-footer">
+                        <a href="https://awe-system.vercel.app" target="_blank" rel="noopener noreferrer" class="compare-btn green">
+                            <i class="fas fa-external-link-alt"></i>
+                            Launch PWA App
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Google Forms System Card -->
+                <div class="compare-card fade-right stagger-2">
+                    <div class="compare-card-header blue-bg">
+                        <i class="fab fa-google"></i>
+                        <h3>Google Forms System</h3>
+                        <p>Form-Based Submission Pipeline</p>
+                    </div>
+                    <div class="compare-card-body">
+                        <div class="compare-feature">
+                            <i class="fas fa-check"></i>
+                            <span>No installation &mdash; open in any browser</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Upload essay photos through Google Form</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-minus"></i>
+                            <span>Results via automated email response</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-times"></i>
+                            <span>No local history &mdash; results in email only</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-times"></i>
+                            <span>Requires active internet connection</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-minus"></i>
+                            <span>Course selection via form dropdown</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-minus"></i>
+                            <span>Standard whole-number scoring</span>
+                        </div>
+                        <div class="compare-feature">
+                            <i class="fas fa-check"></i>
+                            <span>Choose Gemini or OpenAI engine</span>
+                        </div>
+                    </div>
+                    <div class="compare-card-footer">
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzxyTLFTeixGxX06tcaC6vQrgwhVQimOiHE7z97wxOrNn9qQ/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="compare-btn blue">
+                            <i class="fas fa-external-link-alt"></i>
+                            Open Google Form
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature Comparison Table -->
+            <div class="comparison-table-wrap fade-up">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th><i class="fas fa-mobile-alt" style="margin-right:6px;"></i> PWA App</th>
+                            <th><i class="fab fa-google" style="margin-right:6px;"></i> Google Forms</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="feature-label">Installation</td>
+                            <td class="check"><i class="fas fa-check"></i> Installable PWA</td>
+                            <td class="partial"><i class="fas fa-minus"></i> No install needed</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-label">Essay Input</td>
+                            <td class="check"><i class="fas fa-check"></i> Camera + upload (up to 2 pages)</td>
+                            <td class="partial"><i class="fas fa-minus"></i> Upload via form</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-label">OCR Engine</td>
+                            <td class="check"><i class="fas fa-check"></i> Gemini Vision API</td>
+                            <td class="check"><i class="fas fa-check"></i> Google Vision API</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-label">AI Assessment</td>
+                            <td class="check"><i class="fas fa-check"></i> Gemini</td>
+                            <td class="check"><i class="fas fa-check"></i> Gemini / OpenAI</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-label">Scoring Precision</td>
+                            <td class="check"><i class="fas fa-check"></i> 0.5 decimal increments</td>
+                            <td class="cross"><i class="fas fa-times"></i> Whole numbers only</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-label">Results Display</td>
+                            <td class="check"><i class="fas fa-check"></i> Interactive on-screen UI</td>
+                            <td class="partial"><i class="fas fa-minus"></i> Email response</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-label">Assessment History</td>
+                            <td class="check"><i class="fas fa-check"></i> Local storage</td>
+                            <td class="cross"><i class="fas fa-times"></i> Not available</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-label">Offline Support</td>
+                            <td class="check"><i class="fas fa-check"></i> Partial (UI only)</td>
+                            <td class="cross"><i class="fas fa-times"></i> Requires internet</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-label">Exam-Type Selection</td>
+                            <td class="check"><i class="fas fa-check"></i> FP0340 mid/final toggle</td>
+                            <td class="cross"><i class="fas fa-times"></i> Not available</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-label">Share Results</td>
+                            <td class="check"><i class="fas fa-check"></i> Share button built-in</td>
+                            <td class="partial"><i class="fas fa-minus"></i> Forward email</td>
+                        </tr>
+                        <tr>
+                            <td class="feature-label">Best For</td>
+                            <td class="check"><i class="fas fa-star"></i> Students &amp; teachers</td>
+                            <td class="partial"><i class="fas fa-star"></i> Quick trials</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================
+         TRY NOW SECTION
+         ========================================== -->
+    <section class="section section-alt" id="try">
+        <div class="container">
+            <div class="section-header fade-up">
                 <div class="section-label">Get Started</div>
-                <h2 class="section-title">Submit Your Writing</h2>
-                <p class="cta-text">
-                    Click the button below to open the submission form. Upload a photo of your handwritten essay, select your course and preferred AI engine, and receive detailed feedback powered by advanced language models.
-                </p>
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzxyTLFTeixGxX06tcaC6vQrgwhVQimOiHE7z97wxOrNn9qQ/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="cta-button">
-                    <i class="fas fa-paper-plane"></i>
-                    Open Submission Form
-                    <i class="fas fa-arrow-right"></i>
-                </a>
-                <p class="cta-note">Opens in a new tab &mdash; Google Forms</p>
+                <h2 class="section-title">Try the AWE System</h2>
+                <p class="section-desc">Whether you are a teacher exploring AI-assisted evaluation or a student seeking instant feedback, start here.</p>
+            </div>
+
+            <div class="try-grid">
+                <!-- Teachers -->
+                <div class="try-card fade-up stagger-1">
+                    <div class="try-card-icon teacher">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <h3>For Teachers</h3>
+                    <p>Explore how AI can support formative assessment in your writing courses. Try both systems to compare the evaluation quality and feedback depth.</p>
+                    <div class="try-card-links">
+                        <a href="https://awe-system.vercel.app" target="_blank" rel="noopener noreferrer" class="try-link green">
+                            <i class="fas fa-mobile-alt"></i>
+                            Try PWA App
+                        </a>
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzxyTLFTeixGxX06tcaC6vQrgwhVQimOiHE7z97wxOrNn9qQ/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="try-link blue">
+                            <i class="fab fa-google"></i>
+                            Try Google Form
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Students -->
+                <div class="try-card fade-up stagger-2">
+                    <div class="try-card-icon student">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <h3>For Students</h3>
+                    <p>Get instant, detailed feedback on your writing. Upload a photo of your handwritten essay and receive AI-powered scores with specific suggestions for improvement.</p>
+                    <div class="try-card-links">
+                        <a href="https://awe-system.vercel.app" target="_blank" rel="noopener noreferrer" class="try-link green">
+                            <i class="fas fa-mobile-alt"></i>
+                            Launch PWA App
+                        </a>
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzxyTLFTeixGxX06tcaC6vQrgwhVQimOiHE7z97wxOrNn9qQ/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="try-link blue">
+                            <i class="fab fa-google"></i>
+                            Submit via Form
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

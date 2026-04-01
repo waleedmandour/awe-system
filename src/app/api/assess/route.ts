@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Word count targets by exam type for Foundation courses
+const EXAM_WORD_COUNTS: Record<string, { min: number; max: number; ideal: number; label: string }> = {
+  'mid-semester': { min: 110, max: 130, ideal: 120, label: 'Mid-semester Exam' },
+  'final':        { min: 190, max: 210, ideal: 200, label: 'Final Exam' },
+};
+
+// Default word count target (used when no exam type is specified)
+const DEFAULT_FOUNDATION_WORD_COUNT = { min: 110, max: 130, ideal: 120 };
+
 // Detailed assessment rubrics for Foundation courses (0230, 0340)
 const FOUNDATION_RUBRICS = {
-  targetWordCount: { min: 110, max: 130, ideal: 120 },
   criteria:[
     {
       name: 'Task Response',
@@ -69,13 +77,13 @@ const CREDIT_CRITERIA =[
 ];
 
 // Build detailed rubric prompt for Foundation courses
-function buildFoundationPrompt(text: string, topic: string | null, wordCount: number): string {
+function buildFoundationPrompt(text: string, topic: string | null, wordCount: number, targetWordCount: { min: number; max: number; ideal: number; label?: string }): string {
   const rubrics = FOUNDATION_RUBRICS;
-  const wordCountStatus = wordCount < rubrics.targetWordCount.min 
-    ? `WARNING: Word count (${wordCount}) is BELOW the required range of ${rubrics.targetWordCount.min}-${rubrics.targetWordCount.max} words. This MUST lower the Task Response score.`
-    : wordCount > rubrics.targetWordCount.max
-    ? `NOTE: Word count (${wordCount}) exceeds the target range of ${rubrics.targetWordCount.min}-${rubrics.targetWordCount.max} words. Minor flexibility is acceptable.`
-    : `Word count (${wordCount}) is within the acceptable range of ${rubrics.targetWordCount.min}-${rubrics.targetWordCount.max} words.`;
+  const wordCountStatus = wordCount < targetWordCount.min 
+    ? `WARNING: Word count (${wordCount}) is BELOW the required range of ${targetWordCount.min}-${targetWordCount.max} words. This MUST lower the Task Response score.`
+    : wordCount > targetWordCount.max
+    ? `NOTE: Word count (${wordCount}) exceeds the target range of ${targetWordCount.min}-${targetWordCount.max} words. Minor flexibility is acceptable.`
+    : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
 
   const criteriaDetails = rubrics.criteria.map(c => {
     const rubricLevels = Object.entries(c.rubric)
@@ -430,7 +438,7 @@ function extractJsonObject(text: string): string | null {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { text, courseCode, topic, apiKey } = body;
+    const { text, courseCode, topic, apiKey, examType } = body;
 
     if (!text) {
       return NextResponse.json(
@@ -450,9 +458,18 @@ export async function POST(request: NextRequest) {
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
 
     // Determine course type and build appropriate prompt
-    const isFoundation =['0230', '0340'].includes(courseCode);
+    const isFoundation = ['0230', '0340'].includes(courseCode);
+
+    // Resolve target word count based on exam type (for FP0340) or default
+    let activeTargetWordCount: { min: number; max: number; ideal: number; label?: string };
+    if (isFoundation && examType && EXAM_WORD_COUNTS[examType]) {
+      activeTargetWordCount = EXAM_WORD_COUNTS[examType];
+    } else {
+      activeTargetWordCount = { ...DEFAULT_FOUNDATION_WORD_COUNT };
+    }
+
     const prompt = isFoundation 
-      ? buildFoundationPrompt(text, topic, wordCount)
+      ? buildFoundationPrompt(text, topic, wordCount, activeTargetWordCount)
       : buildCreditPrompt(text, topic, wordCount);
 
     const criteria = isFoundation 
@@ -663,7 +680,7 @@ export async function POST(request: NextRequest) {
 
     // Add word count info
     assessment.wordCount = wordCount;
-    assessment.targetWordCount = isFoundation ? FOUNDATION_RUBRICS.targetWordCount : null;
+    assessment.targetWordCount = isFoundation ? activeTargetWordCount : null;
 
     return NextResponse.json({
       success: true,

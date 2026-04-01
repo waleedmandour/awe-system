@@ -532,14 +532,19 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
 
 // Course Selection Screen
 const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onBack: () => void }) => {
-  const { courses, selectedCourse, setSelectedCourse } = useAppStore();
+  const { courses, selectedCourse, setSelectedCourse, selectedExamType, setSelectedExamType } = useAppStore();
   const [activeTab, setActiveTab] = useState<'foundation' | 'credit'>('foundation');
+
+  // Whether the currently selected course requires an exam-type choice
+  const needsExamType = selectedCourse?.code === '0340';
+
+  // Whether the Continue button should be enabled
+  const canContinue = selectedCourse && (!needsExamType || selectedExamType);
 
   const filteredCourses = courses.filter((course) => course.program === activeTab);
 
   const handleSelectCourse = (course: Course) => {
     setSelectedCourse(course);
-    onSelect();
   };
 
   return (
@@ -640,16 +645,66 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
               </motion.div>
             ))}
           </div>
+
+          {/* Exam-Type Selection for FP0340 */}
+          <AnimatePresence>
+            {needsExamType && (
+              <motion.div
+                initial={{ opacity: 0, y: 15, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: -10, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pt-2 pb-4 space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground px-1">
+                    Select exam type:
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSelectedExamType('mid-semester')}
+                      className={`flex-1 flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all duration-200 ios-press ${
+                        selectedExamType === 'mid-semester'
+                          ? 'border-[#1a5f2a] bg-[#1a5f2a]/10 text-[#1a5f2a]'
+                          : 'border-muted-foreground/20 bg-white hover:border-muted-foreground/40 text-muted-foreground'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>For Mid-semester Exam</span>
+                      <Badge variant="secondary" className="text-[10px] ml-1">120 words</Badge>
+                    </button>
+                    <button
+                      onClick={() => setSelectedExamType('final')}
+                      className={`flex-1 flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all duration-200 ios-press ${
+                        selectedExamType === 'final'
+                          ? 'border-[#1a5f2a] bg-[#1a5f2a]/10 text-[#1a5f2a]'
+                          : 'border-muted-foreground/20 bg-white hover:border-muted-foreground/40 text-muted-foreground'
+                      }`}
+                    >
+                      <Award className="w-4 h-4" />
+                      <span>For Final Exam</span>
+                      <Badge variant="secondary" className="text-[10px] ml-1">200 words</Badge>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </ScrollArea>
 
         {/* Footer */}
         <div className="p-4 border-t bg-white/80 backdrop-blur-sm">
           <Button
             onClick={onSelect}
-            disabled={!selectedCourse}
+            disabled={!canContinue}
             className="w-full h-12 bg-[#1a5f2a] hover:bg-[#1a5f2a]/90 rounded-xl ios-press"
           >
             Continue with {selectedCourse?.code || 'Course'}
+            {needsExamType && selectedExamType && (
+              <span className="ml-1 text-sm font-normal opacity-80">
+                ({selectedExamType === 'mid-semester' ? 'Mid-semester' : 'Final'})
+              </span>
+            )}
             <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
@@ -1277,7 +1332,7 @@ const ReviewScreen = ({ onSubmit, onBack }: { onSubmit: (text: string) => void; 
 
 // Assessment Screen (Processing)
 const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment) => void }) => {
-  const { selectedCourse, extractedText, geminiApiKey } = useAppStore();
+  const { selectedCourse, extractedText, geminiApiKey, selectedExamType } = useAppStore();
   const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -1305,6 +1360,7 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
             courseCode: selectedCourse?.code,
             topic: null,
             apiKey: geminiApiKey,
+            examType: selectedExamType || undefined,
           }),
         });
 
@@ -1362,7 +1418,7 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
       clearInterval(progressInterval);
       clearInterval(phaseInterval);
     };
-  }, [extractedText, selectedCourse, geminiApiKey, onComplete, toast]);
+  }, [extractedText, selectedCourse, geminiApiKey, selectedExamType, onComplete, toast]);
 
   if (error) {
     return (

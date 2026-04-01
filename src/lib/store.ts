@@ -52,6 +52,7 @@ export interface Essay {
   createdAt: string;
 }
 
+export type ExamType = 'mid-semester' | 'final' | null;
 export type AppStep = 'welcome' | 'setup' | 'course' | 'upload' | 'processing' | 'review' | 'assessing' | 'results' | 'records';
 
 export interface AssessmentRecord {
@@ -79,6 +80,8 @@ interface AppState {
   selectedCourse: Course | null;
   courses: Course[];
   setSelectedCourse: (course: Course | null) => void;
+  selectedExamType: ExamType;
+  setSelectedExamType: (examType: ExamType) => void;
   
   // Essay management
   currentEssay: Essay | null;
@@ -157,7 +160,9 @@ export const useAppStore = create<AppState>()(
       // Course selection
       selectedCourse: null,
       courses: defaultCourses,
-      setSelectedCourse: (course) => set({ selectedCourse: course }),
+      setSelectedCourse: (course) => set({ selectedCourse: course, selectedExamType: null }),
+      selectedExamType: null,
+      setSelectedExamType: (examType) => set({ selectedExamType: examType }),
       
       // Essay management
       currentEssay: null,

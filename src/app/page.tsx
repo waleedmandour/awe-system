@@ -680,7 +680,6 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
                     >
                       <FileText className="w-4 h-4" />
                       <span>For Mid-semester Exam</span>
-                      <Badge variant="secondary" className="text-[10px] ml-1">120 words</Badge>
                     </button>
                     <button
                       onClick={() => setSelectedExamType('final')}
@@ -692,7 +691,6 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
                     >
                       <Award className="w-4 h-4" />
                       <span>For Final Exam</span>
-                      <Badge variant="secondary" className="text-[10px] ml-1">200 words</Badge>
                     </button>
                   </div>
                 </div>
@@ -2635,8 +2633,69 @@ const RecordsScreen = ({ onBack, onNewAssessment }: { onBack: () => void; onNewA
   );
 };
 
-// Bottom Navigation Component
+// Bottom Navigation Component with autohide on scroll
 const BottomNav = ({ currentStep, onNavigate }: { currentStep: string; onNavigate: (step: string) => void }) => {
+  const [isVisible, setIsVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const touchStartY = useRef(0);
+
+  useEffect(() => {
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const scrollDelta = currentScrollY - lastScrollY.current;
+
+          // Hide when scrolling down past 20px, show when scrolling up
+          if (scrollDelta > 20) {
+            setIsVisible(false);
+          } else if (scrollDelta < -10) {
+            setIsVisible(true);
+          }
+
+          // Always show when at the top
+          if (currentScrollY < 10) {
+            setIsVisible(true);
+          }
+
+          lastScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+    const handleTouchMove = (e: TouchEvent) => {
+    const deltaY = touchStartY.current - e.touches[0].clientY;
+    if (deltaY > 30) {
+      setIsVisible(false); // scrolling down
+    } else if (deltaY < -30) {
+      setIsVisible(true); // scrolling up
+    }
+  };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
+  // Show nav immediately when step changes
+  useEffect(() => {
+    setIsVisible(true);
+  }, [currentStep]);
+
   const navItems = [
     { id: 'home', step: 'welcome', icon: Home, label: 'Home' },
     { id: 'courses', step: 'course', icon: BookOpen, label: 'Courses' },
@@ -2647,8 +2706,8 @@ const BottomNav = ({ currentStep, onNavigate }: { currentStep: string; onNavigat
 
   return (
     <motion.div
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
+      animate={{ y: isVisible ? 0 : 100 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t safe-area-bottom z-40"
     >
       <div className="flex items-center justify-around py-2">

@@ -921,38 +921,95 @@ export async function POST(request: NextRequest) {
       s.score = Math.round(rawScore * 2) / 2;
       s.maxScore = Math.round(Number(s.maxScore) || 0);
 
-      // Build a structured feedback string from the individual fields
-      // This preserves backwards compatibility with the frontend parseFeedback()
+      // Strip markdown from Gemini-returned fields before building feedback
+      const clean = (str: string) => {
+        if (!str) return '';
+        return str
+          .replace(/\*\*/g, '')           // Remove bold markers
+          .replace(/\*(?!\*)/g, '')        // Remove italic markers
+          .replace(/^#+\s+/gm, '')         // Remove heading markers
+          .replace(/^---+$/gm, '')         // Remove horizontal rules
+          .trim();
+      };
+
+      s.strengths = clean(s.strengths);
+      s.justification = clean(s.justification);
+      s.suggestions = clean(s.suggestions);
+
+      // Clean mistakes array items
+      if (Array.isArray(s.mistakes)) {
+        s.mistakes = s.mistakes.map((m: any) => {
+          if (typeof m === 'string') {
+            // Strip leading "- " or "* " list markers
+            let cleaned = m.replace(/^[\-\*]\s+/, '').trim();
+            // Remove surrounding quotes
+            cleaned = cleaned.replace(/^["\u201C\u201D]/, '').replace(/["\u201C\u201D]$/, '');
+            // Remove em-dash and replace with colon separator
+            cleaned = cleaned.replace(/\s*[—\-]\s*/, ': ').trim();
+            return cleaned;
+          } else {
+            // Object format: { quote, explanation, text, reason }
+            const quote = clean(typeof m.quote === 'string' ? m.quote : (m.text || ''));
+            const explanation = clean(typeof m.explanation === 'string' ? m.explanation : (m.reason || ''));
+            return { quote, explanation };
+          }
+        }).filter((m: any) => {
+          if (typeof m === 'string') return m.length > 0;
+          return m.quote || m.explanation;
+        });
+      }
+
+      // Build a clean, professional feedback string (no markdown)
       const parts: string[] = [];
 
       if (s.strengths) {
-        parts.push(`**Strengths:** ${s.strengths}`);
+        parts.push(s.strengths);
       }
       if (s.justification) {
-        parts.push(`**Justification:** ${s.justification}`);
+        parts.push(s.justification);
       }
       if (Array.isArray(s.mistakes) && s.mistakes.length > 0) {
         const mistakeLines = s.mistakes
           .map((m: any) => {
-            const text = typeof m === 'string' ? m : (m.quote || m.text || '');
-            const explanation = typeof m === 'string' ? '' : (m.explanation || m.reason || '');
-            return `- "${text}" — ${explanation}`;
+            if (typeof m === 'string') return m;
+            return m.quote ? `${m.quote}: ${m.explanation}` : m.explanation;
           })
           .join('\n');
-        parts.push(`**Mistakes Found:**\n${mistakeLines}`);
+        parts.push(mistakeLines);
       }
       if (s.suggestions) {
-        parts.push(`**Suggestions:** ${s.suggestions}`);
+        parts.push(s.suggestions);
       }
 
-      // Use the built structured string, fallback to raw feedback if empty
-      s.feedback = parts.length > 0 ? parts.join('\n\n') : (s.feedback || 'No feedback provided.');
+      // Use the clean structured string, fallback to raw feedback
+      if (parts.length > 0) {
+        s.feedback = parts.join('\n\n');
+      } else if (s.feedback) {
+        // If no structured fields, clean the raw feedback
+        s.feedback = clean(s.feedback);
+      } else {
+        s.feedback = 'No feedback provided.';
+      }
     });
 
     // Recalculate total score to ensure accuracy
-    assessment.totalScore = assessment.scores.reduce((sum: number, s: any) => sum + s.score, 0);
+    // Use integer math to avoid floating-point precision issues with 0.5 increments
+    // e.g., 3.5 + 2.5 + 4.0 + 3.0 = 13.0 (not 12.999999...)
+    assessment.totalScore = Math.round(
+      assessment.scores.reduce((sum: number, s: any) => sum + s.score, 0) * 2
+    ) / 2;
     assessment.maxScore = assessment.scores.reduce((sum: number, s: any) => sum + s.maxScore, 0);
     assessment.percentage = assessment.maxScore > 0 ? Math.round((assessment.totalScore / assessment.maxScore) * 100) : 0;
+
+    // Clean overallFeedback from any markdown residue
+    if (typeof assessment.overallFeedback === 'string') {
+      assessment.overallFeedback = assessment.overallFeedback
+        .replace(/\*\*/g, '')
+        .replace(/\*(?!\*)/g, '')
+        .replace(/^#+\s+/gm, '')
+        .replace(/^---+$/gm, '')
+        .trim();
+    }
 
     // Add word count info
     assessment.wordCount = wordCount;

@@ -1652,40 +1652,81 @@ const parseFeedback = (feedback: string) => {
   };
 
   try {
-    // Extract strengths
-    const strengthsMatch = feedback.match(/\*\*Strengths:\*\*\s*([\s\S]*?)(?=\*\*(?:Justification|Mistakes)|$)/i);
-    if (strengthsMatch) {
-      sections.strengths = strengthsMatch[1].trim();
-    }
+    // Strip any remaining markdown residue
+    const clean = (str: string) => str
+      .replace(/\*\*/g, '')
+      .replace(/\*(?!\*)/g, '')
+      .replace(/^#+\s+/gm, '')
+      .replace(/^---+$/gm, '')
+      .trim();
 
-    // Extract justification
-    const justMatch = feedback.match(/\*\*Justification:\*\*\s*([\s\S]*?)(?=\*\*(?:Strengths|Mistakes|Suggestions)|$)/i);
-    if (justMatch) {
-      sections.justification = justMatch[1].trim();
-    }
+    const cleaned = clean(feedback);
 
-    // Extract mistakes — support both em dash (—) and plain dash (-) separators
-    const mistakesMatch = feedback.match(/\*\*Mistakes Found:\*\*\s*([\s\S]*?)(?=\*\*(?:Suggestions|Justification)|$)/i);
-    if (mistakesMatch) {
-      const mistakesText = mistakesMatch[1];
-      // Match lines starting with "- " and containing a quoted string
-      const mistakeLines = mistakesText.match(/^-\s*"[^"]+"\s*[—\-]+\s*[^\n]+/gm) || [];
-      mistakeLines.forEach((line: string) => {
-        const match = line.match(/-\s*"([^"]+)"\s*[—\-]+\s*(.+)/);
-        if (match) {
-          sections.mistakes.push({ quote: match[1], explanation: match[2].trim() });
-        }
-      });
-    }
+    // Split into paragraphs by double newline
+    const paragraphs = cleaned.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
 
-    // Extract suggestions
-    const suggestionsMatch = feedback.match(/\*\*Suggestions:\*\*\s*([\s\S]*?)$/i);
-    if (suggestionsMatch) {
-      sections.suggestions = suggestionsMatch[1].trim();
+    paragraphs.forEach((para) => {
+      const lower = para.toLowerCase();
+
+      // Try legacy markdown-style headers first (backwards compatibility with old records)
+      if (/^strengths:/i.test(lower)) {
+        sections.strengths = clean(para.replace(/^strengths:\s*/i, ''));
+        return;
+      }
+      if (/^justification:/i.test(lower)) {
+        sections.justification = clean(para.replace(/^justification:\s*/i, ''));
+        return;
+      }
+      if (/^suggestions?:/i.test(lower)) {
+        sections.suggestions = clean(para.replace(/^suggestions?:\s*/i, ''));
+        return;
+      }
+      if (/^mistakes?\s*(found)?:/i.test(lower)) {
+        const mistakeText = clean(para.replace(/^mistakes?\s*(found)?:\s*/i, ''));
+        // Parse mistake lines: "quoted text": explanation
+        const lines = mistakeText.split('\n');
+        lines.forEach((line) => {
+          line = line.trim();
+          if (!line) return;
+          // Match pattern: "quote" — explanation  OR  "quote": explanation
+          const match = line.match(/^[\"'\u201C\u201D]([^\"\u201C\u201D]+)[\"'\u201C\u201D]\s*[—\-:]\s*(.+)/);
+          if (match) {
+            sections.mistakes.push({ quote: match[1].trim(), explanation: match[2].trim() });
+          } else if (line.length > 5) {
+            // If no quote pattern, treat the whole line as an explanation
+            sections.mistakes.push({ quote: '', explanation: line });
+          }
+        });
+        return;
+      }
+
+      // For new clean format: no headers, just ordered paragraphs
+      // First paragraph = justification (or strengths), second = strengths (or mistakes), etc.
+      // Heuristic: if paragraph is short (< 100 chars), likely a strength; if longer, likely justification
+      if (!sections.justification && para.length > 80) {
+        sections.justification = para;
+      } else if (!sections.strengths) {
+        sections.strengths = para;
+      } else if (!sections.suggestions && para.length < 200) {
+        sections.suggestions = para;
+      }
+    });
+
+    // Also check for single-line mistake format with "- " prefix (legacy)
+    if (sections.mistakes.length === 0) {
+      const dashLines = cleaned.split('\n').filter(l => /^\s*[-•]\s*["\u201C\u201D]/.test(l));
+      if (dashLines.length > 0) {
+        dashLines.forEach((line) => {
+          const match = line.replace(/^[-•]\s*/, '').match(/^[\"'\u201C\u201D]([^\"\u201C\u201D]+)[\"'\u201C\u201D]\s*[—\-:]\s*(.+)/);
+          if (match) {
+            sections.mistakes.push({ quote: match[1].trim(), explanation: match[2].trim() });
+          }
+        });
+      }
     }
   } catch (e) {
-    // If parsing fails, return the raw feedback
-    sections.strengths = feedback;
+    // If parsing fails, return the raw feedback as justification
+    sections.justification = feedback;
   }
 
   return sections;

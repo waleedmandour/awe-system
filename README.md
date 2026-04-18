@@ -44,6 +44,7 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 |-------------|-------------|:------------:|---------------|
 | LANC1070 | Academic English: Essay Writing | 0-25 per criterion | Mid-Semester Practice Tests / Final Practice Tests |
 | LANC2160 | Academic English: Summary Writing & Synthesis Essay | 0-5 per criterion (2-Point) / 0-25 per criterion | Summary Writing / Synthesis Essay |
+| LANC2146 | Report Writing | 0-5 per criterion | Discussion & Conclusion Practice (350-450 words, +/-20 tolerance) |
 
 ---
 
@@ -99,6 +100,19 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 |---|-------|:-------:|:----------:|:----------:|
 | 1 | Two Common Sources of Poisoning Nitrates | 3 | 200-300 | 4 |
 | 2 | Two Advantages of the Xeros Waterless Washing Machine | 3 | 300-350 | 4 |
+
+### LANC2146 — Report Writing: Discussion & Conclusion (B1-B2 Level)
+
+| Criterion | Scale | Description |
+|-----------|:-----:|-------------|
+| Task Response | 0-5 | Analysis and interpretation of data with details/examples/statistics; quality of the discussion section; adequacy of the conclusion |
+| Coherence and Cohesion | 0-5 | Logical organization of information and ideas; use of cohesive devices; paragraphing |
+| Grammatical Range and Accuracy | 0-5 | Use of grammatical functions (cause/effect, compare/contrast, prediction, recommendation); grammar structures accuracy; punctuation |
+| Lexical Resource | 0-5 | Vocabulary range and genre-specific register; spelling, word formation, and capitalization |
+
+**Total:** 20 marks | **Word Count Target:** 350-450 words (ideal: 400) with +/-20 word tolerance (effective acceptable range: 330-470)
+
+**Practice Test:** "Investigating the Effects of Seed Priming with PEG on Wheat Seedling Germination" — Students write the Discussion and Conclusion sections based on provided Abstract, Introduction, Methods, and Results (including a bar graph figure). Expected CEFR level: B1-B2.
 
 ---
 
@@ -295,7 +309,7 @@ API keys are entered by each user inside the app and stored locally in their bro
 
 - **Mobile-First:** Optimized for iOS and Android with touch-friendly UI, safe area support, and iOS press effects
 - **Smooth Animations:** Framer Motion page transitions and micro-interactions
-- **SQU Branding:** Official green (#1a5f2a) and gold (#c9a227) color scheme throughout
+- **SQU Branding:** Official green (#1a5f2a) and gold (#c9a227) color scheme throughout, supporting 5 courses
 - **Dark Mode:** Automatic theme detection (light/dark/system)
 - **PWA Features:** Offline support, install prompts, service worker caching
 - **Responsive:** Works seamlessly on phones, tablets, and desktop browsers

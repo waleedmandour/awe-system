@@ -282,6 +282,70 @@ However, nowadays, the introduction of digital marketing has revolutionized the 
   },
 ];
 
+// LANC2146 practice test interface (lab report discussion & conclusion, B1-B2 level)
+export interface Lanc2146PracticeTest {
+  id: string;
+  title: string;
+  description: string;
+  cefrLevel: string;
+  expectedParagraphs: number;
+  reportSections: {
+    id: string;
+    title: string;
+    content: string;
+  }[];
+  resultsFigure?: {
+    caption: string;
+    imageUrl: string;
+  };
+  targetWordCount: {
+    min: number;
+    max: number;
+    ideal: number;
+  };
+  practiceType: 'mid-semester' | 'final';
+}
+
+export const LANC2146_PRACTICE_TESTS: Lanc2146PracticeTest[] = [
+  {
+    id: 'lanc2146-p1-seed-priming',
+    title: 'Investigating the Effects of Seed Priming Germination on Wheat',
+    description: 'Using the provided report sections (Abstract, Introduction, Methods and Materials, Results), write an appropriate Discussion and Conclusion for the report in 350-450 words total.',
+    cefrLevel: 'B1-B2',
+    expectedParagraphs: 6,
+    practiceType: 'final',
+    targetWordCount: { min: 350, max: 450, ideal: 400 },
+    reportSections: [
+      {
+        id: 'lanc2146-p1-abstract',
+        title: 'Abstract',
+        content: `Seed priming is a technique used to control hydration in plants by treating seeds with Polyethylene Glycol (PEG), which stimulates rapid germination and enhances plant resistance to diseases and harsh environmental conditions. This treatment is an effective method for increasing crop production. The aim of this research was to investigate the effects of seed priming on wheat germination by applying different concentrations of PEG and measuring the radical length. The experiment was conducted in a laboratory setting, where seeds were treated with varying concentrations of PEG. Radical length was measured following germination. The results demonstrated the impact of four different PEG concentrations on the radical length of wheat. Based on these findings, several recommendations are provided for farmers, researchers, and policymakers to consider using seed priming as a strategy to enhance crop production.`,
+      },
+      {
+        id: 'lanc2146-p1-introduction',
+        title: 'Introduction',
+        content: `Seed priming is a method of controlling hydration in plants by treating seeds with natural or synthetic compounds to induce metabolic activities for germination (Sheteiwy et al., 2015). Through seed priming, plants are able to activate defense responses to negative environmental conditions. Moreover, priming treatments lead to enhanced germination and result in larger crop yields (Salehzade et al., 2009). By contributing to growth speed and seedling uniformity, seed priming is seen as an efficient and beneficial way of ensuring crop establishment.
+
+Treatment methods for seed priming include \u201chydropriming, biopriming, seed soaking, hormonal-priming, and magneto-priming\u201d (Salehzade et al., 2009). Polyethylene glycol (PEG) is often used in hydropriming due to its osmotic ability to affect dehydration in seeds and stimulate rapid germination and radical emergence, and stimulate crop establishment (Zhang et al., 2015). The aim of this study is to investigate the germination effects of seed priming on wheat (triticum aestivum) by quantifying radical length at various concentrations of PEG, test the hypotheses, and offer suggestions for implementation and future research. The initial hypothesis is that seeds primed with a moderate concentration of PEG will experience greater radical growth. A secondary hypothesis is that seeds primed with a higher concentration of PEG will suffer severe negative osmotic results and see less radical growth.`,
+      },
+      {
+        id: 'lanc2146-p1-methods',
+        title: 'Methods and Materials',
+        content: `This study was conducted in a laboratory using a growth chamber, an electric balance, a Petri dish, filter paper, and a micropipette. All seeds were sterilized with a 2% Safex solution for 5 minutes, then rinsed with sterilized water and air dried at room temperature. The control group was separated and planted directly in the growth chamber. One group of seeds was primed with sterilized water and then relocated to the growth chamber. The remaining seeds were hydroprimed with Polyethylene Glycol (PEG) at various concentrations (5%, 10%, 15%, and 20%) for 12 hours. The hydro-primed seeds were then transferred to the growth chamber. Data was collected on radical length after germination. The results were tabled indicating concentration of PEG and radical length.`,
+      },
+      {
+        id: 'lanc2146-p1-results',
+        title: 'Results',
+        content: `Figure 1: The effects of four different concentrations of PEG used for seed priming on the radical length of wheat seedlings`,
+      },
+    ],
+    resultsFigure: {
+      caption: 'Figure 1: The effects of four different concentrations of PEG used for seed priming on the radical length of wheat seedlings',
+      imageUrl: '/lanc2146-seed-priming-results.png',
+    },
+  },
+];
+
 export interface AssessmentRecord {
   id: string;
   assessment: Assessment;
@@ -383,6 +447,13 @@ const defaultCourses: Course[] = [
     name: 'Academic English: Summary Writing & Synthesis Essay',
     program: 'post-foundation',
     description: 'Post-foundation course focusing on academic summary writing and 2-point synthesis essay writing.'
+  },
+  {
+    id: 'course-lanc2146',
+    code: 'LANC2146',
+    name: 'Report Writing (LANC2146)',
+    program: 'post-foundation',
+    description: 'Post-foundation course focusing on academic report writing, including lab report Discussion and Conclusion sections. Expected CEFR level: B1-B2.'
   }
 ];
 

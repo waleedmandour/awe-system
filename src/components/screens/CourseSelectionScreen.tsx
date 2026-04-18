@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAppStore, type Course, SUMMARY_SOURCE_TEXTS, SYNTHESIS_ASSIGNMENTS, LANC1070_PRACTICE_TESTS } from '@/lib/store';
+import { useAppStore, type Course, SUMMARY_SOURCE_TEXTS, SYNTHESIS_ASSIGNMENTS, LANC1070_PRACTICE_TESTS, LANC2146_PRACTICE_TESTS } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,6 +18,7 @@ import {
   Award,
   ClipboardList,
   PenTool,
+  FlaskConical,
 } from 'lucide-react';
 import { PageTransition } from '@/lib/animations';
 
@@ -34,13 +35,15 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
   const needsSourceText = needsWritingType && selectedWritingType === 'summary';
   const needsSynthesisAssignment = needsWritingType && selectedWritingType === 'synthesis';
 
-  // Whether the currently selected course requires a practice-type choice (LANC1070)
-  const needsPracticeType = selectedCourse?.code === 'LANC1070';
+  // Whether the currently selected course requires a practice-type choice (LANC1070 or LANC2146)
+  const needsPracticeType = selectedCourse?.code === 'LANC1070' || selectedCourse?.code === 'LANC2146';
   const needsPracticeTest = needsPracticeType && !!selectedPracticeType;
 
   // Filter practice tests by selected practice type
   const filteredPracticeTests = needsPracticeType && selectedPracticeType
-    ? LANC1070_PRACTICE_TESTS.filter(t => t.practiceType === selectedPracticeType)
+    ? selectedCourse?.code === 'LANC2146'
+      ? LANC2146_PRACTICE_TESTS.filter(t => t.practiceType === selectedPracticeType)
+      : LANC1070_PRACTICE_TESTS.filter(t => t.practiceType === selectedPracticeType)
     : [];
 
   // Whether Foundation Final Exam needs a writing prompt input
@@ -79,7 +82,9 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
     if (needsPracticeType && selectedPracticeType) {
       const label = selectedPracticeType === 'mid-semester' ? 'Mid-Semester' : 'Final';
       if (needsPracticeTest && selectedSourceTextId) {
-        const test = LANC1070_PRACTICE_TESTS.find(t => t.id === selectedSourceTextId);
+        const test = selectedCourse?.code === 'LANC2146'
+          ? LANC2146_PRACTICE_TESTS.find(t => t.id === selectedSourceTextId)
+          : LANC1070_PRACTICE_TESTS.find(t => t.id === selectedSourceTextId);
         return `${label}: ${test?.title || ''}`;
       }
       return `${label} Practice Test`;
@@ -145,13 +150,15 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
               // Check which children to show for this specific course
               const showExamType = showChildren && (course.code === '0230' || course.code === '0340');
               const showWritingType = showChildren && course.code === 'LANC2160';
-              const showPracticeType = showChildren && course.code === 'LANC1070';
+              const showPracticeType = showChildren && (course.code === 'LANC1070' || course.code === 'LANC2146');
               const showSourceText = showWritingType && selectedWritingType === 'summary';
               const showSynthesisAssignment = showWritingType && selectedWritingType === 'synthesis';
               const showWritingPrompt = showChildren && (course.code === '0230' || course.code === '0340') && selectedExamType === 'final';
               const showPracticeTest = showPracticeType && !!selectedPracticeType;
               const coursePracticeTests = showPracticeType && selectedPracticeType
-                ? LANC1070_PRACTICE_TESTS.filter(t => t.practiceType === selectedPracticeType)
+                ? course.code === 'LANC2146'
+                  ? LANC2146_PRACTICE_TESTS.filter(t => t.practiceType === selectedPracticeType)
+                  : LANC1070_PRACTICE_TESTS.filter(t => t.practiceType === selectedPracticeType)
                 : [];
 
               return (
@@ -440,6 +447,8 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
                                 <div className="space-y-2">
                                   {coursePracticeTests.map((test) => {
                                     const isSelected = selectedSourceTextId === test.id;
+                                    const isLanc2146 = 'reportSections' in test;
+                                    const IconComponent = isLanc2146 ? FlaskConical : PenTool;
                                     return (
                                       <motion.div key={test.id} whileTap={{ scale: 0.98 }}>
                                         <button
@@ -456,7 +465,7 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
                                                 ? 'bg-[#c9a227] text-white'
                                                 : 'bg-muted text-muted-foreground'
                                             }`}>
-                                              <PenTool className="w-5 h-5" />
+                                              <IconComponent className="w-5 h-5" />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                               <p className={`text-sm font-semibold leading-tight ${
@@ -465,8 +474,13 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
                                                 {test.title}
                                               </p>
                                               <p className="text-xs text-muted-foreground mt-0.5">
-                                                {test.targetWordCount.min}&ndash;{test.targetWordCount.max} words &middot; {test.expectedParagraphs} paragraphs expected
+                                                {test.targetWordCount.min}&ndash;{test.targetWordCount.max} words{isLanc2146 ? '' : ` &middot; ${test.expectedParagraphs} paragraphs expected`}
                                               </p>
+                                              {isLanc2146 && (test as any).description && (
+                                                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                                                  {(test as any).description}
+                                                </p>
+                                              )}
                                             </div>
                                           </div>
                                         </button>

@@ -260,6 +260,213 @@ const SYNTHESIS_RUBRICS = {
   ],
 };
 
+// ─── LANC2146 Report Writing — Discussion & Conclusion Assessment ─────────────
+
+// Lab Report Discussion and Conclusion criteria (B1-B2 level, 0-5 per criterion)
+const LANC2146_CRITERIA = [
+  {
+    name: 'Task Response',
+    maxScore: 5,
+    description: 'Analysis and interpretation of data with details/examples/statistics; quality of the discussion section; adequacy of the conclusion (most obvious result, reference to previous research, restatement of aim, solutions/recommendations).',
+  },
+  {
+    name: 'Coherence and Cohesion',
+    maxScore: 5,
+    description: 'Logical organization of information and ideas; use of cohesive devices (conjunctions and linkers); paragraphing.',
+  },
+  {
+    name: 'Grammatical Range and Accuracy',
+    maxScore: 5,
+    description: 'Use of grammatical functions (cause/effect, compare/contrast, prediction, recommendation/suggestion/solution); grammar structures accuracy; punctuation.',
+  },
+  {
+    name: 'Lexical Resource',
+    maxScore: 5,
+    description: 'Vocabulary range and genre-specific register; spelling, word formation, and capitalization.',
+  },
+];
+
+// Detailed rubric band descriptors for LANC2146 Discussion & Conclusion (B1-B2 level)
+const LANC2146_RUBRICS = {
+  criteria: [
+    {
+      name: 'Task Response',
+      maxScore: 5,
+      rubric: {
+        '1': 'Poor (1-1.5): The analysis and interpretation of the main trend lacks specific details, examples, and statistics. The conclusion is missing or irrelevant.',
+        '2': 'Unsatisfactory (2-2.5): The analysis and interpretation of the main trend is supported by few details, examples, and statistics. The conclusion is insufficient, may not refer to previous research, may not restate the aim, and provides irrelevant recommendations.',
+        '3': 'Satisfactory (3-3.5): The analysis and interpretation of one clear main trend is supported by relevant details and examples, including some statistics. The conclusion adequately summarizes the most obvious result, refers to previous research, restates the aim, and provides solutions/general recommendations, but there may be gaps in coverage.',
+        '4': 'Good (4-4.5): The analysis and interpretation of one clear main trend is supported by adequate details, examples, and relevant statistics. The conclusion adequately summarizes the most obvious result, refers to previous research, restates the aim, and provides solutions/general recommendations.',
+        '5': 'Excellent (5): The analysis and interpretation of one clear main trend is supported by carefully chosen details and examples, including comprehensive statistics. The conclusion provides an insightful and effective summary of the most obvious result, refers to previous research, restates the aim, and provides solutions/specific recommendations.',
+      }
+    },
+    {
+      name: 'Coherence and Cohesion',
+      maxScore: 5,
+      rubric: {
+        '1': 'Poor (1-1.5): Lacks coherent development of ideas, with disjointed or illogical writing which is largely confused and incoherent. Cohesive devices are missing or used inaccurately. Paragraphs lack clear organization and unity, with ideas scattered or unrelated.',
+        '2': 'Unsatisfactory (2-2.5): Only basic understanding of information in the text through illogical and/or incoherent writing with limited development of ideas, and connections between concepts are unclear or inconsistent. Cohesive devices are used inaccurately and inappropriately. Paragraphs demonstrate some attempt at organization.',
+        '3': 'Satisfactory (3-3.5): Generally logical and coherent writing, but may not be completely successful, possibly due to some misunderstanding of the data. Cohesive devices used may be accurate but not appropriate or too simple, over or under used, creating many abrupt or weak transitions. Paragraphs demonstrate development of ideas, but the organization is not sustained.',
+        '4': 'Good (4-4.5): Sufficient depth of analysis and interpretation, but with some abrupt or weak transitions. Cohesive devices are usually used accurately and appropriately. Paragraphs exhibit clear organization and unity.',
+        '5': 'Excellent (5): Seamless flow of ideas with effective transitions that guide the reader through the in-depth analysis and interpretation. An extensive range of cohesive devices is used accurately and appropriately. Paragraphs are exceptionally well-organized and unified.',
+      }
+    },
+    {
+      name: 'Grammatical Range and Accuracy',
+      maxScore: 5,
+      rubric: {
+        '1': 'Poor (1-1.5): Little control of grammar, with basic faulty sentence structures. Severe grammar errors that significantly impede understanding. Numerous instances of incorrect or missing punctuation throughout the text, hindering readability and comprehension.',
+        '2': 'Unsatisfactory (2-2.5): Limited control of grammar, with repetitive sentence structures. Noticeable grammar errors throughout the text, making comprehension difficult. Noticeable errors in punctuation, hindering readability and comprehension.',
+        '3': 'Satisfactory (3-3.5): Adequate control of grammar, with repetitive sentence structures. Occasional errors which impede understanding. Occasional instances of incorrect or missing punctuation, but overall punctuation usage is adequate for understanding.',
+        '4': 'Good (4-4.5): Proficient use of grammar, with a wide range of sentence structures with a few errors that do not impede understanding. The majority of sentences are error-free. Generally correct and appropriately-used punctuation, with only minor errors that do not significantly affect readability and comprehension.',
+        '5': 'Excellent (5): Exemplary command of grammar, with a variety of sentence structures with no errors, allowing for clear and precise communication of ideas. All sentences are error-free. Punctuation is error-free and effectively used to enhance readability and comprehension.',
+      }
+    },
+    {
+      name: 'Lexical Resource',
+      maxScore: 5,
+      rubric: {
+        '1': 'Poor (1-1.5): Basic vocabulary which may be repetitive or inappropriate for the task, hindering understanding. Limited control of word formation and/or spelling; numerous severe spelling and capitalization errors.',
+        '2': 'Unsatisfactory (2-2.5): Uses a limited range of vocabulary (vocabulary choices are often inappropriate or ineffective, detracting from the overall quality of the description), but this is minimally adequate for the task. May make frequent and noticeable errors in spelling and/or word formation throughout the text, making it difficult to understand.',
+        '3': 'Satisfactory (3-3.5): Uses an adequate range of vocabulary for the task (vocabulary choices are generally appropriate with some awareness of style and collocation, but there is some repetition or lack of variety). Makes some errors in spelling and/or word formation that may cause some difficulty for the reader.',
+        '4': 'Good (4-4.5): Uses a wide range of vocabulary with uncommon lexical items to allow some flexibility and precision, but there may be occasional inaccuracies in word choice and collocation. Produces rare errors in spelling and/or word formation and capitalization but they do not impede communication.',
+        '5': 'Excellent (5): Uses a wide range of vocabulary (rich, varied, and perfectly suited to the context) with very natural and sophisticated control of lexical features; rare minor errors occur only as slips. Produces no errors in spelling and/or word formation and capitalization.',
+      }
+    },
+  ],
+};
+
+// Build prompt for LANC2146 Report Writing (Discussion & Conclusion)
+function buildLanc2146Prompt(
+  studentText: string,
+  reportSections: { title: string; content: string }[],
+  resultsCaption: string | null,
+  assignmentTitle: string,
+  wordCount: number,
+  targetWordCount: { min: number; max: number; ideal: number }
+): string {
+  const rubrics = LANC2146_RUBRICS;
+  const totalMaxScore = LANC2146_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0); // 20
+
+  const wordCountStatus = wordCount < targetWordCount.min
+    ? `WARNING: Word count (${wordCount}) is BELOW the required range of ${targetWordCount.min}-${targetWordCount.max} words. This MUST lower the Task Response score.`
+    : wordCount > targetWordCount.max
+    ? `NOTE: Word count (${wordCount}) exceeds the target range of ${targetWordCount.min}-${targetWordCount.max} words. This should lower the Task Response score.`
+    : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
+
+  const criteriaDetails = rubrics.criteria.map(c => {
+    const rubricLevels = Object.entries(c.rubric)
+      .map(([score, desc]) => `  Score ${score}: ${desc}`)
+      .join('\n');
+    return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
+  }).join('\n\n');
+
+  const sectionsText = reportSections.map(s => `=== ${s.title} ===\n${s.content}`).join('\n\n');
+
+  return `You are an expert writing assessor evaluating a Credit level student's lab report Discussion and Conclusion for Sultan Qaboos University's Center for Preparatory Studies, course LANC2146 (Report Writing).
+
+STUDENT LEVEL: CEFR B1-B2 (Intermediate to Upper Intermediate). Feedback must use clear, academic language appropriate for B1-B2 learners. Be encouraging while maintaining appropriate academic standards for a university-level report.
+
+ASSIGNMENT: ${assignmentTitle}
+
+WRITING TASK: Write an appropriate Discussion and Conclusion for the report based on the provided sections.
+
+TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}).
+
+${wordCountStatus}
+
+PROVIDED REPORT SECTIONS:
+${sectionsText}
+${resultsCaption ? `\nRESULTS FIGURE CAPTION: ${resultsCaption}\nNote: The student was expected to read the bar graph showing the results of the experiment. The graph shows the effects of four different concentrations of PEG (5%, 10%, 15%, 20%) on the radical length of wheat seedlings, compared to a control group.` : ''}
+
+STUDENT'S DISCUSSION AND CONCLUSION:
+"""
+${studentText}
+"""
+
+ASSESSMENT RUBRICS (LANC2146 - Discussion and Conclusion of a Lab Report):
+
+${criteriaDetails}
+
+POINTS TO CONSIDER FOR EACH CRITERION:
+
+Task Response:
+- Discussion: analysis and interpretation with details/examples/statistics; reference to the hypothesis
+- Conclusion: most obvious result, reference to previous research; restatement of the aim; solutions/recommendations
+
+Coherence and Cohesion:
+- Logical organization of information and ideas
+- Cohesive devices (conjunctions and linkers)
+- Paragraphing
+
+Grammatical Range and Accuracy:
+- Functions: cause/effect, compare/contrast, prediction, recommendation/suggestion/solution
+- Grammar structures
+- Punctuation
+
+Lexical Resource:
+- Vocabulary range and genre-specific register
+- Spelling and/or word formation and capitalization
+
+============================================================
+SCORING AND FEEDBACK INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
+============================================================
+
+STEP 1 — SCORE each criterion using WHOLE or HALF numbers (1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, or 5). If the text's quality falls between two adjacent score bands, award a half-point (e.g., 3.5). Use 0.5 increments only — never use 0.25 or 0.75.
+
+STEP 2 — For EACH criterion, write a "Justification" paragraph that:
+  (a) Explicitly names the score band you chose (e.g. "Score 3.5 — Satisfactory")
+  (b) Quotes at least ONE specific phrase or sentence from the student's text as evidence
+  (c) Explains why the text fits that band descriptor — connect the evidence to the rubric
+  (d) If you awarded a half-point, explain which aspects place it in the lower band and which in the higher band
+  (e) If the score is below 4, clearly state what is missing compared to the next higher band
+  (f) If the score is 5, explain what the student did beyond expectations
+
+STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
+  - "[exact quoted text]" — explanation of the error and how to fix it
+
+STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for a B1-B2 level writer.
+
+STEP 5 — overallFeedback must be a comprehensive summary (4-6 sentences) that:
+  - Highlights the student's strongest criterion and what they did well
+  - Identifies the weakest area needing the most attention
+  - Evaluates whether the Discussion section effectively analyzes and interprets the data
+  - Evaluates whether the Conclusion section adequately summarizes results and provides recommendations
+  - Gives one prioritized action item to focus on next
+
+STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
+
+============================================================
+CRITICAL OUTPUT RULES:
+- Respond with ONLY the raw JSON object. No markdown, no code fences, no commentary.
+- Do NOT wrap the JSON in triple-backtick code blocks.
+- Use straight double quotes, not smart/curly quotes.
+- Do NOT add trailing commas after the last item in arrays or objects.
+- All string values must have properly escaped quotes inside them.
+
+JSON OUTPUT FORMAT:
+============================================================
+{
+  "scores": [
+    {
+      "criterionName": "Task Response",
+      "score": 4,
+      "maxScore": 5,
+      "justification": "Score 4: Good. The discussion section analyses the main trend with adequate details and statistics. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment]. The conclusion restates the aim and provides general recommendations.",
+      "strengths": "The student demonstrates solid analysis of the main trend with supporting details.",
+      "mistakes": [
+        "[exact quoted text]" — Explanation of the error and how to fix it
+      ],
+      "suggestions": "Include more specific statistics from the results to strengthen your analysis. Reference previous research more explicitly in the conclusion."
+    }
+  ],
+  "totalScore": 16,
+  "maxScore": ${totalMaxScore},
+  "percentage": 80,
+  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Your discussion effectively [evaluation]. Your conclusion could be improved by [suggestion]. Focus on [one prioritized action] to improve your next report."
+}`;
+}
+
 // Build detailed rubric prompt for Foundation courses
 function buildFoundationPrompt(text: string, topic: string | null, wordCount: number, targetWordCount: { min: number; max: number; ideal: number; label?: string }): string {
   const rubrics = FOUNDATION_RUBRICS;
@@ -1002,6 +1209,7 @@ export async function POST(request: NextRequest) {
     const isFoundation = ['0230', '0340'].includes(courseCode);
     const isSummaryWriting = courseCode === 'LANC2160' && writingType === 'summary';
     const isSynthesisWriting = courseCode === 'LANC2160' && writingType === 'synthesis';
+    const isLanc2146 = courseCode === 'LANC2146';
 
     // Resolve target word count based on exam type (for FP0340) or summary target
     let activeTargetWordCount: { min: number; max: number; ideal: number; label?: string } | null = null;
@@ -1062,6 +1270,33 @@ export async function POST(request: NextRequest) {
         activeTargetWordCount
       );
       criteria = SYNTHESIS_CRITERIA;
+    } else if (isLanc2146) {
+      // LANC2146 Report Writing — Discussion & Conclusion
+      const { LANC2146_PRACTICE_TESTS } = await import('@/lib/store');
+      const practiceData = LANC2146_PRACTICE_TESTS.find(t => t.id === sourceTextId);
+
+      if (!practiceData) {
+        return NextResponse.json(
+          { error: 'Report writing assignment not found. Please select a valid practice test.' },
+          { status: 400 }
+        );
+      }
+
+      activeTargetWordCount = {
+        min: practiceData.targetWordCount.min,
+        max: practiceData.targetWordCount.max,
+        ideal: practiceData.targetWordCount.ideal,
+        label: `Report: "${practiceData.title}"`
+      };
+      prompt = buildLanc2146Prompt(
+        text,
+        practiceData.reportSections.map(s => ({ title: s.title, content: s.content })),
+        practiceData.resultsFigure?.caption || null,
+        practiceData.title,
+        wordCount,
+        activeTargetWordCount
+      );
+      criteria = LANC2146_CRITERIA;
     } else {
       // Credit/Post-foundation — general
       activeTargetWordCount = null;
@@ -1077,6 +1312,8 @@ export async function POST(request: NextRequest) {
       ? 'You are an expert writing assessment AI for the Credit level course LANC2160 (Academic English: Summary Writing & Synthesis Essay) at Sultan Qaboos University. For summary writing tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student summary against the provided source text, (2) quote exact words from the student summary as evidence, (3) explicitly justify why the score matches the rubric band, (4) list specific errors with quoted text, (5) assess paraphrasing quality, and (6) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : isSynthesisWriting
       ? 'You are an expert writing assessment AI for the Credit level course LANC2160 (Academic English: Summary Writing & Synthesis Essay) at Sultan Qaboos University. For synthesis essay tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student essay against ALL THREE provided source texts, (2) check that information from all sources is synthesized, (3) quote exact words from the student essay as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) assess paraphrasing quality and estimate copying percentage, (7) check word count against the target range, and (8) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
+      : isLanc2146
+      ? 'You are an expert writing assessment AI for the Credit level course LANC2146 (Report Writing) at Sultan Qaboos University. For lab report Discussion and Conclusion tasks, students are at CEFR B1-B2 level. Your feedback must use clear, academic language appropriate for this proficiency level. CRITICAL: You MUST (1) evaluate the Discussion section for analysis and interpretation of data with details/examples/statistics, (2) evaluate the Conclusion for summary of results, reference to previous research, restatement of aim, and recommendations, (3) quote exact words from the student text as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) check word count against the 350-450 word target range, and (7) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : 'You are an expert writing assessment AI for Foundation and Credit level university courses at Sultan Qaboos University. All students are at CEFR A1-A2 level (Basic User). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. CRITICAL: For each criterion you MUST (1) quote exact words from the student essay as evidence, (2) explicitly justify why the score matches the rubric band, (3) list specific errors with quoted text, and (4) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.';
 
     const model = genAI.getGenerativeModel({ 

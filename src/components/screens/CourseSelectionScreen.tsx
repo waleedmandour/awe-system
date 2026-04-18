@@ -474,7 +474,7 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
                                                 {test.title}
                                               </p>
                                               <p className="text-xs text-muted-foreground mt-0.5">
-                                                {test.targetWordCount.min}&ndash;{test.targetWordCount.max} words{isLanc2146 ? '' : ` &middot; ${test.expectedParagraphs} paragraphs expected`}
+                                                {test.targetWordCount.min}&ndash;{test.targetWordCount.max} words{isLanc2146 ? ` (+/-20 tolerance)` : ` &middot; ${test.expectedParagraphs} paragraphs expected`}
                                               </p>
                                               {isLanc2146 && (test as any).description && (
                                                 <p className="text-xs text-muted-foreground mt-1 leading-relaxed">

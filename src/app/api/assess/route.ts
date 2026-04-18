@@ -348,10 +348,18 @@ function buildLanc2146Prompt(
   const rubrics = LANC2146_RUBRICS;
   const totalMaxScore = LANC2146_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0); // 20
 
-  const wordCountStatus = wordCount < targetWordCount.min
-    ? `WARNING: Word count (${wordCount}) is BELOW the required range of ${targetWordCount.min}-${targetWordCount.max} words. This MUST lower the Task Response score.`
+  // Word count tolerance: +/-20 words beyond the target range is acceptable without penalty
+  const toleranceBelow = targetWordCount.min - 20;
+  const toleranceAbove = targetWordCount.max + 20;
+
+  const wordCountStatus = wordCount < toleranceBelow
+    ? `WARNING: Word count (${wordCount}) is SIGNIFICANTLY BELOW the required range of ${targetWordCount.min}-${targetWordCount.max} words (more than 20 words below minimum). This MUST lower the Task Response score.`
+    : wordCount < targetWordCount.min
+    ? `NOTE: Word count (${wordCount}) is slightly below the required range of ${targetWordCount.min}-${targetWordCount.max} words (within 20-word tolerance). Minor flexibility is acceptable — do NOT penalize.`
+    : wordCount > toleranceAbove
+    ? `NOTE: Word count (${wordCount}) SIGNIFICANTLY exceeds the target range of ${targetWordCount.min}-${targetWordCount.max} words (more than 20 words above maximum). This should lower the Task Response score.`
     : wordCount > targetWordCount.max
-    ? `NOTE: Word count (${wordCount}) exceeds the target range of ${targetWordCount.min}-${targetWordCount.max} words. This should lower the Task Response score.`
+    ? `Word count (${wordCount}) is slightly above the target range of ${targetWordCount.min}-${targetWordCount.max} words (within 20-word tolerance). Minor flexibility is acceptable — do NOT penalize.`
     : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
 
   const criteriaDetails = rubrics.criteria.map(c => {
@@ -371,7 +379,7 @@ ASSIGNMENT: ${assignmentTitle}
 
 WRITING TASK: Write an appropriate Discussion and Conclusion for the report based on the provided sections.
 
-TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}).
+TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}). A tolerance of +/-20 words is acceptable (effective range: ${toleranceBelow}-${toleranceAbove}).
 
 ${wordCountStatus}
 
@@ -1313,7 +1321,7 @@ export async function POST(request: NextRequest) {
       : isSynthesisWriting
       ? 'You are an expert writing assessment AI for the Credit level course LANC2160 (Academic English: Summary Writing & Synthesis Essay) at Sultan Qaboos University. For synthesis essay tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student essay against ALL THREE provided source texts, (2) check that information from all sources is synthesized, (3) quote exact words from the student essay as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) assess paraphrasing quality and estimate copying percentage, (7) check word count against the target range, and (8) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : isLanc2146
-      ? 'You are an expert writing assessment AI for the Credit level course LANC2146 (Report Writing) at Sultan Qaboos University. For lab report Discussion and Conclusion tasks, students are at CEFR B1-B2 level. Your feedback must use clear, academic language appropriate for this proficiency level. CRITICAL: You MUST (1) evaluate the Discussion section for analysis and interpretation of data with details/examples/statistics, (2) evaluate the Conclusion for summary of results, reference to previous research, restatement of aim, and recommendations, (3) quote exact words from the student text as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) check word count against the 350-450 word target range, and (7) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
+      ? 'You are an expert writing assessment AI for the Credit level course LANC2146 (Report Writing) at Sultan Qaboos University. For lab report Discussion and Conclusion tasks, students are at CEFR B1-B2 level. Your feedback must use clear, academic language appropriate for this proficiency level. CRITICAL: You MUST (1) evaluate the Discussion section for analysis and interpretation of data with details/examples/statistics, (2) evaluate the Conclusion for summary of results, reference to previous research, restatement of aim, and recommendations, (3) quote exact words from the student text as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) check word count against the 350-450 word target range with a +/-20 word tolerance (effective acceptable range: 330-470), and (7) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : 'You are an expert writing assessment AI for Foundation and Credit level university courses at Sultan Qaboos University. All students are at CEFR A1-A2 level (Basic User). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. CRITICAL: For each criterion you MUST (1) quote exact words from the student essay as evidence, (2) explicitly justify why the score matches the rubric band, (3) list specific errors with quoted text, and (4) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.';
 
     const model = genAI.getGenerativeModel({ 
@@ -1574,7 +1582,7 @@ export async function POST(request: NextRequest) {
 
     // Add word count info
     assessment.wordCount = wordCount;
-    assessment.targetWordCount = (isFoundation || isSummaryWriting || isSynthesisWriting) ? activeTargetWordCount : null;
+    assessment.targetWordCount = (isFoundation || isSummaryWriting || isSynthesisWriting || isLanc2146) ? activeTargetWordCount : null;
 
     return NextResponse.json({
       success: true,

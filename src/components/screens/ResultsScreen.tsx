@@ -450,7 +450,9 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                         <span className="text-2xl font-bold">{assessment.wordCount}</span>
                         <span className="text-sm text-muted-foreground">
                           {assessment.targetWordCount 
-                            ? `Target: ${assessment.targetWordCount.min}-${assessment.targetWordCount.max} words` 
+                            ? selectedCourse?.code === 'LANC2146'
+                              ? `Target: ${assessment.targetWordCount.min}-${assessment.targetWordCount.max} words (+/-20)`
+                              : `Target: ${assessment.targetWordCount.min}-${assessment.targetWordCount.max} words` 
                             : 'words'}
                         </span>
                       </div>

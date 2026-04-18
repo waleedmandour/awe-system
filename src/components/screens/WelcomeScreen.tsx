@@ -16,22 +16,19 @@ import { PageTransition } from '@/lib/animations';
 
 const IconRevealAnimation = ({ onComplete }: { onComplete: () => void }) => {
   // Phase timeline:
-  // 0-1.2s: Both icons merge at center (scale from 0, slight overlap glow)
-  // 1.2-2.2s: Hold as one combined image with pulse glow
-  // 2.2-3.5s: Split apart — old moves left with fade, new moves right with glow
-  // 3.5-4.5s: New icon settles at center, old icon fades out entirely
+  // 0-1.5s: iAWE icon scales up from center with glow ring
+  // 1.5-2.5s: Hold with pulse glow and floating particles
+  // 2.5-3.5s: Glow expands outward, icon settles, fade to welcome screen
 
-  const [phase, setPhase] = useState<'merge' | 'hold' | 'split' | 'settle'>('merge');
+  const [phase, setPhase] = useState<'reveal' | 'hold' | 'settle'>('reveal');
 
   useEffect(() => {
-    const holdTimer = setTimeout(() => setPhase('hold'), 1200);
-    const splitTimer = setTimeout(() => setPhase('split'), 2200);
-    const settleTimer = setTimeout(() => setPhase('settle'), 3500);
-    const completeTimer = setTimeout(() => onComplete(), 4500);
+    const holdTimer = setTimeout(() => setPhase('hold'), 1500);
+    const settleTimer = setTimeout(() => setPhase('settle'), 2500);
+    const completeTimer = setTimeout(() => onComplete(), 3500);
 
     return () => {
       clearTimeout(holdTimer);
-      clearTimeout(splitTimer);
       clearTimeout(settleTimer);
       clearTimeout(completeTimer);
     };
@@ -46,7 +43,7 @@ const IconRevealAnimation = ({ onComplete }: { onComplete: () => void }) => {
           background: 'radial-gradient(circle, rgba(26,95,42,0.08) 0%, transparent 70%)',
         }}
         animate={{
-          scale: phase === 'merge' ? [0.5, 1.2] : phase === 'hold' ? [1.2, 1.3, 1.2] : phase === 'split' ? [1.2, 1.5] : [1.5, 2],
+          scale: phase === 'reveal' ? [0.5, 1.2] : phase === 'hold' ? [1.2, 1.3, 1.2] : [1.2, 2],
           opacity: phase === 'settle' ? 0 : 1,
         }}
         transition={{ duration: 1, ease: 'easeInOut' }}
@@ -75,15 +72,15 @@ const IconRevealAnimation = ({ onComplete }: { onComplete: () => void }) => {
         />
       ))}
 
-      {/* Center glow ring during merge/hold */}
+      {/* Center glow ring */}
       <AnimatePresence>
-        {(phase === 'merge' || phase === 'hold') && (
+        {(phase === 'reveal' || phase === 'hold') && (
           <motion.div
             className="absolute w-48 h-48 md:w-56 md:h-56 rounded-full border-2 border-[#1a5f2a]/20"
             initial={{ scale: 0, opacity: 0 }}
             animate={{
-              scale: phase === 'merge' ? [0, 1.3] : [1.3, 1.4, 1.3],
-              opacity: phase === 'merge' ? [0, 0.8] : [0.8, 1, 0.8],
+              scale: phase === 'reveal' ? [0, 1.3] : [1.3, 1.4, 1.3],
+              opacity: phase === 'reveal' ? [0, 0.8] : [0.8, 1, 0.8],
             }}
             exit={{ scale: 2, opacity: 0 }}
             transition={{ duration: 1, ease: 'easeOut' }}
@@ -91,50 +88,16 @@ const IconRevealAnimation = ({ onComplete }: { onComplete: () => void }) => {
         )}
       </AnimatePresence>
 
-      {/* Old SQU Logo - moves LEFT during split */}
+      {/* iAWE Icon — scales up from center */}
       <motion.div
         className="absolute"
-        initial={{ scale: 0, opacity: 0, x: 0 }}
+        initial={{ scale: 0, opacity: 0 }}
         animate={{
-          scale: phase === 'merge' ? [0, 1] : phase === 'hold' ? 1 : phase === 'split' ? [1, 0.7] : 0.6,
-          opacity: phase === 'merge' ? [0, 1] : phase === 'hold' ? 1 : phase === 'split' ? [1, 0.5] : 0,
-          x: phase === 'merge' ? 0 : phase === 'hold' ? 0 : phase === 'split' ? -180 : -220,
-          rotateY: phase === 'split' ? [0, -30] : phase === 'settle' ? -45 : 0,
+          scale: phase === 'reveal' ? [0, 1] : phase === 'hold' ? [1, 1.05, 1] : 1,
+          opacity: phase === 'reveal' ? [0, 1] : 1,
         }}
         transition={{
-          duration: phase === 'merge' ? 1.2 : phase === 'hold' ? 1 : phase === 'split' ? 1.3 : 1,
-          ease: [0.16, 1, 0.3, 1],
-        }}
-      >
-        <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl shadow-2xl overflow-hidden bg-white p-1.5 relative">
-          <img
-            src="/squ_logo.png"
-            alt="Sultan Qaboos University"
-            className="w-full h-full object-contain"
-          />
-          {/* Fading label */}
-          <motion.div
-            className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] md:text-xs font-medium text-[#1a5f2a]/60"
-            animate={{ opacity: phase === 'split' ? 0 : 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            SQU
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* New iAWE Icon - moves RIGHT then settles to CENTER */}
-      <motion.div
-        className="absolute"
-        initial={{ scale: 0, opacity: 0, x: 0 }}
-        animate={{
-          scale: phase === 'merge' ? [0, 1] : phase === 'hold' ? 1 : phase === 'split' ? [1, 1.15] : 1,
-          opacity: phase === 'merge' ? [0, 1] : 1,
-          x: phase === 'merge' ? 0 : phase === 'hold' ? 0 : phase === 'split' ? 180 : 0,
-          rotateY: phase === 'split' ? [0, 25] : phase === 'settle' ? 0 : 0,
-        }}
-        transition={{
-          duration: phase === 'merge' ? 1.2 : phase === 'hold' ? 1 : phase === 'split' ? 1.3 : 0.8,
+          duration: phase === 'reveal' ? 1.5 : phase === 'hold' ? 1 : 1,
           ease: [0.16, 1, 0.3, 1],
         }}
       >
@@ -144,7 +107,7 @@ const IconRevealAnimation = ({ onComplete }: { onComplete: () => void }) => {
             alt="iAWE System"
             className="w-full h-full object-contain"
           />
-          {/* Pulsing glow behind new icon */}
+          {/* Pulsing glow behind icon during settle */}
           <motion.div
             className="absolute -inset-2 rounded-3xl -z-10"
             style={{
@@ -157,21 +120,6 @@ const IconRevealAnimation = ({ onComplete }: { onComplete: () => void }) => {
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           />
         </div>
-      </motion.div>
-
-      {/* "Powered by" text that appears during hold, fades during split */}
-      <motion.div
-        className="absolute mt-28 md:mt-36 text-center"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{
-          opacity: phase === 'merge' ? 0 : phase === 'hold' ? [0, 1] : phase === 'split' ? [1, 0] : 0,
-          y: phase === 'merge' ? 10 : phase === 'hold' ? [10, 0] : 0,
-        }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-      >
-        <p className="text-sm md:text-base font-medium text-[#1a5f2a]/70 tracking-wide">
-          Reimagined with Intelligence
-        </p>
       </motion.div>
     </div>
   );

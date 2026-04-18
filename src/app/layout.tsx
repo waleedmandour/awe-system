@@ -14,34 +14,39 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AWE System - Sultan Qaboos University",
-  description: "Automated Writing Evaluation System for Sultan Qaboos University. AI-powered essay assessment and feedback.",
-  keywords: ["AWE", "Sultan Qaboos University", "SQU", "Writing Evaluation", "Essay Assessment", "Academic Writing"],
+  title: "iAWE System - Sultan Qaboos University",
+  description: "Intelligent Automated Writing Evaluation System for Sultan Qaboos University. AI-powered essay assessment and feedback.",
+  keywords: ["iAWE", "AWE", "Sultan Qaboos University", "SQU", "Writing Evaluation", "Essay Assessment", "Academic Writing"],
   authors: [{ name: "Sultan Qaboos University" }],
   icons: {
-    icon: "/squ_logo.png",
-    apple: "/squ_logo.png",
+    icon: [
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "AWE System",
+    title: "iAWE System",
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
-    title: "AWE System - Sultan Qaboos University",
-    description: "AI-powered essay assessment and feedback for SQU students",
+    title: "iAWE System - Sultan Qaboos University",
+    description: "Intelligent AI-powered essay assessment and feedback for SQU students",
     url: "https://awe.squ.edu.om",
-    siteName: "AWE System",
+    siteName: "iAWE System",
     type: "website",
+    images: [{ url: "/icon-512x512.png", width: 512, height: 512, type: "image/png" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AWE System - Sultan Qaboos University",
-    description: "AI-powered essay assessment and feedback",
+    title: "iAWE System - Sultan Qaboos University",
+    description: "Intelligent AI-powered essay assessment and feedback",
+    images: ["/icon-512x512.png"],
   },
 };
 
@@ -67,7 +72,9 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <link rel="apple-touch-icon" href="/squ_logo.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512x512.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}

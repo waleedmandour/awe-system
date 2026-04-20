@@ -453,7 +453,7 @@ const defaultCourses: Course[] = [
     code: 'LANC2146',
     name: 'Report Writing (LANC2146)',
     program: 'post-foundation',
-    description: 'Post-foundation course focusing on academic report writing, including lab report Discussion and Conclusion sections. Expected CEFR level: B1-B2.'
+    description: 'Post-foundation course focusing on academic report writing, including lab report Discussion and Conclusion sections.'
   }
 ];
 

@@ -132,7 +132,7 @@ const IconRevealAnimation = ({ onComplete }: { onComplete: () => void }) => {
       >
         <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl shadow-2xl overflow-hidden bg-white p-1.5 relative">
           <img
-            src="/iawe-icon.png"
+            src="/cps_logo.png"
             alt="iAWE System"
             className="w-full h-full object-contain"
             draggable={false}

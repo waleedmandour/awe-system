@@ -48,12 +48,12 @@ const IconRevealAnimation = ({ onComplete }: { onComplete: () => void }) => {
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-b from-white via-[#f0fdf4] to-white overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-b from-[#0d3320] via-[#1a5f2a] to-[#0d3320] overflow-hidden">
       {/* Background radial glow */}
       <motion.div
-        className="absolute w-[500px] h-[500px] rounded-full"
+        className="absolute w-[600px] h-[600px] rounded-full"
         style={{
-          background: 'radial-gradient(circle, rgba(26,95,42,0.06) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(201,162,39,0.10) 0%, transparent 60%)',
         }}
         initial={{ scale: 0, opacity: 0 }}
         animate={{
@@ -77,14 +77,14 @@ const IconRevealAnimation = ({ onComplete }: { onComplete: () => void }) => {
             top: `${p.y}%`,
             left: `${p.x}%`,
             background: p.id % 2 === 0
-              ? 'radial-gradient(circle, rgba(201,162,39,0.4), transparent)'
-              : 'radial-gradient(circle, rgba(26,95,42,0.25), transparent)',
+              ? 'radial-gradient(circle, rgba(201,162,39,0.5), transparent)'
+              : 'radial-gradient(circle, rgba(255,255,255,0.2), transparent)',
           }}
           initial={{ opacity: 0, scale: 0 }}
           animate={{
             y: [0, -18, 0],
             x: [0, p.drift, 0],
-            opacity: [0, 0.5, 0],
+            opacity: [0, 0.6, 0],
             scale: [0, 1.2, 0],
           }}
           transition={{
@@ -99,10 +99,10 @@ const IconRevealAnimation = ({ onComplete }: { onComplete: () => void }) => {
 
       {/* Glow ring — expands smoothly */}
       <motion.div
-        className="absolute w-44 h-44 md:w-52 md:h-52 rounded-full"
+        className="absolute w-72 h-72 md:w-80 md:h-80 rounded-full"
         style={{
-          background: 'conic-gradient(from 90deg, rgba(26,95,42,0.08), rgba(201,162,39,0.12), rgba(26,95,42,0.08))',
-          border: '1.5px solid rgba(26,95,42,0.12)',
+          background: 'conic-gradient(from 90deg, rgba(201,162,39,0.10), rgba(255,255,255,0.08), rgba(201,162,39,0.10))',
+          border: '1.5px solid rgba(201,162,39,0.15)',
         }}
         initial={{ scale: 0, opacity: 0, rotate: -90 }}
         animate={{
@@ -116,33 +116,33 @@ const IconRevealAnimation = ({ onComplete }: { onComplete: () => void }) => {
         }}
       />
 
-      {/* iAWE Icon — spring-based scale-in */}
+      {/* CPS Logo — full-width, spring-based scale-in */}
       <motion.div
-        className="absolute"
-        initial={{ scale: 0, opacity: 0, y: 8 }}
+        className="absolute w-4/5 max-w-md px-4"
+        initial={{ scale: 0, opacity: 0, y: 10 }}
         animate={{
-          scale: phase === 'reveal' ? [0, 1.08, 1] : phase === 'hold' ? [1, 1.02, 1] : [1, 1.01],
+          scale: phase === 'reveal' ? [0, 1.06, 1] : phase === 'hold' ? [1, 1.01, 1] : [1, 1.01],
           opacity: phase === 'reveal' ? [0, 1] : 1,
           y: 0,
         }}
         transition={{
           duration: phase === 'reveal' ? 0.7 : 0.8,
-          ease: phase === 'reveal' ? [0.34, 1.56, 0.64, 1] : 'easeInOut', // spring overshoot
+          ease: phase === 'reveal' ? [0.34, 1.56, 0.64, 1] : 'easeInOut',
         }}
       >
-        <div className="w-28 h-28 md:w-36 md:h-36 rounded-2xl shadow-2xl overflow-hidden bg-white p-1.5 relative">
+        <div className="rounded-2xl overflow-hidden relative bg-white/95 shadow-2xl shadow-black/30 backdrop-blur-sm p-4">
           <img
             src="/cps_logo.png"
             alt="iAWE System"
-            className="w-full h-full object-contain"
+            className="w-full h-auto object-contain"
             draggable={false}
           />
-          {/* Subtle ambient glow */}
+          {/* Ambient glow behind the card */}
           <motion.div
-            className="absolute -inset-3 rounded-3xl -z-10"
+            className="absolute -inset-4 rounded-3xl -z-10"
             style={{
-              background: 'linear-gradient(135deg, rgba(26,95,42,0.12), rgba(201,162,39,0.12))',
-              filter: 'blur(8px)',
+              background: 'linear-gradient(135deg, rgba(201,162,39,0.20), rgba(26,95,42,0.15))',
+              filter: 'blur(12px)',
             }}
             animate={{
               opacity: phase === 'settle' ? [0.6, 0.3, 0.6] : [0, 0.6, 0],

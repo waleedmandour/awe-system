@@ -367,4 +367,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-*Built with LOVE to the Language Teaching Community.*
+*Built with ♥️ to the Language Teaching Community.*

@@ -364,3 +364,7 @@ If you use **awe-system** in your research, teaching, or publications, please ci
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+---
+
+*Built with LOVE to the Language Teaching Community.*

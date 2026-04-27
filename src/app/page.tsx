@@ -64,13 +64,13 @@ export default function AWEApp() {
 
   // Handle image upload and OCR processing — supports single or multi-page (up to 2)
   const handleImageUpload = async (images: string[]) => {
-    const { visionApiKey, geminiApiKey } = useAppStore.getState();
+    const { geminiApiKey } = useAppStore.getState();
 
-    // Check if at least one API key is available
-    if (!visionApiKey && !geminiApiKey) {
+    // Check if API key is available
+    if (!geminiApiKey) {
       toast({
         title: 'API Key Required',
-        description: 'Please configure a Vision API key or Gemini API key in settings.',
+        description: 'Please configure your Gemini API key in settings.',
         variant: 'destructive',
       });
       return;
@@ -89,9 +89,8 @@ export default function AWEApp() {
         },
         body: JSON.stringify({
           images, // Array of base64/data-uri image strings, in page order
-          apiKey: visionApiKey || undefined,
           geminiApiKey: geminiApiKey || undefined,
-          useGemini: !visionApiKey && !!geminiApiKey,
+          useGemini: true,
         }),
       });
 
@@ -117,6 +116,8 @@ export default function AWEApp() {
 
       setExtractedText(extractedText);
       setProcessing(false);
+      // Record OCR completion time for cooldown timer
+      useAppStore.getState().setOcrCompletedAt(Date.now());
       setStep('review');
     } catch (error) {
       console.error('OCR processing error:', error);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import {
   CheckCircle,
   Edit3,
   AlertCircle,
+  Timer,
 } from 'lucide-react';
 
 // Animation variants
@@ -43,17 +44,52 @@ const PageTransition = ({ children, direction = 'right' }: { children: React.Rea
   </motion.div>
 );
 
+// Cooldown duration in seconds (60 seconds)
+const COOLDOWN_SECONDS = 60;
+
 // Review Screen Component
 const ReviewScreen = ({ onSubmit, onBack }: { onSubmit: (text: string) => void; onBack: () => void }) => {
-  const { extractedText, setExtractedText, selectedCourse } = useAppStore();
+  const { extractedText, setExtractedText, selectedCourse, ocrCompletedAt } = useAppStore();
   const [editedText, setEditedText] = useState(extractedText);
   const [isEditing, setIsEditing] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState(0);
 
   const wordCount = editedText.trim().split(/\s+/).filter(Boolean).length;
   const charCount = editedText.length;
 
+  // Cooldown timer: count down from OCR completion time
+  useEffect(() => {
+    if (!ocrCompletedAt) {
+      setCooldownRemaining(0);
+      return;
+    }
+
+    const calculateRemaining = () => {
+      const elapsed = Math.floor((Date.now() - ocrCompletedAt) / 1000);
+      const remaining = Math.max(0, COOLDOWN_SECONDS - elapsed);
+      setCooldownRemaining(remaining);
+      return remaining;
+    };
+
+    // Initial calculation
+    const remaining = calculateRemaining();
+    if (remaining <= 0) return;
+
+    // Update every second
+    const interval = setInterval(() => {
+      const rem = calculateRemaining();
+      if (rem <= 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [ocrCompletedAt]);
+
+  const isCooldownActive = cooldownRemaining > 0;
+
   const handleSubmit = () => {
-    if (editedText.trim().length < 50) {
+    if (editedText.trim().length < 50 || isCooldownActive) {
       return;
     }
     setExtractedText(editedText);
@@ -154,19 +190,37 @@ const ReviewScreen = ({ onSubmit, onBack }: { onSubmit: (text: string) => void; 
               </AlertDescription>
             </Alert>
           )}
-          <Alert className="bg-red-50 border-red-300 dark:bg-red-950 dark:border-red-800">
-            <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
-            <AlertDescription className="text-sm text-red-700 dark:text-red-300">
-              <strong>Please wait 1–2 minutes</strong> before clicking &quot;Submit for Assessment.&quot; Gemini&apos;s free tier has usage limits — submitting too quickly after your last request may cause the assessment to fail.
-            </AlertDescription>
-          </Alert>
+          {isCooldownActive ? (
+            <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+              <Timer className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+              <AlertDescription className="text-sm text-blue-700 dark:text-blue-300">
+                <strong>Please wait {cooldownRemaining}s</strong> before submitting for assessment. This cooldown helps avoid Gemini free-tier rate limits. The button will be enabled automatically.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+              <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
+              <AlertDescription className="text-sm text-green-700 dark:text-green-300">
+                Ready to submit for assessment.
+              </AlertDescription>
+            </Alert>
+          )}
           <Button
             onClick={handleSubmit}
-            disabled={editedText.trim().length < 50}
+            disabled={editedText.trim().length < 50 || isCooldownActive}
             className="w-full h-12 bg-[#1a5f2a] hover:bg-[#1a5f2a]/90 rounded-xl ios-press"
           >
-            Submit for Assessment
-            <ChevronRight className="w-4 h-4 ml-2" />
+            {isCooldownActive ? (
+              <>
+                <Timer className="w-4 h-4 mr-2" />
+                Wait {cooldownRemaining}s...
+              </>
+            ) : (
+              <>
+                Submit for Assessment
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </>
+            )}
           </Button>
         </div>
       </div>

@@ -361,11 +361,15 @@ interface AppState {
   
   // Settings
   geminiApiKey: string;
-  visionApiKey: string;
+  assessmentApiKey: string;
   theme: 'light' | 'dark' | 'system';
   setGeminiApiKey: (key: string) => void;
-  setVisionApiKey: (key: string) => void;
+  setAssessmentApiKey: (key: string) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
+
+  // OCR completion tracking (for cooldown timer)
+  ocrCompletedAt: number | null;
+  setOcrCompletedAt: (ts: number | null) => void;
   
   // Course selection
   selectedCourse: Course | null;
@@ -466,11 +470,15 @@ export const useAppStore = create<AppState>()(
       
       // Settings
       geminiApiKey: '',
-      visionApiKey: '',
+      assessmentApiKey: '',
       theme: 'system',
       setGeminiApiKey: (key) => set({ geminiApiKey: key }),
-      setVisionApiKey: (key) => set({ visionApiKey: key }),
+      setAssessmentApiKey: (key) => set({ assessmentApiKey: key }),
       setTheme: (theme) => set({ theme }),
+
+      // OCR completion tracking
+      ocrCompletedAt: null,
+      setOcrCompletedAt: (ts) => set({ ocrCompletedAt: ts }),
       
       // Course selection
       selectedCourse: null,
@@ -534,7 +542,8 @@ export const useAppStore = create<AppState>()(
         extractedText: '',
         currentAssessment: null,
         isProcessing: false,
-        processingMessage: ''
+        processingMessage: '',
+        ocrCompletedAt: null
       })
     }),
     {
@@ -542,7 +551,7 @@ export const useAppStore = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         geminiApiKey: state.geminiApiKey,
-        visionApiKey: state.visionApiKey,
+        assessmentApiKey: state.assessmentApiKey,
         theme: state.theme,
         selectedCourse: state.selectedCourse,
         selectedExamType: state.selectedExamType,

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
+// IMPORTANT: Prevents Vercel from timing out the assessment process on the FREE tier
+export const maxDuration = 60;
+
 // Word count targets by exam type for Foundation courses
 const EXAM_WORD_COUNTS: Record<string, { min: number; max: number; ideal: number; label: string }> = {
   'mid-semester': { min: 110, max: 130, ideal: 120, label: 'Mid-semester Exam' },
@@ -101,74 +104,59 @@ const SUMMARY_CRITERIA = [
 ];
 
 // Detailed rubric band descriptors for Summary Writing (A2-B1 level)
+// Condensed from per-0.5 bands to range bands to reduce token consumption
 const SUMMARY_RUBRICS = {
   criteria: [
     {
       name: 'Task Achievement',
       maxScore: 5,
       rubric: {
-        '0': 'No attempt or completely irrelevant. The student has not written a summary, or the text has no connection to the source material whatsoever. No main ideas are identified or represented.',
-        '0.5': 'Minimal attempt. The student has written a few disconnected words or phrases that vaguely relate to the source text, but no main ideas are captured. The response shows almost no understanding of the original text.',
-        '1': 'Very poor achievement. The summary identifies at most one minor point from the source text. Most or all of the main ideas are missing. The response may consist largely of copied phrases without comprehension. The summary does not reflect the overall message of the original text.',
-        '1.5': 'Poor achievement. The summary captures one main idea but misses several key points. The student may include irrelevant details or personal opinions. Large portions of the source text\'s main arguments are omitted. Paraphrasing is minimal, with heavy reliance on copying from the original.',
-        '2': 'Unsatisfactory achievement. The summary captures some main ideas but omits at least two key points. The student includes some irrelevant or minor details. Paraphrasing is limited — the student copies phrases or sentences directly from the source text rather than using their own words. The summary does not accurately reflect the overall message.',
-        '2.5': 'Below expectations. The summary captures most of the main ideas but may miss one or two supporting points. Some paraphrasing is attempted, but there is still noticeable copying from the source text. The student generally understands the overall message but does not clearly distinguish between main and minor ideas.',
-        '3': 'Satisfactory achievement. The summary captures the main ideas of the source text adequately. The student demonstrates reasonable understanding of the original text. Some paraphrasing is used, though some phrases may still be copied directly. The distinction between main and minor ideas is generally clear, though minor points may occasionally be included.',
-        '3.5': 'Good achievement. The summary captures all or nearly all main ideas and the overall message effectively. The student demonstrates solid understanding of the source text. Paraphrasing is used consistently, with only minor instances of copied phrases. Supporting details are appropriately selected and not confused with main ideas.',
-        '4': 'Very good achievement. The summary captures all main ideas clearly and accurately reflects the overall message of the source text. The student demonstrates strong comprehension. Effective paraphrasing is used throughout — the student consistently uses their own words to convey the meaning. The summary is focused and excludes irrelevant details.',
-        '4.5': 'Excellent achievement. The summary captures all main ideas and key supporting details with precision and clarity. The student demonstrates excellent comprehension of the source text. The paraphrasing is highly effective and natural-sounding. The summary flows as a cohesive text that accurately represents the source.',
-        '5': 'Outstanding achievement. The summary is a highly accurate and comprehensive reflection of the source text\'s main ideas and overall message. The student demonstrates sophisticated comprehension. Paraphrasing is consistently natural and effective throughout. The summary reads as a well-constructed, independent text that faithfully represents the source material.',
+        '0-1': 'Poor: No summary written, completely irrelevant, or only isolated words/phrases. No main ideas captured. May be largely copied without comprehension.',
+        '1.5-2': 'Unsatisfactory: Captures at most one main idea; misses most key points. May include irrelevant details or personal opinions. Paraphrasing is minimal with heavy reliance on copying.',
+        '2.5': 'Below expectations: Captures most main ideas but misses one or two points. Some paraphrasing attempted but noticeable copying remains. Does not clearly distinguish main from minor ideas.',
+        '3': 'Satisfactory: Captures main ideas adequately with reasonable understanding. Some paraphrasing used though some phrases may be copied. Distinction between main and minor ideas is generally clear.',
+        '3.5': 'Good: Captures all or nearly all main ideas effectively. Solid understanding with consistent paraphrasing, only minor copied phrases. Supporting details appropriately selected.',
+        '4-4.5': 'Very good to Excellent: Captures all main ideas clearly and accurately. Strong/excellent comprehension. Effective paraphrasing throughout with focused, cohesive summary. Minor or no irrelevant details.',
+        '5': 'Outstanding: Highly accurate, comprehensive reflection of source text. Sophisticated comprehension with consistently natural paraphrasing. Reads as a well-constructed independent text.',
       }
     },
     {
       name: 'Coherence & Cohesion',
       maxScore: 5,
       rubric: {
-        '0': 'No coherence whatsoever. The text is a random collection of words or fragments with no logical connection or structure. Ideas cannot be followed at all.',
-        '0.5': 'Minimal coherence. The text consists of a few loosely related fragments. There is no discernible organizational pattern. No linking words or transitional devices are used.',
-        '1': 'Very poor coherence. Ideas are presented in a random or confusing order. There may be some recognizable individual sentences, but they do not connect logically. No linking words are used. The reader must guess the intended meaning.',
-        '1.5': 'Poor coherence. There is minimal organization — ideas may be listed but not connected. Very few or no linking words are used. The text is difficult to follow, and the reader must re-read to understand the relationships between ideas.',
-        '2': 'Unsatisfactory coherence. There is an attempt at organization, but ideas are presented in a somewhat disjointed manner. Basic linking words (e.g., "and", "but") may be used but are often incorrect or repetitive. The text requires effort from the reader to follow the logic.',
-        '2.5': 'Below expectations. Basic organization is present but inconsistent. Some simple linking words (e.g., "first", "also", "however") are used, but transitions between ideas are often abrupt. Paragraph structure may be weak or absent. The text is generally understandable but not smooth.',
-        '3': 'Satisfactory coherence. The summary has a logical structure that is generally easy to follow. Simple linking words and basic transitional devices are used appropriately. Ideas are connected in a way that the reader can follow without significant difficulty. Basic paragraphing may be used.',
-        '3.5': 'Good coherence. The summary is well-organized with clear logical progression. A range of linking words and transitional devices are used correctly (e.g., "moreover", "in addition", "as a result"). The text flows smoothly from one idea to the next. Paragraph structure is appropriate.',
-        '4': 'Very good coherence. The summary is clearly and logically organized with strong progression of ideas. A good range of cohesive devices is used effectively and naturally. The text reads smoothly and is easy to follow. Paragraphing supports the overall structure well.',
-        '4.5': 'Excellent coherence. The summary demonstrates sophisticated organization with seamless flow between ideas. A wide range of cohesive devices is used naturally and accurately. The text is highly readable and engaging. The organizational structure enhances the clarity of the content.',
-        '5': 'Outstanding coherence. The summary is exceptionally well-organized with flawless logical flow. Cohesive devices are used with mastery, creating a text that is seamless and highly effective. The structure clearly serves the content and enhances reader comprehension.',
+        '0-1': 'Poor: No coherence. Random words/fragments with no logical connection or structure. No linking words used. Ideas cannot be followed.',
+        '1.5-2': 'Unsatisfactory: Minimal organization — ideas listed but not connected. Very few or no linking words. Disjointed presentation requiring reader effort to follow logic.',
+        '2.5': 'Below expectations: Basic organization present but inconsistent. Some simple linking words used but transitions are abrupt. Paragraph structure may be weak or absent. Generally understandable but not smooth.',
+        '3': 'Satisfactory: Logical structure generally easy to follow. Simple linking words and basic transitional devices used appropriately. Ideas connected so reader can follow without significant difficulty.',
+        '3.5': 'Good: Well-organized with clear logical progression. Range of linking words/transitional devices used correctly (e.g., "moreover", "as a result"). Smooth flow between ideas. Appropriate paragraph structure.',
+        '4-4.5': 'Very good to Excellent: Clearly and logically organized with strong progression. Good/wide range of cohesive devices used effectively and naturally. Highly readable with smooth flow.',
+        '5': 'Outstanding: Exceptionally well-organized with flawless logical flow. Cohesive devices used with mastery. Structure serves the content and enhances comprehension.',
       }
     },
     {
       name: 'Lexical Resource',
       maxScore: 5,
       rubric: {
-        '0': 'No meaningful vocabulary. The text contains no recognizable vocabulary related to the task, or vocabulary is so limited that no meaning can be conveyed.',
-        '0.5': 'Extremely limited vocabulary. A few isolated words are used, but they are insufficient to convey meaning. Vocabulary is largely inappropriate for the task.',
-        '1': 'Very poor vocabulary. The student uses a very narrow range of words, many of which are repeated. Word choice is frequently inaccurate or inappropriate. Spelling errors are pervasive and impede understanding.',
-        '1.5': 'Poor vocabulary. The student uses a limited range of vocabulary with frequent repetition. Word choice is often inaccurate, and many words are used inappropriately. Spelling errors are frequent and sometimes affect communication.',
-        '2': 'Unsatisfactory vocabulary. The student uses a basic range of vocabulary that is adequate for simple communication but lacks variety. Some attempt at paraphrasing is made but word choice is often awkward or inaccurate. Several spelling errors are present but generally do not prevent understanding.',
-        '2.5': 'Below expectations. The vocabulary is limited but generally adequate for the task. The student attempts paraphrasing with some success, though word choice may be awkward at times. Core vocabulary is used correctly, but there is little evidence of range or variety. Some spelling errors occur.',
-        '3': 'Satisfactory vocabulary. The student uses an adequate range of vocabulary for the summary task. Basic paraphrasing is attempted and usually effective. Core vocabulary is generally accurate and appropriate. Spelling errors are present but do not significantly affect communication.',
-        '3.5': 'Good vocabulary. The student uses a good range of vocabulary appropriate for the task. Paraphrasing is generally effective, showing the student can express source text ideas in their own words. Some less common vocabulary may be attempted. Spelling is generally accurate.',
-        '4': 'Very good vocabulary. The student uses a varied and appropriate range of vocabulary. Paraphrasing is effective and natural-sounding. The student shows awareness of word choice and can select appropriate synonyms. Spelling is mostly accurate with only minor errors.',
-        '4.5': 'Excellent vocabulary. The student uses a wide and precise range of vocabulary that enhances the quality of the summary. Paraphrasing is highly effective and natural. The student demonstrates strong control of word choice and collocation. Spelling is consistently accurate.',
-        '5': 'Outstanding vocabulary. The student uses a sophisticated and precise range of vocabulary with excellent control. Paraphrasing is consistently natural, accurate, and effective. Word choice enhances the clarity and quality of the summary. Spelling is consistently accurate throughout.',
+        '0-1': 'Poor: No meaningful or extremely limited vocabulary. Insufficient to convey meaning. Word choice frequently inaccurate. Spelling errors pervasive and impede understanding.',
+        '1.5-2': 'Unsatisfactory: Limited vocabulary with frequent repetition. Some paraphrasing attempted but word choice often awkward/inaccurate. Spelling errors frequent and sometimes affect communication.',
+        '2.5': 'Below expectations: Vocabulary limited but generally adequate. Paraphrasing attempted with some success though word choice may be awkward. Core vocabulary correct but little range. Some spelling errors.',
+        '3': 'Satisfactory: Adequate range of vocabulary for the task. Basic paraphrasing attempted and usually effective. Core vocabulary generally accurate. Spelling errors present but do not significantly affect communication.',
+        '3.5': 'Good: Good range of vocabulary. Paraphrasing generally effective, expressing source ideas in own words. Some less common vocabulary attempted. Spelling generally accurate.',
+        '4-4.5': 'Very good to Excellent: Varied and appropriate vocabulary. Effective, natural-sounding paraphrasing. Strong control of word choice and collocation. Spelling mostly to consistently accurate.',
+        '5': 'Outstanding: Sophisticated, precise vocabulary with excellent control. Consistently natural and effective paraphrasing. Word choice enhances clarity and quality. Spelling consistently accurate.',
       }
     },
     {
       name: 'Grammar & Accuracy',
       maxScore: 5,
       rubric: {
-        '0': 'No grammatical control. The text consists of random words or fragments with no attempt at sentence construction. No grammatical structures are used correctly.',
-        '0.5': 'Extremely limited grammar. One or two recognizable simple sentences may be present, but grammatical control is almost non-existent. Errors in every sentence prevent meaningful communication.',
-        '1': 'Very poor grammar. Only the simplest sentence structures are attempted, and most contain errors. Subject-verb agreement, tense usage, and article usage are consistently incorrect. Punctuation is largely absent or inaccurate.',
-        '1.5': 'Poor grammar. Simple sentence structures are attempted with limited success. Frequent grammatical errors in tense, subject-verb agreement, and word order are present. The student struggles to form complete, correct sentences. Punctuation is inconsistent.',
-        '2': 'Unsatisfactory grammar. Simple sentences can be formed but often contain errors. There is limited variety in sentence structure — most sentences follow the same basic pattern. Common grammatical errors (articles, prepositions, tenses) occur frequently. Basic punctuation is used but often incorrectly.',
-        '2.5': 'Below expectations. The student can form simple sentences with reasonable accuracy, but complex sentences contain errors. Some variety in sentence structure is attempted. Common grammatical errors still occur (articles, prepositions, tenses) but do not always impede understanding. Basic punctuation is generally correct.',
-        '3': 'Satisfactory grammar. The student uses simple sentences accurately and attempts some complex structures with varying success. A reasonable range of grammatical structures is evident. Errors in articles, prepositions, and tenses occur but do not significantly affect meaning. Punctuation is generally effective.',
-        '3.5': 'Good grammar. The student uses a good range of simple and some complex sentence structures with reasonable accuracy. Errors are present but are typically minor and do not impede communication. Sentence variety is evident. Punctuation is generally accurate and supports readability.',
-        '4': 'Very good grammar. The student demonstrates good control of a range of grammatical structures including simple and complex sentences. Errors are infrequent and minor. Sentence variety enhances the quality of the summary. Punctuation is accurate and effective.',
-        '4.5': 'Excellent grammar. The student demonstrates strong control of a wide range of grammatical structures. Errors are rare and minor. Complex sentence structures are used naturally and accurately. Punctuation is consistently accurate and enhances clarity.',
-        '5': 'Outstanding grammar. The student demonstrates near-native control of grammatical structures. A wide variety of sentence structures is used naturally and accurately. Errors are virtually non-existent. Punctuation is flawless and supports the text\'s readability and clarity.',
+        '0-1': 'Poor: No grammatical control. Only random words/fragments. Errors in every sentence prevent meaningful communication. Punctuation largely absent or inaccurate.',
+        '1.5-2': 'Unsatisfactory: Simple sentence structures attempted but often contain errors. Limited variety in sentence structure. Common errors (articles, prepositions, tenses) occur frequently. Punctuation often incorrect.',
+        '2.5': 'Below expectations: Can form simple sentences with reasonable accuracy, but complex sentences contain errors. Some variety attempted. Common errors still occur but do not always impede understanding. Basic punctuation generally correct.',
+        '3': 'Satisfactory: Simple sentences accurate with some complex structures attempted. Reasonable range of grammatical structures. Errors in articles, prepositions, tenses occur but do not significantly affect meaning. Punctuation generally effective.',
+        '3.5': 'Good: Good range of simple and some complex structures with reasonable accuracy. Errors typically minor and do not impede communication. Sentence variety evident. Punctuation generally accurate.',
+        '4-4.5': 'Very good to Excellent: Good/strong control of grammatical structures including complex sentences. Errors infrequent/rare and minor. Sentence variety enhances quality. Punctuation accurate and effective.',
+        '5': 'Outstanding: Near-native control. Wide variety of sentence structures used naturally and accurately. Errors virtually non-existent. Punctuation flawless.',
       }
     },
   ],
@@ -199,62 +187,51 @@ const SYNTHESIS_CRITERIA = [
 ];
 
 // Detailed rubric band descriptors for Synthesis Essay (A2-B1 level, TWO-POINT ESSAY WRITING MARKING CRITERIA)
+// Condensed by merging duplicate adjacent bands to reduce token consumption
 const SYNTHESIS_RUBRICS = {
   criteria: [
     {
       name: 'Task Achievement',
       maxScore: 5,
       rubric: {
-        '0-1.5': 'Poor: Text fails to fulfil any task requirements. 10% or more higher or lower than word count.',
-        '2': 'Unsatisfactory: Response does not adequately fulfil task requirements. Most details are unimportant. 10% or more higher or lower than word count.',
-        '2.5': 'Unsatisfactory: Response does not adequately fulfil task requirements. Most details are unimportant. 10% or more higher or lower than word count.',
-        '3': 'Satisfactory: Response adequately fulfils specific task requirements. Most main ideas present. Meaning is generally accurate, and some unimportant details may be included. Up to 10% higher or lower than word count.',
-        '3.5': 'Satisfactory: Response adequately fulfils specific task requirements. Most main ideas present. Meaning is generally accurate, and some unimportant details may be included. Up to 10% higher or lower than word count.',
-        '4': 'Good: Response fulfils all specific task requirements but a little more could be expected. Main ideas present. Meaning is mostly accurate, and most details included are relevant. Stays within word count.',
-        '4.5': 'Good: Response fulfils all specific task requirements but a little more could be expected. Main ideas present. Meaning is mostly accurate, and most details included are relevant. Stays within word count.',
-        '5': 'Excellent: Response fulfils all specific task requirements and exceeds expectations. All main ideas present. Meaning is accurate, and all details included are relevant. Stays within word count.',
+        '0-1.5': 'Poor: Fails to fulfil any task requirements. 10% or more outside word count.',
+        '2-2.5': 'Unsatisfactory: Does not adequately fulfil task requirements. Most details are unimportant. 10% or more outside word count.',
+        '3-3.5': 'Satisfactory: Adequately fulfils task requirements. Most main ideas present. Meaning generally accurate; some unimportant details may be included. Up to 10% outside word count.',
+        '4-4.5': 'Good: Fulfils all task requirements but a little more could be expected. Main ideas present. Meaning mostly accurate, most details relevant. Stays within word count.',
+        '5': 'Excellent: Fulfils all task requirements and exceeds expectations. All main ideas present. Meaning accurate, all details relevant. Stays within word count.',
       }
     },
     {
       name: 'Coherence and Cohesion',
       maxScore: 5,
       rubric: {
-        '0-1.5': 'Poor: Text lacks organization and coherence. The text is largely confused and incoherent, making it challenging for the reader to process.',
-        '2': 'Unsatisfactory: Organization and coherence are limited. Some re-reading may be necessary. Most cohesive devices are simple and may be used inaccurately and mechanically in most places.',
-        '2.5': 'Unsatisfactory: Organization and coherence are limited. Some re-reading may be necessary. Most cohesive devices are simple and may be used inaccurately and mechanically in most places.',
-        '3': 'Satisfactory: Organization and coherence are often adequate, but supporting ideas may be limited. Text may be stilted in places. Cohesive devices attempted are sometimes inaccurate and repetitive and may be over or under used.',
-        '3.5': 'Satisfactory: Organization and coherence are often adequate, but supporting ideas may be limited. Text may be stilted in places. Cohesive devices attempted are sometimes inaccurate and repetitive and may be over or under used.',
-        '4': 'Good: Organization of information and ideas makes text clear and easy to understand. Cohesive devices attempted are almost always used accurately and appropriately both within and/or between sentences.',
-        '4.5': 'Good: Organization of information and ideas makes text clear and easy to understand. Cohesive devices attempted are almost always used accurately and appropriately both within and/or between sentences.',
-        '5': 'Excellent: Organization of information and ideas is effective and there is a logical flow throughout. A good range of cohesive devices are used accurately and appropriately.',
+        '0-1.5': 'Poor: Lacks organization and coherence. Text largely confused and incoherent, challenging for reader to process.',
+        '2-2.5': 'Unsatisfactory: Organization and coherence limited. Some re-reading necessary. Most cohesive devices are simple, used inaccurately and mechanically.',
+        '3-3.5': 'Satisfactory: Organization and coherence often adequate, but supporting ideas may be limited. Text may be stilted. Cohesive devices sometimes inaccurate, repetitive, or over/under used.',
+        '4-4.5': 'Good: Organization makes text clear and easy to understand. Cohesive devices almost always used accurately and appropriately within and between sentences.',
+        '5': 'Excellent: Effective organization with logical flow throughout. Good range of cohesive devices used accurately and appropriately.',
       }
     },
     {
       name: 'Lexical Resource',
       maxScore: 5,
       rubric: {
-        '0-1.5': 'Poor: Paraphrasing is largely absent. Poor word choice, word form, and spelling prevent communication of ideas.',
-        '2': 'Unsatisfactory: Very little attempt at paraphrasing: more than 15% of the product is directly copied. Inadequate range of vocabulary. Errors in word choice, word form, and spelling predominate and affect communication.',
-        '2.5': 'Unsatisfactory: Very little attempt at paraphrasing: more than 15% of the product is directly copied. Inadequate range of vocabulary. Errors in word choice, word form, and spelling predominate and affect communication.',
-        '3': 'Satisfactory: Generally paraphrased; there may be some copying, but it is less than 15%. Limited but adequate range of vocabulary. Errors in word choice and spelling sometimes affect communication.',
-        '3.5': 'Satisfactory: Generally paraphrased; there may be some copying, but it is less than 15%. Limited but adequate range of vocabulary. Errors in word choice and spelling sometimes affect communication.',
-        '4': 'Good: Well paraphrased with very little copying. Good range of vocabulary. Spelling is mostly correct.',
-        '4.5': 'Good: Well paraphrased with very little copying. Good range of vocabulary. Spelling is mostly correct.',
-        '5': 'Excellent: Completely and accurately paraphrased. Wider range of vocabulary than is expected for the level. Spelling is accurate.',
+        '0-1.5': 'Poor: Paraphrasing largely absent. Poor word choice, word form, and spelling prevent communication.',
+        '2-2.5': 'Unsatisfactory: Very little paraphrasing; more than 15% directly copied. Inadequate vocabulary range. Errors in word choice, word form, and spelling predominate and affect communication.',
+        '3-3.5': 'Satisfactory: Generally paraphrased; some copying but less than 15%. Limited but adequate vocabulary. Errors in word choice and spelling sometimes affect communication.',
+        '4-4.5': 'Good: Well paraphrased with very little copying. Good vocabulary range. Spelling mostly correct.',
+        '5': 'Excellent: Completely and accurately paraphrased. Wider vocabulary range than expected for the level. Spelling accurate.',
       }
     },
     {
       name: 'Grammatical Range and Accuracy',
       maxScore: 5,
       rubric: {
-        '0-1.5': 'Poor: Structures are inaccurate and errors predominate, preventing meaningful communication. Punctuation may be inadequate and/or inaccurate.',
-        '2': 'Unsatisfactory: Structures are very limited and inadequate for the level and task. Grammatical errors are noticeable and may often affect communication. Punctuation may be inadequate and/or inaccurate.',
-        '2.5': 'Unsatisfactory: Structures are very limited and inadequate for the level and task. Grammatical errors are noticeable and may often affect communication. Punctuation may be inadequate and/or inaccurate.',
-        '3': 'Satisfactory: Structures are sometimes limited but are adequate for the level and task. Grammatical errors may affect communication in places. Punctuation is generally correct and effective.',
-        '3.5': 'Satisfactory: Structures are sometimes limited but are adequate for the level and task. Grammatical errors may affect communication in places. Punctuation is generally correct and effective.',
-        '4': 'Good: Text has a good range of structures for the level and task. There may be some inaccuracy but communication is not affected. Punctuation is well managed and effective.',
-        '4.5': 'Good: Text has a good range of structures for the level and task. There may be some inaccuracy but communication is not affected. Punctuation is well managed and effective.',
-        '5': 'Excellent: Wider range of structures than is expected for the level is used. Most sentences are error-free. Punctuation is well managed and effective.',
+        '0-1.5': 'Poor: Inaccurate structures, errors predominate, preventing communication. Punctuation inadequate and/or inaccurate.',
+        '2-2.5': 'Unsatisfactory: Very limited structures inadequate for the level. Grammatical errors noticeable and often affect communication. Punctuation may be inadequate/inaccurate.',
+        '3-3.5': 'Satisfactory: Structures sometimes limited but adequate for the task. Grammatical errors may affect communication in places. Punctuation generally correct and effective.',
+        '4-4.5': 'Good: Good range of structures. Some inaccuracy but communication not affected. Punctuation well managed and effective.',
+        '5': 'Excellent: Wider range of structures than expected for the level. Most sentences error-free. Punctuation well managed and effective.',
       }
     },
   ],
@@ -1343,97 +1320,130 @@ export async function POST(request: NextRequest) {
       { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
     ];
 
+    // Retry configuration for rate-limit errors (429 / RESOURCE_EXHAUSTED)
+    const RATE_LIMIT_RETRIES = 3;
+    const RATE_LIMIT_DELAYS = [5000, 15000, 30000]; // 5s, 15s, 30s
+
     // Try generation with increasing token limits on truncation
     let responseText = '';
     let parsedOk = false;
     const tokenLimits = [8192, 16384, 32768];
 
     for (const maxTokens of tokenLimits) {
-      try {
-        const result = await model.generateContent({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: maxTokens,
-          },
-          safetySettings,
-        });
-
-        // ── Check for prompt-level blocking ──
-        const promptFeedback = (result.response as any)?.promptFeedback;
-        if (promptFeedback?.blockReason) {
-          const reason = promptFeedback.blockReason;
-          console.error(`Gemini prompt blocked: ${reason}`);
-          return NextResponse.json(
-            { error: 'AI content filter blocked the submission. Please try rephrasing your essay or contact your instructor.', details: `Prompt blocked: ${reason}` },
-            { status: 422 }
-          );
-        }
-
-        // ── Check for response-level blocking / truncation ──
-        const candidate = (result.response as any)?.candidates?.[0];
-        const finishReason = candidate?.finishReason;
-
-        // SAFETY / RECITATION / LANGUAGE — content is blocked entirely
-        if (finishReason === 'SAFETY' || finishReason === 'RECITATION' || finishReason === 'LANGUAGE') {
-          console.error(`Gemini response blocked, finishReason: ${finishReason}`);
-          return NextResponse.json(
-            { error: 'AI content filter blocked the assessment response. This may happen if the essay discusses sensitive topics. Please try rephrasing or contact your instructor.', details: `Response blocked: ${finishReason}` },
-            { status: 422 }
-          );
-        }
-
-        // Extract text — handle null/undefined safely
-        const rawText = result.response?.text?.() || '';
-        if (!rawText || rawText.trim().length === 0) {
-          console.error('Gemini returned empty response. finishReason:', finishReason);
-          return NextResponse.json(
-            { error: 'AI returned an empty response. Please try again.', details: `Empty response, finishReason: ${finishReason || 'unknown'}` },
-            { status: 500 }
-          );
-        }
-
-        // MAX_TOKENS — response is truncated, may cause JSON parse failure
-        if (finishReason === 'MAX_TOKENS') {
-          console.warn(`Response truncated at ${maxTokens} tokens, attempting to parse anyway...`);
-        }
-
-        // Try to parse the JSON
+      // Inner retry loop for rate-limit (429) errors
+      for (let rateLimitAttempt = 0; rateLimitAttempt < RATE_LIMIT_RETRIES; rateLimitAttempt++) {
         try {
-          const assessment = extractJSON(rawText);
-          if (assessment && assessment.scores && Array.isArray(assessment.scores)) {
-            responseText = rawText;
-            parsedOk = true;
-            // If it parsed successfully even with MAX_TOKENS, use it
-            break;
-          }
-        } catch (_e) {
-          // JSON parse failed — if truncated, try next token limit
-          if (finishReason === 'MAX_TOKENS' && maxTokens !== tokenLimits[tokenLimits.length - 1]) {
-            console.warn(`JSON parse failed after truncation at ${maxTokens} tokens, retrying with higher limit...`);
-            continue;
-          }
-          // Otherwise, fall through to error
-          console.error('Failed to parse assessment response. Raw text (first 500 chars):', rawText.substring(0, 500));
-          return NextResponse.json(
-            { error: 'Failed to parse AI assessment response. The AI returned an invalid format. Please try again.', details: 'The AI response could not be parsed. This is a temporary issue — retrying usually works.' },
-            { status: 500 }
-          );
-        }
+          const result = await model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: maxTokens,
+            },
+            safetySettings,
+          });
 
-        // Parsed OK with STOP
-        responseText = rawText;
-        parsedOk = true;
-        break;
+          // ── Check for prompt-level blocking ──
+          const promptFeedback = (result.response as any)?.promptFeedback;
+          if (promptFeedback?.blockReason) {
+            const reason = promptFeedback.blockReason;
+            console.error(`Gemini prompt blocked: ${reason}`);
+            return NextResponse.json(
+              { error: 'AI content filter blocked the submission. Please try rephrasing your essay or contact your instructor.', details: `Prompt blocked: ${reason}` },
+              { status: 422 }
+            );
+          }
 
-      } catch (genError: any) {
-        // If this is the last attempt, throw
-        if (maxTokens === tokenLimits[tokenLimits.length - 1]) {
-          throw genError;
+          // ── Check for response-level blocking / truncation ──
+          const candidate = (result.response as any)?.candidates?.[0];
+          const finishReason = candidate?.finishReason;
+
+          // SAFETY / RECITATION / LANGUAGE — content is blocked entirely
+          if (finishReason === 'SAFETY' || finishReason === 'RECITATION' || finishReason === 'LANGUAGE') {
+            console.error(`Gemini response blocked, finishReason: ${finishReason}`);
+            return NextResponse.json(
+              { error: 'AI content filter blocked the assessment response. This may happen if the essay discusses sensitive topics. Please try rephrasing or contact your instructor.', details: `Response blocked: ${finishReason}` },
+              { status: 422 }
+            );
+          }
+
+          // Extract text — handle null/undefined safely
+          const rawText = result.response?.text?.() || '';
+          if (!rawText || rawText.trim().length === 0) {
+            console.error('Gemini returned empty response. finishReason:', finishReason);
+            return NextResponse.json(
+              { error: 'AI returned an empty response. Please try again.', details: `Empty response, finishReason: ${finishReason || 'unknown'}` },
+              { status: 500 }
+            );
+          }
+
+          // MAX_TOKENS — response is truncated, may cause JSON parse failure
+          if (finishReason === 'MAX_TOKENS') {
+            console.warn(`Response truncated at ${maxTokens} tokens, attempting to parse anyway...`);
+          }
+
+          // Try to parse the JSON
+          try {
+            const assessment = extractJSON(rawText);
+            if (assessment && assessment.scores && Array.isArray(assessment.scores)) {
+              responseText = rawText;
+              parsedOk = true;
+              // If it parsed successfully even with MAX_TOKENS, use it
+              break;
+            }
+          } catch (_e) {
+            // JSON parse failed — if truncated, try next token limit
+            if (finishReason === 'MAX_TOKENS' && maxTokens !== tokenLimits[tokenLimits.length - 1]) {
+              console.warn(`JSON parse failed after truncation at ${maxTokens} tokens, retrying with higher limit...`);
+              continue;
+            }
+            // Otherwise, fall through to error
+            console.error('Failed to parse assessment response. Raw text (first 500 chars):', rawText.substring(0, 500));
+            return NextResponse.json(
+              { error: 'Failed to parse AI assessment response. The AI returned an invalid format. Please try again.', details: 'The AI response could not be parsed. This is a temporary issue — retrying usually works.' },
+              { status: 500 }
+            );
+          }
+
+          // Parsed OK with STOP
+          responseText = rawText;
+          parsedOk = true;
+          break;
+
+        } catch (genError: any) {
+          const errMsg = genError?.message || String(genError);
+          const isRateLimit =
+            errMsg.includes('429') ||
+            errMsg.includes('RESOURCE_EXHAUSTED') ||
+            errMsg.includes('quota') ||
+            errMsg.includes('rate') && errMsg.includes('limit');
+
+          // If rate-limited and we have retries left, wait and retry
+          if (isRateLimit && rateLimitAttempt < RATE_LIMIT_RETRIES - 1) {
+            const delay = RATE_LIMIT_DELAYS[rateLimitAttempt];
+            console.warn(`Rate limit hit (attempt ${rateLimitAttempt + 1}/${RATE_LIMIT_RETRIES}), retrying in ${delay / 1000}s...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue; // retry inner loop
+          }
+
+          // If rate-limited and out of retries, return a helpful error
+          if (isRateLimit) {
+            console.error('Rate limit exhausted after all retries.');
+            return NextResponse.json(
+              { error: 'Gemini API rate limit reached. Your free tier has a limited number of requests per minute. Please wait 1-2 minutes and try again. Tip: Add a second Gemini API key in Settings (one for OCR, one for assessment) to double your quota.', details: errMsg },
+              { status: 429 }
+            );
+          }
+
+          // Non-rate-limit error: if this is the last token limit attempt, throw
+          if (maxTokens === tokenLimits[tokenLimits.length - 1]) {
+            throw genError;
+          }
+          console.warn(`Generation error with ${maxTokens} tokens:`, errMsg);
+          break; // break inner loop, try next token limit
         }
-        console.warn(`Generation error with ${maxTokens} tokens:`, genError.message);
-        continue;
       }
+
+      if (parsedOk) break;
     }
 
     if (!parsedOk) {

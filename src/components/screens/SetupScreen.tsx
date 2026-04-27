@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import {
   Settings,
-  Camera,
+  ClipboardCheck,
   Eye,
   EyeOff,
   Shield,
@@ -24,11 +24,11 @@ import { PageTransition } from '@/lib/animations';
 
 // Setup Screen Component
 const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
-  const { geminiApiKey, visionApiKey, setGeminiApiKey, setVisionApiKey } = useAppStore();
+  const { geminiApiKey, assessmentApiKey, setGeminiApiKey, setAssessmentApiKey } = useAppStore();
   const [localGeminiKey, setLocalGeminiKey] = useState(geminiApiKey);
-  const [localVisionKey, setLocalVisionKey] = useState(visionApiKey);
+  const [localAssessmentKey, setLocalAssessmentKey] = useState(assessmentApiKey);
   const [showGeminiKey, setShowGeminiKey] = useState(false);
-  const [showVisionKey, setShowVisionKey] = useState(false);
+  const [showAssessmentKey, setShowAssessmentKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -47,7 +47,7 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     setGeminiApiKey(localGeminiKey);
-    setVisionApiKey(localVisionKey);
+    setAssessmentApiKey(localAssessmentKey);
 
     toast({
       title: 'Settings Saved',
@@ -106,7 +106,7 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
                   </div>
                   <div>
                     <CardTitle className="text-base">Gemini API Key</CardTitle>
-                    <CardDescription className="text-xs">Required for essay assessment</CardDescription>
+                    <CardDescription className="text-xs">Required — used for OCR (text extraction)</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -143,26 +143,26 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
               </CardContent>
             </Card>
 
-            {/* Vision API Key (Optional) */}
+            {/* Assessment API Key (Optional — recommended for free tier users) */}
             <Card className="border-0 shadow-sm">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                    <Camera className="w-5 h-5 text-white" />
+                    <ClipboardCheck className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-base">Vision API Key</CardTitle>
-                    <CardDescription className="text-xs">Optional - for enhanced OCR</CardDescription>
+                    <CardTitle className="text-base">Assessment API Key</CardTitle>
+                    <CardDescription className="text-xs">Optional — separate key for assessment to avoid rate limits</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="relative">
                   <Input
-                    type={showVisionKey ? 'text' : 'password'}
-                    placeholder="Enter your Vision API key (optional)"
-                    value={localVisionKey}
-                    onChange={(e) => setLocalVisionKey(e.target.value)}
+                    type={showAssessmentKey ? 'text' : 'password'}
+                    placeholder="Enter a second Gemini API key (optional)"
+                    value={localAssessmentKey}
+                    onChange={(e) => setLocalAssessmentKey(e.target.value)}
                     className="pr-10 h-12"
                   />
                   <Button
@@ -170,13 +170,21 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
                     variant="ghost"
                     size="icon"
                     className="absolute right-1 top-1 h-10 w-10"
-                    onClick={() => setShowVisionKey(!showVisionKey)}
+                    onClick={() => setShowAssessmentKey(!showAssessmentKey)}
                   >
-                    {showVisionKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showAssessmentKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  For advanced handwriting recognition
+                  Use a second Gemini key for assessment to double your free-tier quota. Get it from{' '}
+                  <a
+                    href="https://aistudio.google.com/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#1a5f2a] underline"
+                  >
+                    Google AI Studio
+                  </a>
                 </p>
               </CardContent>
             </Card>

@@ -203,9 +203,9 @@ Overall costs: higher / 30% lower than conventional`,
     cefrLevel: 'A2-B1',
     expectedParagraphs: 4,
     targetWordCount: {
-      min: 200,
-      max: 300,
-      ideal: 250,
+      min: 300,
+      max: 350,
+      ideal: 325,
     },
     sources: [
       {

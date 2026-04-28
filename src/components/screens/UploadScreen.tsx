@@ -45,8 +45,12 @@ const UploadScreen = ({ onUpload, onBack }: { onUpload: (images: string[]) => vo
 
     setIsProcessing(true);
     try {
+      // Determine total pages for size optimization (reduces quality/dimensions for multi-page)
+      const currentPageCount = (page1Image ? 1 : 0) + (page2Image ? 1 : 0);
+      const totalPages = currentPageCount + 1; // +1 for the image being added now
       // Process image: resize, convert to JPEG, detect HEIC
-      const processedDataUri = await processImageFile(file);
+      // Multi-page uploads use more aggressive compression to stay within Vercel body limits
+      const processedDataUri = await processImageFile(file, totalPages);
       if (slot === 'page1') setPage1Image(processedDataUri);
       else setPage2Image(processedDataUri);
     } catch (error) {
@@ -83,13 +87,59 @@ const UploadScreen = ({ onUpload, onBack }: { onUpload: (images: string[]) => vo
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const images: string[] = [];
     if (page1Image) images.push(page1Image);
     if (page2Image) images.push(page2Image);
     if (images.length > 0) {
+      // When 2 pages are uploaded, re-check total payload size and warn if too large
+      if (images.length === 2) {
+        const totalSize = images.reduce((sum, img) => sum + img.length, 0);
+        const MAX_PAYLOAD = 4.2 * 1024 * 1024; // ~4.2MB (Vercel limit is ~4.5MB)
+        if (totalSize > MAX_PAYLOAD) {
+          toast({
+            title: 'Compressing Images',
+            description: 'Optimizing image sizes for two-page upload...',
+          });
+          // Re-process both images with aggressive compression for multi-page
+          try {
+            const compressed = await Promise.all(images.map(img => recompressDataUri(img)));
+            onUpload(compressed);
+            return;
+          } catch (e) {
+            // If re-compression fails, try sending anyway
+            console.warn('Re-compression failed, sending original images:', e);
+          }
+        }
+      }
       onUpload(images);
     }
+  };
+
+  // Re-compress a data URI to reduce size for multi-page uploads
+  const recompressDataUri = (dataUri: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        // Scale down to 1400px max dimension with 0.72 quality for multi-page
+        const MAX_DIM = 1400;
+        let { width, height } = img;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          const scale = MAX_DIM / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Canvas not supported')); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.72));
+      };
+      img.onerror = () => reject(new Error('Failed to re-compress image'));
+      img.src = dataUri;
+    });
   };
 
   const imageCount = (page1Image ? 1 : 0) + (page2Image ? 1 : 0);

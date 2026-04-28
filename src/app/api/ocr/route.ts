@@ -56,6 +56,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Check total payload size for multi-page uploads
+    // Gemini API has a ~20MB total limit, but Vercel's body limit is ~4.5MB
+    // If the combined base64 is too large, we reject early with a helpful message
+    if (processedImages.length > 1) {
+      const totalBase64Size = processedImages.reduce((sum, img) => sum + img.base64.length, 0);
+      const MAX_TOTAL_BASE64 = 5 * 1024 * 1024; // ~5MB base64 limit for safety
+      if (totalBase64Size > MAX_TOTAL_BASE64) {
+        return NextResponse.json(
+          {
+            error: `The combined image size is too large (${Math.round(totalBase64Size / 1024 / 1024)}MB). ` +
+              `For two-page uploads, please use lower-resolution photos (under 1600px) or upload one page at a time.`,
+          },
+          { status: 413 }
+        );
+      }
+    }
+
     // Check which OCR method to use
     if (useGemini && geminiApiKey) {
       return await performGeminiOCR(processedImages, geminiApiKey);
@@ -344,7 +361,16 @@ async function performGeminiOCR(images: { base64: string; mimeType: string }[], 
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     let userMessage = 'Failed to process image with Gemini.';
 
-    if (errorMsg.includes('string') && (errorMsg.includes('platform') || errorMsg.includes('match') || errorMsg.includes('invalid'))) {
+    if (errorMsg.includes('string') && errorMsg.includes('match') && errorMsg.includes('pattern')) {
+      // "The string did not match the expected pattern" — Gemini SDK rejects malformed base64
+      // This commonly happens when the payload was truncated by Vercel's body size limit,
+      // or when the base64 data contains invalid characters from a corrupt data URI.
+      userMessage =
+        'The image data was too large or corrupt. ' +
+        'When uploading 2 pages, the combined image size may exceed the server limit. ' +
+        'Try using lower-resolution photos, or upload one page at a time. ' +
+        'iPhone users: ensure camera is set to JPEG (Settings → Camera → Formats → Most Compatible).';
+    } else if (errorMsg.includes('string') && (errorMsg.includes('platform') || errorMsg.includes('invalid'))) {
       userMessage =
         'The image format is not supported. ' +
         'This commonly occurs with HEIC/HEIF photos from iPhones. ' +

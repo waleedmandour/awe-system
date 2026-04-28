@@ -239,7 +239,7 @@ const SYNTHESIS_RUBRICS = {
 
 // ─── LANC2146 Report Writing — Discussion & Conclusion Assessment ─────────────
 
-// Lab Report Discussion and Conclusion criteria (B1-B2 level, 0-5 per criterion)
+// Lab Report Discussion and Conclusion criteria (A2-B1 level, 0-5 per criterion)
 const LANC2146_CRITERIA = [
   {
     name: 'Task Response',
@@ -263,7 +263,7 @@ const LANC2146_CRITERIA = [
   },
 ];
 
-// Detailed rubric band descriptors for LANC2146 Discussion & Conclusion (B1-B2 level)
+// Detailed rubric band descriptors for LANC2146 Discussion & Conclusion (A2-B1 level)
 const LANC2146_RUBRICS = {
   criteria: [
     {
@@ -350,7 +350,7 @@ function buildLanc2146Prompt(
 
   return `You are an expert writing assessor evaluating a Credit level student's lab report Discussion and Conclusion for Sultan Qaboos University's Center for Preparatory Studies, course LANC2146 (Report Writing).
 
-STUDENT LEVEL: CEFR B1-B2 (Intermediate to Upper Intermediate). Feedback must use clear, academic language appropriate for B1-B2 learners. Be encouraging while maintaining appropriate academic standards for a university-level report.
+STUDENT LEVEL: CEFR A2-B1 (Elementary to Pre-Intermediate). Feedback must use simple, clear language appropriate for A2-B1 learners. Be encouraging while maintaining appropriate academic standards. Avoid overly technical linguistic terminology.
 
 ASSIGNMENT: ${assignmentTitle}
 
@@ -410,7 +410,7 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
 STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
   - "[exact quoted text]" — explanation of the error and how to fix it
 
-STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for a B1-B2 level writer.
+STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 level writer.
 
 STEP 5 — overallFeedback must be a comprehensive summary (4-6 sentences) that:
   - Highlights the student's strongest criterion and what they did well
@@ -1352,7 +1352,7 @@ export async function POST(request: NextRequest) {
       : isSynthesisWriting
       ? 'You are an expert writing assessment AI for the Credit level course LANC2160 (Academic English: Summary Writing & Synthesis Essay) at Sultan Qaboos University. For synthesis essay tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student essay against ALL THREE provided source texts, (2) check that information from all sources is synthesized, (3) quote exact words from the student essay as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) assess paraphrasing quality and estimate copying percentage, (7) check word count against the target range, and (8) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : isLanc2146
-      ? 'You are an expert writing assessment AI for the Credit level course LANC2146 (Report Writing) at Sultan Qaboos University. For lab report Discussion and Conclusion tasks, students are at CEFR B1-B2 level. Your feedback must use clear, academic language appropriate for this proficiency level. CRITICAL: You MUST (1) evaluate the Discussion section for analysis and interpretation of data with details/examples/statistics, (2) evaluate the Conclusion for summary of results, reference to previous research, restatement of aim, and recommendations, (3) quote exact words from the student text as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) check word count against the 350-450 word target range with a +/-20 word tolerance (effective acceptable range: 330-470), and (7) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
+      ? 'You are an expert writing assessment AI for the Credit level course LANC2146 (Report Writing) at Sultan Qaboos University. For lab report Discussion and Conclusion tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) evaluate the Discussion section for analysis and interpretation of data with details/examples/statistics, (2) evaluate the Conclusion for summary of results, reference to previous research, restatement of aim, and recommendations, (3) quote exact words from the student text as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) check word count against the 350-450 word target range with a +/-20 word tolerance (effective acceptable range: 330-470), and (7) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : 'You are an expert writing assessment AI for Foundation and Credit level university courses at Sultan Qaboos University. All students are at CEFR A1-A2 level (Basic User). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. CRITICAL: For each criterion you MUST (1) quote exact words from the student essay as evidence, (2) explicitly justify why the score matches the rubric band, (3) list specific errors with quoted text, and (4) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.';
 
     const model = genAI.getGenerativeModel({ 

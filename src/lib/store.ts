@@ -333,7 +333,7 @@ However, nowadays, the introduction of digital marketing has revolutionized the 
   },
 ];
 
-// LANC2146 practice test interface (lab report discussion & conclusion, B1-B2 level)
+// LANC2146 practice test interface (lab report discussion & conclusion, A2-B1 level)
 export interface Lanc2146PracticeTest {
   id: string;
   title: string;
@@ -362,7 +362,7 @@ export const LANC2146_PRACTICE_TESTS: Lanc2146PracticeTest[] = [
     id: 'lanc2146-p1-seed-priming',
     title: 'Investigating the Effects of Seed Priming Germination on Wheat',
     description: 'Using the provided report sections (Abstract, Introduction, Methods and Materials, Results), write an appropriate Discussion and Conclusion for the report in 350-450 words total.',
-    cefrLevel: 'B1-B2',
+    cefrLevel: 'A2-B1',
     expectedParagraphs: 6,
     practiceType: 'final',
     targetWordCount: { min: 350, max: 450, ideal: 400 },

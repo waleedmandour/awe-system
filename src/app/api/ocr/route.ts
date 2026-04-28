@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     // If the combined base64 is too large, we reject early with a helpful message
     if (processedImages.length > 1) {
       const totalBase64Size = processedImages.reduce((sum, img) => sum + img.base64.length, 0);
-      const MAX_TOTAL_BASE64 = 5 * 1024 * 1024; // ~5MB base64 limit for safety
+      const MAX_TOTAL_BASE64 = 3.5 * 1024 * 1024; // ~3.5MB base64 limit (Vercel body ~4.5MB with JSON overhead)
       if (totalBase64Size > MAX_TOTAL_BASE64) {
         return NextResponse.json(
           {

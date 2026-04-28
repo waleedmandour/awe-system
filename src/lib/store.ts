@@ -196,6 +196,57 @@ Overall costs: higher / 30% lower than conventional`,
       },
     ],
   },
+  {
+    id: 'co2-automobile-ac',
+    title: 'Two Advantages of CO2 for Automobile Air Conditioning Systems',
+    description: 'Write a synthesis essay (4 paragraphs) based on three source texts about CO2 as a refrigerant for automobile air conditioning systems. Synthesize information from all three sources to explain two advantages of CO2 for automobile air conditioning systems.',
+    cefrLevel: 'A2-B1',
+    expectedParagraphs: 4,
+    targetWordCount: {
+      min: 200,
+      max: 300,
+      ideal: 250,
+    },
+    sources: [
+      {
+        id: 'source-1-co2-cool-wars',
+        title: 'The Cool Wars',
+        content: `Mechanical refrigeration systems were developed in the late 19th and early 20th centuries. These systems were based on the compression and evaporation of gases. The primary refrigerants (gases used in cooling systems) were ammonia (NH3), sulfur dioxide (SO2) and chloromethane (Ch3Cl). These worked relatively well, but were not suitable for home use because they are toxic.
+In the late 1920s, Thomas Midgley developed chlorofluorocarbons (CFCs), which the DuPont Chemical Company marketed as Freon, for use as refrigerants. These compounds of carbon, chlorine and fluorine have many useful properties. They are non-toxic, non-flammable, non-reactive, inexpensive, and efficient as refrigerants. From the 1930s, CFCs were produced in huge quantities for use in refrigeration. Soon, CFCs were used in other applications, such as air conditioning (AC) systems, fire extinguishers and spray cans.
+However, in the early 1970s, scientists noticed that CFCs can reach the upper atmosphere. There, the molecules are broken apart by ultraviolet light from the sun, which results in a chemical reaction that breaks down the ozone molecule. Ozone in the upper atmosphere is important because it absorbs some of the ultraviolet radiation coming from the sun. When the ozone decreases, more ultraviolet radiation reaches the earth. Too much ultraviolet radiation can cause increased skin cancer and eye damage in humans.
+Governments from around the world met in the 1980s and adopted the Montreal Protocol. This was an agreement to stop the production and use of CFCs and other compounds that damage the ozone layer.
+It has not been easy to find a good replacement refrigerant that does not damage the ozone layer and does not contribute to global warming. The necessary properties for a suitable replacement gas include the following: low Ozone Depletion Potential (ODP), low Global Warming Potential (GWP), non-toxic, non-flammable, efficient refrigerant, inexpensive and easy to produce.
+Just as in the 19th century electrical Current Wars, we now have the Cool Wars. The race is on to produce refrigeration and air conditioning systems that do not endanger the ozone layer and do not contribute to global warming. Currently, the two strongest choices for a new refrigerant gas are CO2 and HFO-1234yf (C3H2F4). The winners of the Cool Wars will make billions of dollars.
+
+Refrigerant | History | ODP | GWP
+CFC-12 | Most commonly used refrigerant before Montreal Protocol | 1 | 10,890
+HFC-134a | First generation replacement for CFC-12 | 0 | 1300
+CO2 | Possible non-hydrocarbon replacement for HFC-134a | 0 | 1
+HFO-1234yf | Possible hydrocarbon-based replacement for HFC-134a | 0 | 4
+
+NOTE: This chart compares the effect of each refrigerant on the ozone and on global warming. For example, one molecule of CFC-12 has 10,890 times more effect on Global Warming than one molecule of CO2.`,
+      },
+      {
+        id: 'source-2-co2-safety',
+        title: 'The Safety of Refrigerants Used in Automobile Air Conditioning Systems',
+        content: `One of the main concerns for automobile engineers and government regulators is passenger safety. The main safety concerns about car AC refrigerants are flammability and toxicity.
+While carbon dioxide is non-flammable, many other gases which could be used as refrigerants ignite under certain conditions. For example, butane and propane, which are commonly used as fuel in domestic gas cookers, have properties that would make them efficient gases for use in refrigeration systems. They are, however, both explosive and toxic, so governments have banned their use in automobile air conditioners.
+The new DuPont compound HFO-1234yf is flammable. However, DuPont says it is only slightly flammable and does not ignite at most temperatures that could be encountered. Independent tests have shown that in case of a front-end accident, air conditioning systems using HFO-1234yf would significantly increase the risk of fire. Additional safety measures would thus be necessary to reduce this risk. This would have a negative impact on the system's efficiency, while increasing its costs at the same time.
+Carbon dioxide also can have harmful effects on the human body if inhaled in sufficient quantities. If the concentration of CO2 reaches 3%, a person's respiration rate will increase by 100%. People with heart conditions could be at risk. This has been a concern to engineers and governments. However, the total amount of CO2 in a car AC system is very small (less than 500 grams). This is not enough to harm a person, even if the total amount was released at one time, and tests have shown that a leak of gas from a CO2 car AC system would probably not be very large.
+Information about the toxicity of HFO-1234yf is not known. Two years after the introduction of this compound, the DuPont company has not released the results of their toxicity tests.`,
+      },
+      {
+        id: 'source-3-co2-cost',
+        title: 'How Much Will it Cost?',
+        content: `The Cool Wars may, in the end, be won or lost over the issue of cost. Different participants in the competition have different cost concerns. The chemical industry, led by DuPont, wants to produce and sell a new synthetic refrigerant for many years to come. The automotive industry does not want the increased costs of developing and manufacturing new AC systems. On the other hand, many companies want to develop a new technology that they will be able to produce and sell in the future. Consumers do not want to spend extra money when buying a new car, and they also want to have lower costs over the life of their vehicle. Finally, governments do not want to pay for the costs that could result from the effects of global warming. Below is a chart that summarizes some of the costs involved:
+
+Refrigerant | Production cost (OMR/ton) | Extra cost for new system design | AC system service cost | Lifetime energy use of AC equipped car (varies depending on climate)
+HFC-134a | 2.5 | None; currently exists | High recharge cost; expensive special equipment needed to collect and recycle refrigerant at the end of system service life | —
+CO2 | 0.25 | About 10 rials per car; high pressure system components must be designed and produced | Low recharge cost; expensive special equipment needed to deal with the very high pressures needed for CO2 to function as an effective refrigerant | More fuel efficient than HFC-134a systems; thus lower fuel consumption for the vehicle
+HFO-1234yf | 25 | None; uses existing HFC-134a systems | Very high recharge cost; expensive special equipment needed to collect and recycle refrigerant at the end of system service life | AC system 10-15% lower than HFC-134a systems; thus increased overall fuel use for the vehicle`,
+      },
+    ],
+  },
 ];
 
 // LANC1070 practice test interface (single source text, 4-paragraph essay)

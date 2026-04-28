@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AWE System — Automated Writing Evaluation | Sultan Qaboos University</title>
+    <title>iAWE System — Intelligent Automated Writing Evaluation | Sultan Qaboos University</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&display=swap" rel="stylesheet">
@@ -19,9 +19,9 @@
         }
 
         :root {
-            --primary: #1a5f2a;
-            --primary-dark: #0e3d1a;
-            --primary-light: #2a7a3a;
+            --primary: #1e40af;
+            --primary-dark: #0c1d3a;
+            --primary-light: #3b82f6;
             --gold: #c9a227;
             --gold-light: #d4b34a;
             --gold-dark: #a88620;
@@ -31,6 +31,9 @@
             --text-dark: #2d3436;
             --text-muted: #636e72;
             --text-light: #b2bec3;
+            --green: #1a5f2a;
+            --green-dark: #0f3d1a;
+            --green-light: #2d8a42;
             --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
             --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
             --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
@@ -713,7 +716,7 @@
             justify-content: center;
             margin: 0 auto 20px;
             position: relative;
-            box-shadow: 0 4px 15px rgba(26, 95, 42, 0.3);
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
         }
 
         .step-icon {
@@ -920,7 +923,7 @@
             width: 60px;
             height: 60px;
             border-radius: var(--radius-md);
-            background: linear-gradient(135deg, rgba(26, 95, 42, 0.08), rgba(201, 162, 39, 0.08));
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.08), rgba(201, 162, 39, 0.08));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -966,7 +969,7 @@
             inset: 0;
             background:
                 radial-gradient(ellipse at 30% 50%, rgba(201, 162, 39, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 30%, rgba(26, 95, 42, 0.12) 0%, transparent 50%);
+                radial-gradient(ellipse at 70% 30%, rgba(30, 64, 175, 0.12) 0%, transparent 50%);
         }
 
         .cta-content {
@@ -1070,8 +1073,8 @@
             font-size: 1.1rem;
         }
 
-        .arch-node-icon.green {
-            background: rgba(26, 95, 42, 0.1);
+        .arch-node-icon.blue {
+            background: rgba(30, 64, 175, 0.1);
             color: var(--primary);
         }
 
@@ -1191,7 +1194,7 @@
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background: rgba(26, 95, 42, 0.97);
+                background: rgba(30, 64, 175, 0.97);
                 backdrop-filter: blur(20px);
                 flex-direction: column;
                 justify-content: center;
@@ -1288,7 +1291,7 @@
         }
 
         /* ============================================
-           FOOTER
+           TRY NOW SECTION
            ============================================ */
         .try-grid {
             display: grid;
@@ -1330,7 +1333,7 @@
         }
 
         .try-card-icon.student {
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            background: linear-gradient(135deg, var(--green), var(--green-light));
             color: var(--white);
         }
 
@@ -1369,23 +1372,33 @@
             transition: var(--transition);
         }
 
-        .try-link.green {
-            background: rgba(26, 95, 42, 0.08);
+        .try-link.blue {
+            background: rgba(30, 64, 175, 0.08);
             color: var(--primary);
         }
 
-        .try-link.green:hover {
+        .try-link.blue:hover {
             background: var(--primary);
             color: var(--white);
         }
 
-        .try-link.blue {
+        .try-link.navy {
             background: rgba(26, 58, 95, 0.08);
             color: #1a3a5f;
         }
 
-        .try-link.blue:hover {
+        .try-link.navy:hover {
             background: #1a3a5f;
+            color: var(--white);
+        }
+
+        .try-link.green {
+            background: rgba(26, 95, 42, 0.08);
+            color: var(--green);
+        }
+
+        .try-link.green:hover {
+            background: var(--green);
             color: var(--white);
         }
 
@@ -1414,7 +1427,7 @@
         <div class="container">
             <a href="#" class="navbar-brand">
                 <div class="brand-icon"><i class="fas fa-pen-fancy"></i></div>
-                AWE System
+                iAWE System
             </a>
             <ul class="nav-links" id="navLinks">
                 <button class="mobile-close" id="mobileClose" aria-label="Close menu"><i class="fas fa-times"></i></button>
@@ -1458,13 +1471,17 @@
                 <i class="fas fa-university"></i>
                 Sultan Qaboos University &mdash; Center for Preparatory Studies
             </div>
-            <h1><span>AWE</span> System</h1>
-            <p class="hero-subtitle">Automated Writing Evaluation</p>
-            <p class="hero-tagline">AI-Powered Formative Assessment for Student Writing</p>
+            <h1><span>iAWE</span> System</h1>
+            <p class="hero-subtitle">Intelligent Automated Writing Evaluation</p>
+            <p class="hero-tagline">AI-Powered Formative Assessment for Foundation and Credit Course Writing</p>
             <div class="hero-buttons">
-                <a href="https://awe-system.vercel.app" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-                    <i class="fas fa-mobile-alt"></i>
-                    Launch PWA App
+                <a href="https://awe-system1.vercel.app" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                    Teacher App
+                </a>
+                <a href="https://awe-system.vercel.app" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="background: linear-gradient(135deg, var(--green), var(--green-dark));">
+                    <i class="fas fa-user-graduate"></i>
+                    Student App
                 </a>
                 <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzxyTLFTeixGxX06tcaC6vQrgwhVQimOiHE7z97wxOrNn9qQ/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
                     <i class="fab fa-google"></i>
@@ -1485,16 +1502,16 @@
         <div class="container">
             <div class="section-header fade-up">
                 <div class="section-label">About</div>
-                <h2 class="section-title">What is AWE?</h2>
+                <h2 class="section-title">What is iAWE?</h2>
             </div>
 
             <div class="about-text fade-up stagger-1">
-                The <strong>AWE (Automated Writing Evaluation)</strong> system is a multimodal, LLM-based platform designed to provide formative assessment for student writing at the Center for Preparatory Studies, Sultan Qaboos University. It is available in <strong>two complementary formats</strong>: a full-featured <strong>Progressive Web App (PWA)</strong> that can be installed on any device for an app-like experience with instant results, and a <strong>Google Forms-based system</strong> that offers a quick, no-installation submission workflow. Both systems use OCR to extract text from handwritten essays and evaluate the writing against IELTS-aligned rubrics calibrated to <strong>CEFR A1&ndash;A2 proficiency levels</strong>, delivering detailed, actionable assessment reports in seconds.
+                The <strong>iAWE (Intelligent Automated Writing Evaluation)</strong> system is a multimodal, LLM-based platform designed to provide formative assessment for student writing at the Center for Preparatory Studies, Sultan Qaboos University. It supports <strong>five writing courses</strong> across the Foundation and Post-Foundation programs, each with tailored rubrics calibrated to <strong>CEFR A1&ndash;B2 proficiency levels</strong>. The system offers two dedicated Progressive Web Apps: the <strong style="color: var(--primary);">blue iAWE Teacher App</strong> with paid API access and secure email-whitelisted authentication for instructors, and the <strong style="color: var(--green);">green AWE Student App</strong> with free API access for students. A <strong>Google Forms-based system</strong> is also available for quick, no-installation submission. All systems use Gemini AI-powered OCR to extract text from handwritten essays and evaluate writing against course-specific rubrics, delivering detailed, actionable assessment reports in seconds.
             </div>
 
             <div class="stats-row">
                 <div class="stat-card fade-up stagger-1">
-                    <div class="stat-number">3</div>
+                    <div class="stat-number">5</div>
                     <div class="stat-label">Foundation &amp; Credit Courses</div>
                 </div>
                 <div class="stat-card fade-up stagger-2">
@@ -1503,7 +1520,7 @@
                 </div>
                 <div class="stat-card fade-up stagger-3">
                     <div class="stat-number">2</div>
-                    <div class="stat-label">Available Systems</div>
+                    <div class="stat-label">Dedicated Apps</div>
                 </div>
             </div>
         </div>
@@ -1523,31 +1540,31 @@
             <div class="steps-container">
                 <div class="step-card fade-up stagger-1">
                     <div class="step-icon">
-                        <i class="fas fa-cloud-upload-alt"></i>
+                        <i class="fas fa-camera"></i>
                     </div>
-                    <div class="step-title">Submit Writing</div>
-                    <p class="step-desc">Students upload photos of their handwritten essays via the Google Form, selecting their course and AI engine preference.</p>
+                    <div class="step-title">Scan &amp; Upload</div>
+                    <p class="step-desc">Students take a photo of their handwritten essay or type directly into the app. Multi-page uploads support essays up to two pages.</p>
                 </div>
                 <div class="step-card fade-up stagger-2">
                     <div class="step-icon">
                         <i class="fas fa-eye"></i>
                     </div>
-                    <div class="step-title">OCR Processing</div>
-                    <p class="step-desc">Google Vision API extracts text from the handwritten scripts with industry-leading handwriting recognition accuracy.</p>
+                    <div class="step-title">AI OCR Processing</div>
+                    <p class="step-desc">Google Gemini AI extracts text from handwritten images with high accuracy, handling varied handwriting styles and layouts.</p>
                 </div>
                 <div class="step-card fade-up stagger-3">
                     <div class="step-icon">
                         <i class="fas fa-robot"></i>
                     </div>
                     <div class="step-title">AI Assessment</div>
-                    <p class="step-desc">Gemini or OpenAI evaluates the extracted text against CEFR A1&ndash;A2 aligned rubrics across four criteria.</p>
+                    <p class="step-desc">Gemini evaluates the extracted text against course-specific, CEFR-aligned rubrics across four criteria with detailed band descriptors.</p>
                 </div>
                 <div class="step-card fade-up stagger-4">
                     <div class="step-icon">
                         <i class="fas fa-chart-bar"></i>
                     </div>
                     <div class="step-title">Detailed Feedback</div>
-                    <p class="step-desc">Students receive scores with justifications, error identification with exact quotes, and improvement suggestions.</p>
+                    <p class="step-desc">Students receive scores with justifications, exact error quotes, improvement suggestions, and downloadable PDF reports.</p>
                 </div>
             </div>
         </div>
@@ -1561,27 +1578,27 @@
             <div class="section-header fade-up">
                 <div class="section-label">Courses</div>
                 <h2 class="section-title">Supported Courses</h2>
-                <p class="section-desc">The AWE system supports three writing courses across the Foundation and Credit programs.</p>
+                <p class="section-desc">The iAWE system supports five writing courses across the Foundation and Post-Foundation programs.</p>
             </div>
 
             <div class="courses-grid">
                 <div class="course-card fade-up stagger-1">
                     <div class="course-card-header">
                         <div class="course-code">FP0230</div>
-                        <div class="course-name">Foundation I English</div>
+                        <div class="course-name">English Language Foundation I</div>
                     </div>
                     <div class="course-card-body">
                         <div class="course-detail">
-                            <span class="course-detail-label">Mid-Semester</span>
-                            <span class="course-detail-value">120 words</span>
+                            <span class="course-detail-label">Score Range</span>
+                            <span class="course-detail-value">0 &ndash; 6</span>
                         </div>
                         <div class="course-detail">
-                            <span class="course-detail-label">Final Exam</span>
-                            <span class="course-detail-value">200 words</span>
+                            <span class="course-detail-label">Criteria</span>
+                            <span class="course-detail-value">4 Criteria</span>
                         </div>
                         <div class="course-detail">
-                            <span class="course-detail-label">Rubric</span>
-                            <span class="course-detail-value">Same as FP0340</span>
+                            <span class="course-detail-label">Total Marks</span>
+                            <span class="course-detail-value" style="color: var(--primary); font-size: 1.1rem;">24</span>
                         </div>
                     </div>
                 </div>
@@ -1589,7 +1606,7 @@
                 <div class="course-card fade-up stagger-2">
                     <div class="course-card-header">
                         <div class="course-code">FP0340</div>
-                        <div class="course-name">Foundation II English</div>
+                        <div class="course-name">English Language Foundation II</div>
                     </div>
                     <div class="course-card-body">
                         <div class="course-detail">
@@ -1609,8 +1626,29 @@
 
                 <div class="course-card fade-up stagger-3">
                     <div class="course-card-header" style="background: linear-gradient(135deg, var(--gold-dark), var(--gold));">
+                        <div class="course-code">LANC1070</div>
+                        <div class="course-name">Academic English: Essay Writing</div>
+                    </div>
+                    <div class="course-card-body">
+                        <div class="course-detail">
+                            <span class="course-detail-label">Score Range</span>
+                            <span class="course-detail-value">0 &ndash; 25</span>
+                        </div>
+                        <div class="course-detail">
+                            <span class="course-detail-label">Criteria</span>
+                            <span class="course-detail-value">4 Criteria</span>
+                        </div>
+                        <div class="course-detail">
+                            <span class="course-detail-label">Total Marks</span>
+                            <span class="course-detail-value" style="color: var(--gold-dark); font-size: 1.1rem;">100</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="course-card fade-up stagger-4">
+                    <div class="course-card-header" style="background: linear-gradient(135deg, var(--gold-dark), var(--gold));">
                         <div class="course-code">LANC2160</div>
-                        <div class="course-name">Credit English</div>
+                        <div class="course-name">Summary Writing &amp; Synthesis Essay</div>
                     </div>
                     <div class="course-card-body">
                         <div class="course-detail">
@@ -1618,8 +1656,29 @@
                             <span class="course-detail-value">0 &ndash; 5</span>
                         </div>
                         <div class="course-detail">
-                            <span class="course-detail-label">Criteria</span>
-                            <span class="course-detail-value">4 Criteria</span>
+                            <span class="course-detail-label">Tasks</span>
+                            <span class="course-detail-value">Summary / Synthesis</span>
+                        </div>
+                        <div class="course-detail">
+                            <span class="course-detail-label">Total Marks</span>
+                            <span class="course-detail-value" style="color: var(--gold-dark); font-size: 1.1rem;">20</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="course-card fade-up stagger-5">
+                    <div class="course-card-header" style="background: linear-gradient(135deg, var(--gold-dark), var(--gold));">
+                        <div class="course-code">LANC2146</div>
+                        <div class="course-name">Report Writing</div>
+                    </div>
+                    <div class="course-card-body">
+                        <div class="course-detail">
+                            <span class="course-detail-label">Score Range</span>
+                            <span class="course-detail-value">0 &ndash; 5</span>
+                        </div>
+                        <div class="course-detail">
+                            <span class="course-detail-label">Task</span>
+                            <span class="course-detail-value">Discussion &amp; Conclusion</span>
                         </div>
                         <div class="course-detail">
                             <span class="course-detail-label">Total Marks</span>
@@ -1672,24 +1731,24 @@
                     <div class="feature-icon-wrap">
                         <i class="fas fa-brain"></i>
                     </div>
-                    <div class="feature-title">Multi-Engine AI</div>
-                    <p class="feature-desc">Choose between Gemini or OpenAI as the assessment engine, allowing comparison and validation of evaluation results.</p>
+                    <div class="feature-title">Gemini AI Assessment</div>
+                    <p class="feature-desc">Google Gemini evaluates writing against course-specific rubrics with detailed band descriptors, ensuring transparent and consistent evaluation.</p>
                 </div>
 
                 <div class="feature-card fade-up stagger-2">
                     <div class="feature-icon-wrap">
                         <i class="fas fa-eye"></i>
                     </div>
-                    <div class="feature-title">Google Vision OCR</div>
-                    <p class="feature-desc">Industry-leading handwriting recognition technology extracts text from student essays with high accuracy and reliability.</p>
+                    <div class="feature-title">AI-Powered OCR</div>
+                    <p class="feature-desc">Gemini AI extracts text from handwritten essays with high accuracy, handling varied handwriting styles, multi-page uploads, and complex layouts.</p>
                 </div>
 
                 <div class="feature-card fade-up stagger-3">
                     <div class="feature-icon-wrap">
                         <i class="fas fa-table-list"></i>
                     </div>
-                    <div class="feature-title">Detailed Rubrics</div>
-                    <p class="feature-desc">IELTS-aligned rubrics with score justifications ensure transparent, criterion-referenced evaluation every time.</p>
+                    <div class="feature-title">Course-Specific Rubrics</div>
+                    <p class="feature-desc">Tailored rubrics for each course with CEFR-aligned band descriptors, supporting Foundation (A1&ndash;A2) and Post-Foundation (A2&ndash;B2) levels.</p>
                 </div>
 
                 <div class="feature-card fade-up stagger-4">
@@ -1697,23 +1756,23 @@
                         <i class="fas fa-magnifying-glass-chart"></i>
                     </div>
                     <div class="feature-title">Error Identification</div>
-                    <p class="feature-desc">Exact quotes from the student text are cited alongside explanations, pinpointing specific areas needing improvement.</p>
+                    <p class="feature-desc">Exact quotes from the student text are cited alongside explanations, pinpointing specific areas needing improvement with precise evidence.</p>
                 </div>
 
                 <div class="feature-card fade-up stagger-5">
                     <div class="feature-icon-wrap">
-                        <i class="fas fa-lightbulb"></i>
+                        <i class="fas fa-file-pdf"></i>
                     </div>
-                    <div class="feature-title">Actionable Feedback</div>
-                    <p class="feature-desc">Specific, level-appropriate suggestions for A1&ndash;A2 learners help students understand exactly how to improve their writing.</p>
+                    <div class="feature-title">PDF Assessment Reports</div>
+                    <p class="feature-desc">Download comprehensive assessment reports as PDF files, including scores, justifications, errors, and improvement suggestions for record-keeping.</p>
                 </div>
 
                 <div class="feature-card fade-up stagger-6">
                     <div class="feature-icon-wrap">
-                        <i class="fas fa-bolt"></i>
+                        <i class="fas fa-mobile-screen-button"></i>
                     </div>
-                    <div class="feature-title">Instant Results</div>
-                    <p class="feature-desc">Real-time assessment delivered in seconds, providing immediate formative feedback to support the learning process.</p>
+                    <div class="feature-title">Two Dedicated Apps</div>
+                    <p class="feature-desc">Two purpose-built PWAs &mdash; the blue iAWE Teacher App with secure email-whitelisted access, and the green AWE Student App with free, no-login access &mdash; both installable on any device for instant, camera-based essay scanning.</p>
                 </div>
             </div>
         </div>
@@ -1722,28 +1781,28 @@
     <!-- ==========================================
          TRY NOW SECTION
          ========================================== -->
-    <section class="section section-alt" id="try">
+    <section class="section" id="try">
         <div class="container">
             <div class="section-header fade-up">
                 <div class="section-label">Get Started</div>
-                <h2 class="section-title">Try the AWE System</h2>
-                <p class="section-desc">Whether you are a teacher exploring AI-assisted evaluation or a student seeking instant feedback, start here.</p>
+                <h2 class="section-title">Try the iAWE System</h2>
+                <p class="section-desc">Choose the app designed for your role &mdash; teachers use the blue iAWE app with paid API access, students use the green AWE app with free access.</p>
             </div>
 
             <div class="try-grid">
                 <!-- Teachers -->
-                <div class="try-card fade-up stagger-1">
+                <div class="try-card fade-up stagger-1" style="border-top: 4px solid var(--primary);">
                     <div class="try-card-icon teacher">
                         <i class="fas fa-chalkboard-teacher"></i>
                     </div>
-                    <h3>For Teachers</h3>
-                    <p>Explore how AI can support formative assessment in your writing courses. Try both systems to compare the evaluation quality and feedback depth.</p>
+                    <h3 style="color: var(--primary);">For Teachers</h3>
+                    <p>Access the blue iAWE Teacher App with paid Gemini API access and secure email-whitelisted authentication. Sign in with your authorized @squ.edu.om email to evaluate student writing instantly with full assessment capabilities.</p>
                     <div class="try-card-links">
-                        <a href="https://awe-system.vercel.app" target="_blank" rel="noopener noreferrer" class="try-link green">
+                        <a href="https://awe-system1.vercel.app" target="_blank" rel="noopener noreferrer" class="try-link blue">
                             <i class="fas fa-mobile-alt"></i>
-                            Try PWA App
+                            Launch iAWE Teacher App
                         </a>
-                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzxyTLFTeixGxX06tcaC6vQrgwhVQimOiHE7z97wxOrNn9qQ/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="try-link blue">
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzxyTLFTeixGxX06tcaC6vQrgwhVQimOiHE7z97wxOrNn9qQ/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="try-link navy">
                             <i class="fab fa-google"></i>
                             Try Google Form
                         </a>
@@ -1751,18 +1810,18 @@
                 </div>
 
                 <!-- Students -->
-                <div class="try-card fade-up stagger-2">
+                <div class="try-card fade-up stagger-2" style="border-top: 4px solid var(--green);">
                     <div class="try-card-icon student">
                         <i class="fas fa-user-graduate"></i>
                     </div>
-                    <h3>For Students</h3>
-                    <p>Get instant, detailed feedback on your writing. Upload a photo of your handwritten essay and receive AI-powered scores with specific suggestions for improvement.</p>
+                    <h3 style="color: var(--green);">For Students</h3>
+                    <p>Access the green AWE Student App with free API access &mdash; no login required. Upload a photo of your handwritten essay and receive AI-powered scores with detailed feedback, error identification, and improvement suggestions instantly.</p>
                     <div class="try-card-links">
                         <a href="https://awe-system.vercel.app" target="_blank" rel="noopener noreferrer" class="try-link green">
                             <i class="fas fa-mobile-alt"></i>
-                            Launch PWA App
+                            Launch AWE Student App
                         </a>
-                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzxyTLFTeixGxX06tcaC6vQrgwhVQimOiHE7z97wxOrNn9qQ/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="try-link blue">
+                        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdzxyTLFTeixGxX06tcaC6vQrgwhVQimOiHE7z97wxOrNn9qQ/viewform?usp=header" target="_blank" rel="noopener noreferrer" class="try-link navy">
                             <i class="fab fa-google"></i>
                             Submit via Form
                         </a>
@@ -1775,7 +1834,7 @@
     <!-- ==========================================
          TECHNICAL ARCHITECTURE
          ========================================== -->
-    <section class="section" id="architecture">
+    <section class="section section-alt" id="architecture">
         <div class="container">
             <div class="section-header fade-up">
                 <div class="section-label">Architecture</div>
@@ -1784,42 +1843,52 @@
             </div>
 
             <div class="architecture-flow fade-up">
-                <div class="arch-node">
-                    <div class="arch-node-icon green">
+                <div class="arch-node" style="border-top: 3px solid var(--primary);">
+                    <div class="arch-node-icon blue">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div class="arch-node-title">Teacher App</div>
+                    <div class="arch-node-sub">iAWE (Blue) &bull; Paid API</div>
+                </div>
+                <div class="arch-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="arch-node" style="border-top: 3px solid var(--green);">
+                    <div class="arch-node-icon" style="background: rgba(26, 95, 42, 0.1); color: var(--green);">
                         <i class="fas fa-user-graduate"></i>
                     </div>
-                    <div class="arch-node-title">Student</div>
-                    <div class="arch-node-sub">Handwritten Essay</div>
+                    <div class="arch-node-title">Student App</div>
+                    <div class="arch-node-sub">AWE (Green) &bull; Free API</div>
+                </div>
+                <div class="arch-arrow">
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="arch-node">
+                    <div class="arch-node-icon blue">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <div class="arch-node-title">PWA</div>
+                    <div class="arch-node-sub">Scan / Upload Photo</div>
                 </div>
                 <div class="arch-arrow">
                     <i class="fas fa-chevron-right"></i>
                 </div>
                 <div class="arch-node">
                     <div class="arch-node-icon gold">
-                        <i class="fab fa-google"></i>
-                    </div>
-                    <div class="arch-node-title">Google Form</div>
-                    <div class="arch-node-sub">Photo Upload &amp; Metadata</div>
-                </div>
-                <div class="arch-arrow">
-                    <i class="fas fa-chevron-right"></i>
-                </div>
-                <div class="arch-node">
-                    <div class="arch-node-icon dark">
                         <i class="fas fa-eye"></i>
                     </div>
-                    <div class="arch-node-title">Vision OCR</div>
+                    <div class="arch-node-title">Gemini OCR</div>
                     <div class="arch-node-sub">Text Extraction</div>
                 </div>
                 <div class="arch-arrow">
                     <i class="fas fa-chevron-right"></i>
                 </div>
                 <div class="arch-node">
-                    <div class="arch-node-icon green">
+                    <div class="arch-node-icon blue">
                         <i class="fas fa-robot"></i>
                     </div>
-                    <div class="arch-node-title">AI Engine</div>
-                    <div class="arch-node-sub">Gemini / OpenAI</div>
+                    <div class="arch-node-title">Gemini AI</div>
+                    <div class="arch-node-sub">Rubric Assessment</div>
                 </div>
                 <div class="arch-arrow">
                     <i class="fas fa-chevron-right"></i>
@@ -1829,7 +1898,7 @@
                         <i class="fas fa-file-lines"></i>
                     </div>
                     <div class="arch-node-title">Report</div>
-                    <div class="arch-node-sub">Assessment Output</div>
+                    <div class="arch-node-sub">Scores &amp; PDF</div>
                 </div>
             </div>
         </div>
@@ -1840,13 +1909,13 @@
          ========================================== -->
     <footer class="footer">
         <div class="container">
-            <div class="footer-brand">AWE <span>System</span></div>
+            <div class="footer-brand">iAWE <span>System</span></div>
             <div class="footer-divider"></div>
             <div class="footer-credit">
                 <strong>AI Co-Marker Project Team</strong><br>
-                Dr. Jokha Al Hosni<br>
-                Dr. Sanaa Al Huthaifi<br>
-                Dr. Waleed Mandour<br><br>
+                Jokha Al Hosni (Team Head)<br>
+                Sanna Al Hudhifi (Member)<br>
+                Waleed Mandour (Member)<br><br>
                 <strong>Sultan Qaboos University</strong> &mdash; Center for Preparatory Studies
             </div>
             <div class="footer-year">2025 &ndash; 2026</div>

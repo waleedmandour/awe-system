@@ -428,6 +428,7 @@ CRITICAL OUTPUT RULES:
 - Use straight double quotes, not smart/curly quotes.
 - Do NOT add trailing commas after the last item in arrays or objects.
 - All string values must have properly escaped quotes inside them.
+- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 
 JSON OUTPUT FORMAT:
 ============================================================
@@ -523,6 +524,7 @@ CRITICAL OUTPUT RULES:
 - Use straight double quotes, not smart/curly quotes.
 - Do NOT add trailing commas after the last item in arrays or objects.
 - All string values must have properly escaped quotes inside them.
+- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 
 JSON OUTPUT FORMAT:
 ============================================================
@@ -598,6 +600,7 @@ CRITICAL OUTPUT RULES:
 - Use straight double quotes, not smart/curly quotes.
 - Do NOT add trailing commas after the last item in arrays or objects.
 - All string values must have properly escaped quotes inside them.
+- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 
 JSON OUTPUT FORMAT:
 ============================================================
@@ -716,6 +719,7 @@ CRITICAL OUTPUT RULES:
 - Use straight double quotes, not smart/curly quotes.
 - Do NOT add trailing commas after the last item in arrays or objects.
 - All string values must have properly escaped quotes inside them.
+- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 
 JSON OUTPUT FORMAT:
 ============================================================
@@ -979,6 +983,7 @@ CRITICAL OUTPUT RULES:
 - Use straight double quotes, not smart/curly quotes.
 - Do NOT add trailing commas after the last item in arrays or objects.
 - All string values must have properly escaped quotes inside them.
+- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 
 JSON OUTPUT FORMAT:
 ============================================================

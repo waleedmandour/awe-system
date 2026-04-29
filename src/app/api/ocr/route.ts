@@ -275,7 +275,7 @@ async function performGeminiOCR(images: { base64: string; mimeType: string }[], 
     const genAI = new GoogleGenerativeAI(geminiApiKey);
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       systemInstruction: 'You are an expert OCR system specialized in reading handwritten and printed text. Extract ALL text from images with the highest accuracy. When multiple images are provided, they are pages of the SAME document in order (page 1, page 2, etc.). You MUST combine the text from all pages in exact page order, preserving the logical flow — do NOT duplicate the overlapping text at page boundaries. Output ONLY the full combined extracted text with no additional commentary, no page markers, and no explanations.'
     });
 

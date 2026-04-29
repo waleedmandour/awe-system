@@ -1356,13 +1356,13 @@ export async function POST(request: NextRequest) {
       : 'You are an expert writing assessment AI for Foundation and Credit level university courses at Sultan Qaboos University. All students are at CEFR A1-A2 level (Basic User). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. CRITICAL: For each criterion you MUST (1) quote exact words from the student essay as evidence, (2) explicitly justify why the score matches the rubric band, (3) list specific errors with quoted text, and (4) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.';
 
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       systemInstruction,
     });
 
-    // 3. Generate Content — do NOT use responseMimeType because
-    //    gemini-3-flash-preview doesn't reliably support it.
-    //    Instead, ask for JSON in the prompt and parse robustly.
+    // 3. Generate Content — ask for JSON in the prompt and parse robustly.
+    //    Note: gemini-2.5-flash supports responseMimeType but we keep
+    //    prompt-based JSON for consistency and reliability.
     //
     //    SAFETY: Lower safety thresholds to prevent student essay content
     //    (e.g., essays about smoking, pollution, social issues) from being

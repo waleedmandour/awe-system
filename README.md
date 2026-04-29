@@ -134,7 +134,7 @@ When FP0340 is selected, students choose between "For Mid-semester Exam" and "Fo
 - **Frontend:** Next.js 16, React 19, TypeScript
 - **Styling:** Tailwind CSS 4, shadcn/ui
 - **State Management:** Zustand (persisted to localStorage)
-- **AI Assessment:** Google Gemini (gemini-3-flash-preview)
+- **AI Assessment:** Google Gemini (gemini-2.5-flash)
 - **OCR:** Google Gemini + Google Cloud Vision API (DOCUMENT_TEXT_DETECTION)
 - **Animations:** Framer Motion
 - **PDF Generation:** PDFKit

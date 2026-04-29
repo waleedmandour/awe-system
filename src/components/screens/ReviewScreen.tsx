@@ -44,8 +44,8 @@ const PageTransition = ({ children, direction = 'right' }: { children: React.Rea
   </motion.div>
 );
 
-// Cooldown duration in seconds (60 seconds)
-const COOLDOWN_SECONDS = 60;
+// Cooldown duration in seconds (120 seconds = 2 minutes)
+const COOLDOWN_SECONDS = 120;
 
 // Review Screen Component
 const ReviewScreen = ({ onSubmit, onBack }: { onSubmit: (text: string) => void; onBack: () => void }) => {
@@ -194,7 +194,7 @@ const ReviewScreen = ({ onSubmit, onBack }: { onSubmit: (text: string) => void; 
             <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
               <Timer className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
               <AlertDescription className="text-sm text-blue-700 dark:text-blue-300">
-                <strong>Please wait {cooldownRemaining}s</strong> before submitting for assessment. This cooldown helps avoid Gemini free-tier rate limits. The button will be enabled automatically.
+                <strong>Please wait {cooldownRemaining}s</strong> before submitting for assessment. This cooldown helps avoid Gemini API rate limits. The button will be enabled automatically.
               </AlertDescription>
             </Alert>
           ) : (

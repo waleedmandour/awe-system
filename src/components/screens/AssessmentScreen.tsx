@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useAppStore, type Assessment } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,15 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  // Use refs to prevent race conditions:
+  // - onCompleteRef: stable reference so useEffect doesn't re-fire on parent re-renders
+  // - completedRef: guard flag to prevent double completion (success + error from duplicate calls)
+  // - abortRef: AbortController to cancel in-flight fetch on cleanup
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+  const completedRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
+
   const phases = [
     { text: 'Analyzing structure', icon: FileText },
     { text: 'Evaluating grammar', icon: CheckCircle },
@@ -62,6 +71,13 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
   ];
 
   useEffect(() => {
+    // Reset guard on mount
+    completedRef.current = false;
+
+    // Create AbortController for this effect instance
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     // Start the actual assessment API call
     const performAssessment = async () => {
       try {
@@ -79,9 +95,13 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
             writingType: selectedWritingType || undefined,
             sourceTextId: selectedSourceTextId || undefined,
           }),
+          signal: controller.signal,
         });
 
         const result = await response.json();
+
+        // Check if this call was aborted during fetch
+        if (controller.signal.aborted) return;
 
         if (!response.ok) {
           throw new Error(result.error || 'Failed to assess essay');
@@ -109,10 +129,19 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
         // Always recalculate total score from individual criterion scores (ignore AI total)
         const assessment = recalculateScores(rawAssessment);
 
+        // Guard: only complete once (prevent race condition where duplicate call succeeds)
+        if (completedRef.current) return;
+        completedRef.current = true;
+
         // Wait for progress to complete before showing results
         setProgress(100);
-        setTimeout(() => onComplete(assessment), 500);
+        setTimeout(() => onCompleteRef.current(assessment), 500);
       } catch (err) {
+        // Ignore aborted requests — they are expected during cleanup
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        // Ignore if already completed by another call
+        if (completedRef.current) return;
+
         console.error('Assessment error:', err);
         setError(err instanceof Error ? err.message : 'Failed to assess essay');
         toast({
@@ -135,10 +164,12 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
     }, 1500);
 
     return () => {
+      // Abort in-flight fetch on cleanup to prevent stale callbacks
+      controller.abort();
       clearInterval(progressInterval);
       clearInterval(phaseInterval);
     };
-  }, [extractedText, selectedCourse, geminiApiKey, selectedExamType, writingPrompt, onComplete, toast]);
+  }, [extractedText, selectedCourse, geminiApiKey, selectedExamType, writingPrompt, toast]); // REMOVED onComplete from deps — uses ref instead
 
   if (error) {
     return (

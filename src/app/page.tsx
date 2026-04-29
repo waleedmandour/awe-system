@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useAppStore, type Assessment } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
@@ -137,8 +137,8 @@ export default function AWEApp() {
     // Assessment will be handled by AssessmentScreen
   };
 
-  // Handle assessment completion
-  const handleAssessmentComplete = (assessment: Assessment) => {
+  // Handle assessment completion — wrapped in useCallback for stable reference
+  const handleAssessmentComplete = useCallback((assessment: Assessment) => {
     setCurrentAssessment(assessment);
     // Auto-save record
     const { selectedCourse, extractedText, addRecord } = useAppStore.getState();
@@ -150,7 +150,7 @@ export default function AWEApp() {
       createdAt: new Date().toISOString(),
     });
     setStep('results');
-  };
+  }, []);
 
   // Handle new assessment
   const handleNewAssessment = () => {

@@ -408,7 +408,7 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
   (f) If the score is 5, explain what the student did beyond expectations
 
 STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — explanation of the error and how to fix it
+  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
 
 STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 level writer.
 
@@ -440,7 +440,7 @@ JSON OUTPUT FORMAT:
       "justification": "Score 4: Good. The discussion section analyses the main trend with adequate details and statistics. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment]. The conclusion restates the aim and provides general recommendations.",
       "strengths": "The student demonstrates solid analysis of the main trend with supporting details.",
       "mistakes": [
-        "[exact quoted text]" — Explanation of the error and how to fix it
+        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
       ],
       "suggestions": "Include more specific statistics from the results to strengthen your analysis. Reference previous research more explicitly in the conclusion."
     }
@@ -505,7 +505,7 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
 This justification must make the score transparent and defensible. A reader should understand exactly why that score was given based on the evidence.
 
 STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — explanation of the error and how to fix it
+  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
 
 STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A1-A2 learner.
 
@@ -535,7 +535,7 @@ JSON OUTPUT FORMAT:
       "justification": "Score 4: Good. The essay addresses the task by [explanation]. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
       "strengths": "The student clearly addresses the topic and provides relevant examples. The opening sentence introduces the subject effectively.",
       "mistakes": [
-        "[exact quoted text]" — Explanation of the error and how to fix it
+        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
       ],
       "suggestions": "Try to add a clear concluding sentence that summarizes your main point. Use transition words like 'In conclusion' or 'To sum up'."
     }
@@ -583,7 +583,7 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
   (f) If the score is 4 or 5, explain what the student did beyond basic expectations
 
 STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — explanation of the error and how to fix it
+  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
 
 STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A1-A2 learner.
 
@@ -610,7 +610,7 @@ JSON OUTPUT FORMAT:
       "justification": "The essay achieves the task well by [explanation]. For example, \\"[exact quote]\\" shows [specific alignment with criterion].",
       "strengths": "The student captures the main points effectively and demonstrates good comprehension of the source material.",
       "mistakes": [
-        "[exact quoted text]" — Explanation of the error and how to fix it
+        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
       ],
       "suggestions": "Make sure every main point from the original text is represented in your summary. Use your own words rather than copying phrases."
     }
@@ -696,7 +696,7 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
   (g) If the score is 4 or 5, explain what the student did beyond basic expectations
 
 STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — explanation of the error and how to fix it
+  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
 
 STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 learner. For example: "Try using linking words like 'Furthermore' or 'In addition' to connect your ideas."
 
@@ -728,7 +728,7 @@ JSON OUTPUT FORMAT:
       "justification": "Score 3.5 — Good achievement. The summary captures most main ideas effectively. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment]. The student paraphrased well in most places, though some phrases were copied directly from the source text.",
       "strengths": "The student captures the main points about [X] and [Y] effectively. The paraphrasing shows reasonable comprehension of the source text.",
       "mistakes": [
-        "[exact quoted text]" — Explanation of the error and how to fix it
+        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
       ],
       "suggestions": "Try to capture ALL main ideas from the source text. Remember to use your own words rather than copying phrases directly."
     },
@@ -738,7 +738,7 @@ JSON OUTPUT FORMAT:
       "maxScore": 5,
       "justification": "Score 3 — Satisfactory coherence. [explanation with quoted evidence]",
       "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — explanation],
+      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
       "suggestions": "[1-2 improvement suggestions]"
     },
     {
@@ -747,7 +747,7 @@ JSON OUTPUT FORMAT:
       "maxScore": 5,
       "justification": "Score 3 — Satisfactory vocabulary. [explanation with quoted evidence]",
       "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — explanation],
+      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
       "suggestions": "[1-2 improvement suggestions]"
     },
     {
@@ -756,7 +756,7 @@ JSON OUTPUT FORMAT:
       "maxScore": 5,
       "justification": "Score 3.5 — Good grammar. [explanation with quoted evidence]",
       "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — explanation],
+      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
       "suggestions": "[1-2 improvement suggestions]"
     }
   ],
@@ -959,7 +959,7 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
   (g) If the score is 4 or 5, explain what the student did beyond basic expectations
 
 STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — explanation of the error and how to fix it
+  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
 
 STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 learner. For example: "Try using linking words like 'Furthermore' or 'In addition' to connect your ideas."
 
@@ -991,7 +991,7 @@ JSON OUTPUT FORMAT:
       "justification": "Score 3.5 — between Satisfactory and Good. The essay synthesizes information from all three sources, addressing the assignment prompt. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment]. The student paraphrased in most places. Word count is within the acceptable range.",
       "strengths": "The student successfully integrates information from all three source texts and addresses the assignment prompt requirements.",
       "mistakes": [
-        "[exact quoted text]" — Explanation of the error and how to fix it
+        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
       ],
       "suggestions": "Try to ensure ALL main ideas from each source are represented. Remember to use your own words throughout."
     },
@@ -1001,7 +1001,7 @@ JSON OUTPUT FORMAT:
       "maxScore": 5,
       "justification": "Score 3 — Satisfactory. [explanation with quoted evidence]",
       "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — explanation],
+      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
       "suggestions": "[1-2 improvement suggestions]"
     },
     {
@@ -1010,7 +1010,7 @@ JSON OUTPUT FORMAT:
       "maxScore": 5,
       "justification": "Score 3 — Satisfactory. [explanation with quoted evidence]",
       "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — explanation],
+      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
       "suggestions": "[1-2 improvement suggestions]"
     },
     {
@@ -1019,7 +1019,7 @@ JSON OUTPUT FORMAT:
       "maxScore": 5,
       "justification": "Score 3.5 — between Satisfactory and Good. [explanation with quoted evidence]",
       "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — explanation],
+      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
       "suggestions": "[1-2 improvement suggestions]"
     }
   ],

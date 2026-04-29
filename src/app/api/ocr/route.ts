@@ -308,6 +308,9 @@ async function performGeminiOCR(images: { base64: string; mimeType: string }[], 
         temperature: 0.1,
         mediaResolution: 'MEDIA_RESOLUTION_HIGH',
         maxOutputTokens: 8192,
+        thinkingConfig: {
+          thinkingBudget: 0,  // Disable thinking — prevents thought tokens from consuming output budget or polluting OCR text
+        },
       } as any,
       safetySettings,
     });
@@ -331,8 +334,18 @@ async function performGeminiOCR(images: { base64: string; mimeType: string }[], 
       );
     }
 
-    // Handle null/undefined response safely
-    const rawText = result.response?.text?.() || '';
+    // Extract text — filter out "thought" parts from thinking models
+    let rawText = '';
+    if (candidate?.content?.parts) {
+      for (const part of candidate.content.parts) {
+        if (part.text && !part.thought) {
+          rawText += part.text;
+        }
+      }
+    }
+    if (!rawText) {
+      rawText = result.response?.text?.() || '';
+    }
     if (!rawText || rawText.trim().length === 0) {
       return NextResponse.json(
         { error: 'AI returned an empty response for the image. Please try again or use the Vision API instead.', details: `Empty response, finishReason: ${finishReason || 'unknown'}` },

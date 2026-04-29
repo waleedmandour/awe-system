@@ -1355,14 +1355,20 @@ export async function POST(request: NextRequest) {
       ? 'You are an expert writing assessment AI for the Credit level course LANC2146 (Report Writing) at Sultan Qaboos University. For lab report Discussion and Conclusion tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) evaluate the Discussion section for analysis and interpretation of data with details/examples/statistics, (2) evaluate the Conclusion for summary of results, reference to previous research, restatement of aim, and recommendations, (3) quote exact words from the student text as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) check word count against the 350-450 word target range with a +/-20 word tolerance (effective acceptable range: 330-470), and (7) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : 'You are an expert writing assessment AI for Foundation and Credit level university courses at Sultan Qaboos University. All students are at CEFR A1-A2 level (Basic User). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. CRITICAL: For each criterion you MUST (1) quote exact words from the student essay as evidence, (2) explicitly justify why the score matches the rubric band, (3) list specific errors with quoted text, and (4) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.';
 
-    const model = genAI.getGenerativeModel({ 
+    const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       systemInstruction,
+      generationConfig: {
+        responseMimeType: 'application/json',
+      },
     });
 
-    // 3. Generate Content — ask for JSON in the prompt and parse robustly.
-    //    Note: gemini-2.5-flash supports responseMimeType but we keep
-    //    prompt-based JSON for consistency and reliability.
+    // 3. Generate Content — gemini-2.5-flash is a "thinking" model by default.
+    //    We MUST disable thinking because:
+    //    (a) thinking tokens waste the maxOutputTokens budget, causing truncated JSON
+    //    (b) thinking text can bleed into the response, breaking JSON parsing
+    //    (c) we only need structured JSON output, not reasoning
+    //    We also use responseMimeType: 'application/json' to force valid JSON.
     //
     //    SAFETY: Lower safety thresholds to prevent student essay content
     //    (e.g., essays about smoking, pollution, social issues) from being
@@ -1392,7 +1398,10 @@ export async function POST(request: NextRequest) {
             generationConfig: {
               temperature: 0.2,
               maxOutputTokens: maxTokens,
-            },
+              thinkingConfig: {
+                thinkingBudget: 0,  // Disable thinking — prevents thought tokens from consuming output budget or polluting JSON
+              },
+            } as any,
             safetySettings,
           });
 
@@ -1420,8 +1429,22 @@ export async function POST(request: NextRequest) {
             );
           }
 
-          // Extract text — handle null/undefined safely
-          const rawText = result.response?.text?.() || '';
+          // Extract text — manually filter out "thought" parts from thinking models
+          // gemini-2.5-flash may include thought parts in the response even with thinkingBudget: 0
+          // We only want the actual text (non-thought) parts for JSON parsing
+          let rawText = '';
+          if (candidate?.content?.parts) {
+            // Filter out thought parts and concatenate only text parts
+            for (const part of candidate.content.parts) {
+              if (part.text && !part.thought) {
+                rawText += part.text;
+              }
+            }
+          }
+          // Fallback to the SDK's text() method if manual extraction failed
+          if (!rawText) {
+            rawText = result.response?.text?.() || '';
+          }
           if (!rawText || rawText.trim().length === 0) {
             console.error('Gemini returned empty response. finishReason:', finishReason);
             return NextResponse.json(

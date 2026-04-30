@@ -11,7 +11,7 @@ const EXAM_WORD_COUNTS: Record<string, { min: number; max: number; ideal: number
 };
 
 // Default word count target (used when no exam type is specified)
-const DEFAULT_FOUNDATION_WORD_COUNT = { min: 110, max: 130, ideal: 120 };
+const DEFAULT_FOUNDATION_WORD_COUNT = { min: 110, max: 130, ideal: 120, label: 'Foundation Exam' };
 
 // Detailed assessment rubrics for Foundation courses (0230, 0340)
 const FOUNDATION_RUBRICS = {
@@ -21,11 +21,13 @@ const FOUNDATION_RUBRICS = {
       maxScore: 6,
       description: 'How well the essay addresses the task requirements, audience, purpose, and genre.',
       rubric: {
-        '0-2': 'Very Poor: Text fails to fulfill any task requirements and shows no understanding of audience, purpose or genre. Length of text may be inappropriate.',
+        '0-1.5': 'Very Poor: Text fails to fulfill any task requirements and shows no understanding of audience, purpose or genre. Length of text may be inappropriate.',
+        '2-2.5': 'Weak: Response shows minimal awareness of the task, audience, purpose or genre. Very limited topic development. Length of text is likely inappropriate.',
         '3': 'Unsatisfactory: Response does not adequately fulfill task requirements and shows little awareness of audience, purpose and genre. Little or no attempt at topic development. Length of text may be inappropriate.',
         '3.5': 'Satisfactory: Response fulfills most task requirements and shows adequate awareness of audience, purpose and genre. Topic development is attempted but may be limited, predictable, and/or irrelevant in places. Length of text may be inappropriate.',
         '4': 'Good: Response fulfills specific task requirements. Little more could reasonably be expected for the level. Response shows a good level of awareness of audience, purpose and genre. Topic is developed and explored well.',
-        '4.5-6': 'Excellent: Response fulfills all specific task requirements and exceeds expectations for this level. Response shows a high level of awareness of audience, purpose and genre. Topic is fully developed and explored.'
+        '4.5': 'Very Good: Response fulfills all specific task requirements. Response shows a very good level of awareness of audience, purpose and genre. Topic is well developed and explored with some depth.',
+        '5-6': 'Excellent: Response fulfills all specific task requirements and exceeds expectations for this level. Response shows a high level of awareness of audience, purpose and genre. Topic is fully developed and explored.'
       }
     },
     {
@@ -33,11 +35,13 @@ const FOUNDATION_RUBRICS = {
       maxScore: 6,
       description: 'Logical organization, paragraphing, and use of cohesive devices.',
       rubric: {
-        '0-2': 'Very Poor: Very little control of organizational features. The text is largely confused and incoherent, making it challenging for the reader to process.',
+        '0-1.5': 'Very Poor: Very little control of organizational features. The text is largely confused and incoherent, making it challenging for the reader to process.',
+        '2-2.5': 'Weak: Minimal organization. Ideas are disconnected and difficult to follow. No paragraphs or very poor paragraphing. Cohesive devices are absent or misused.',
         '3': 'Unsatisfactory: Organization is limited, compromising coherence. Some re-reading may be necessary. Ideas lack progression and may be repeated. There may be no paragraphs. Some simple cohesive devices are used but usually inaccurately and repetitively.',
         '3.5': 'Satisfactory: Organization provides an underlying coherence although progression may be inconsistent. Text may be stilted in places. Paragraphing is generally appropriate although ideas may not always be supported. Cohesive devices may be over or under used, or used mechanically in places. Text may be repetitive due to lack of referencing.',
         '4': 'Good: Organization of information and ideas makes text clear and easy to understand. Each paragraph has a main topic supported by some relevant details. Cohesive devices are frequently used accurately both within and/or between sentences.',
-        '4.5-6': 'Excellent: Information and ideas are organized so effectively that text has a fluent progression throughout. Opening and closing sections are appropriate and fully developed. Each paragraph has a clear main topic supported by well-organised, relevant details. Cohesive devices are consistently used accurately both within and/or between sentences.'
+        '4.5': 'Very Good: Information and ideas are clearly and logically organized. Each paragraph has a clear main topic supported by relevant details. Cohesive devices are consistently used accurately within and between sentences.',
+        '5-6': 'Excellent: Information and ideas are organized so effectively that text has a fluent progression throughout. Opening and closing sections are appropriate and fully developed. Each paragraph has a clear main topic supported by well-organised, relevant details. Cohesive devices are consistently used accurately both within and/or between sentences.'
       }
     },
     {
@@ -45,11 +49,13 @@ const FOUNDATION_RUBRICS = {
       maxScore: 6,
       description: 'Range and accuracy of vocabulary, word choice, and spelling.',
       rubric: {
-        '0-2': 'Very Poor: Vocabulary is very limited and may be unrelated to the task or consists largely of inappropriate memorized chunks. Poor word choice and spelling prevent the communication of ideas.',
+        '0-1.5': 'Very Poor: Vocabulary is very limited and may be unrelated to the task or consists largely of inappropriate memorized chunks. Poor word choice and spelling prevent the communication of ideas.',
+        '2-2.5': 'Weak: Vocabulary is extremely limited and frequently inappropriate. Word choice and spelling errors are pervasive and severely impede communication. Only isolated words or phrases are comprehensible.',
         '3': 'Unsatisfactory: Vocabulary is inadequate or inappropriate for the level and task and may be used repetitively. Errors in word choice and spelling frequently affect communication.',
         '3.5': 'Satisfactory: Text has a limited but adequate range of vocabulary for the level and task. Core vocabulary is usually used accurately and appropriately. If there are attempts to extend beyond this range, there may be some inaccuracy or inappropriacy which affects communication in places.',
         '4': 'Good: Text has a good range of vocabulary for the level and task. Core vocabulary is frequently used accurately and appropriately. If there are attempts to extend beyond this range, there may be some inaccuracy or inappropriacy, although communication is not affected.',
-        '4.5-6': 'Excellent: Text has a significantly wider range of vocabulary than is expected for the level and task. Core vocabulary is consistently used accurately and appropriately. There may be occasional errors in word choice and spelling where more complex/creative lexis is attempted but communication is not affected.'
+        '4.5': 'Very Good: Text has a very good range of vocabulary for the level and task. Vocabulary is used accurately and appropriately with only rare minor errors. Communication is clear and effective.',
+        '5-6': 'Excellent: Text has a significantly wider range of vocabulary than is expected for the level and task. Core vocabulary is consistently used accurately and appropriately. There may be occasional errors in word choice and spelling where more complex/creative lexis is attempted but communication is not affected.'
       }
     },
     {
@@ -57,11 +63,13 @@ const FOUNDATION_RUBRICS = {
       maxScore: 6,
       description: 'Range and accuracy of grammatical structures and punctuation.',
       rubric: {
-        '0-2': 'Very Poor: Structures are inaccurate and errors predominate, preventing meaningful communication. Punctuation may be inadequate and/or inaccurate.',
+        '0-1.5': 'Very Poor: Structures are inaccurate and errors predominate, preventing meaningful communication. Punctuation may be inadequate and/or inaccurate.',
+        '2-2.5': 'Weak: Very limited grammatical structures with frequent serious errors. Most sentences contain errors that impede understanding. Punctuation is largely absent or inaccurate.',
         '3': 'Unsatisfactory: Structures are very limited and inadequate for the level and task. Errors are noticeable and may often affect communication. Punctuation may be inadequate and/or inaccurate.',
         '3.5': 'Satisfactory: Text has a limited but adequate range of structures for the level and task. Core structures for the level are usually used accurately and appropriately although they may sometimes be used mechanically. Grammatical errors may affect communication in places. Punctuation is generally effective.',
         '4': 'Good: Text has a good range of structures for the level and task. Core structures for the level are frequently used accurately and appropriately. If there are attempts to extend beyond this range, there may be some inaccuracy or inappropriacy, without affecting communication. Punctuation is well managed and effective.',
-        '4.5-6': 'Excellent: Text has a significantly wider range of structures than is expected for the level and task. Core structures are consistently used accurately and appropriately. There may be occasional errors where more complex structures are attempted but communication is not affected. Punctuation is well managed and effective.'
+        '4.5': 'Very Good: Text has a very good range of structures for the level. Most structures are used accurately and appropriately. Minor errors do not impede communication. Punctuation is well managed and effective.',
+        '5-6': 'Excellent: Text has a significantly wider range of structures than is expected for the level and task. Core structures are consistently used accurately and appropriately. There may be occasional errors where more complex structures are attempted but communication is not affected. Punctuation is well managed and effective.'
       }
     }
   ],
@@ -456,11 +464,23 @@ JSON OUTPUT FORMAT:
 // Build detailed rubric prompt for Foundation courses
 function buildFoundationPrompt(text: string, topic: string | null, wordCount: number, targetWordCount: { min: number; max: number; ideal: number; label?: string }): string {
   const rubrics = FOUNDATION_RUBRICS;
-  const wordCountStatus = wordCount < targetWordCount.min 
-    ? `WARNING: Word count (${wordCount}) is BELOW the required range of ${targetWordCount.min}-${targetWordCount.max} words. This MUST lower the Task Response score.`
+  const totalMaxScore = rubrics.criteria.reduce((sum, c) => sum + c.maxScore, 0); // 24
+
+  // Word count tolerance: +/-10 words beyond the target range is acceptable without penalty
+  const toleranceBelow = targetWordCount.min - 10;
+  const toleranceAbove = targetWordCount.max + 10;
+
+  const wordCountStatus = wordCount < toleranceBelow
+    ? `WARNING: Word count (${wordCount}) is SIGNIFICANTLY BELOW the required range of ${targetWordCount.min}-${targetWordCount.max} words (more than 10 words below minimum). This MUST lower the Task Response score.`
+    : wordCount < targetWordCount.min
+    ? `NOTE: Word count (${wordCount}) is slightly below the required range of ${targetWordCount.min}-${targetWordCount.max} words (within 10-word tolerance). Minor flexibility is acceptable — do NOT penalize.`
+    : wordCount > toleranceAbove
+    ? `NOTE: Word count (${wordCount}) SIGNIFICANTLY exceeds the target range of ${targetWordCount.min}-${targetWordCount.max} words (more than 10 words above maximum). This should lower the Task Response score.`
     : wordCount > targetWordCount.max
-    ? `NOTE: Word count (${wordCount}) exceeds the target range of ${targetWordCount.min}-${targetWordCount.max} words. Minor flexibility is acceptable.`
+    ? `Word count (${wordCount}) is slightly above the target range of ${targetWordCount.min}-${targetWordCount.max} words (within 10-word tolerance). Minor flexibility is acceptable — do NOT penalize.`
     : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
+
+  const examLabel = targetWordCount.label || 'Foundation Exam';
 
   const criteriaDetails = rubrics.criteria.map(c => {
     const rubricLevels = Object.entries(c.rubric)
@@ -473,6 +493,7 @@ function buildFoundationPrompt(text: string, topic: string | null, wordCount: nu
 
 STUDENT LEVEL: CEFR A1-A2 (Basic User). Feedback must use simple, clear language that A1-A2 learners can understand. Be encouraging while maintaining appropriate standards. Avoid overly technical linguistic terminology.
 
+EXAM TYPE: ${examLabel}
 ${topic ? `Essay Topic: ${topic}` : 'No specific topic provided.'}
 
 Student Essay:
@@ -480,7 +501,9 @@ Student Essay:
 ${text}
 """
 
-WORD COUNT: ${wordCountStatus}
+TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}). A tolerance of +/-10 words is acceptable (effective range: ${toleranceBelow}-${toleranceAbove}).
+
+${wordCountStatus}
 
 ASSESSMENT RUBRICS (Foundation Courses - FP0230 and FP0340):
 
@@ -502,6 +525,7 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
   (d) If you awarded a half-point, explain which aspects place it in the lower band and which aspects place it in the higher band
   (e) If the score is below 4, clearly state what is missing compared to the next higher band
   (f) If the score is 5 or 6, explain what the student did beyond expectations
+  (g) For Task Response: specifically address whether the essay addresses the topic, stays within the word count, and follows the expected essay structure for a ${examLabel}
 
 This justification must make the score transparent and defensible. A reader should understand exactly why that score was given based on the evidence.
 
@@ -513,12 +537,14 @@ STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for 
 STEP 5 — overallFeedback must be a comprehensive summary (3-5 sentences) that:
   - Highlights the student's strongest criterion and what they did well
   - Identifies the weakest area needing the most attention
+  - Comments on whether the word count meets the ${examLabel} requirements
   - Gives one prioritized action item to focus on next
 
-STEP 6 — Calculate totalScore = sum of all criterion scores (max 24). Scores may include 0.5 increments (e.g., 3.5, 4.5). Calculate percentage = round(totalScore / 24 * 100).
+STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Scores may include 0.5 increments (e.g., 3.5, 4.5). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
 
 ============================================================
 CRITICAL OUTPUT RULES:
+- You MUST score ALL FOUR criteria: Task Response, Coherence and Cohesion, Lexical Resource, and Grammatical Range and Accuracy. Do NOT omit any criterion.
 - Respond with ONLY the raw JSON object. No markdown, no code fences, no commentary.
 - Do NOT wrap the JSON in triple-backtick code blocks.
 - Use straight double quotes, not smart/curly quotes.
@@ -526,7 +552,7 @@ CRITICAL OUTPUT RULES:
 - All string values must have properly escaped quotes inside them.
 - FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 
-JSON OUTPUT FORMAT:
+JSON OUTPUT FORMAT (you MUST include exactly 4 score entries — one for EACH criterion):
 ============================================================
 {
   "scores": [
@@ -535,17 +561,44 @@ JSON OUTPUT FORMAT:
       "score": 4,
       "maxScore": 6,
       "justification": "Score 4: Good. The essay addresses the task by [explanation]. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
-      "strengths": "The student clearly addresses the topic and provides relevant examples. The opening sentence introduces the subject effectively.",
+      "strengths": "The student clearly addresses the topic and provides relevant examples.",
       "mistakes": [
-        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+        "[exact quoted text]: Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version"
       ],
       "suggestions": "Try to add a clear concluding sentence that summarizes your main point. Use transition words like 'In conclusion' or 'To sum up'."
+    },
+    {
+      "criterionName": "Coherence and Cohesion",
+      "score": 3.5,
+      "maxScore": 6,
+      "justification": "Score 3.5: [justification with quoted evidence]",
+      "strengths": "[specific strengths]",
+      "mistakes": ["[exact quoted text]: explanation"],
+      "suggestions": "[1-2 improvement suggestions]"
+    },
+    {
+      "criterionName": "Lexical Resource",
+      "score": 3,
+      "maxScore": 6,
+      "justification": "Score 3: [justification with quoted evidence]",
+      "strengths": "[specific strengths]",
+      "mistakes": ["[exact quoted text]: explanation"],
+      "suggestions": "[1-2 improvement suggestions]"
+    },
+    {
+      "criterionName": "Grammatical Range and Accuracy",
+      "score": 3.5,
+      "maxScore": 6,
+      "justification": "Score 3.5: [justification with quoted evidence]",
+      "strengths": "[specific strengths]",
+      "mistakes": ["[exact quoted text]: explanation"],
+      "suggestions": "[1-2 improvement suggestions]"
     }
   ],
-  "totalScore": 16,
-  "maxScore": 24,
-  "percentage": 67,
-  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Focus on [one prioritized action] to improve your next essay."
+  "totalScore": 14,
+  "maxScore": ${totalMaxScore},
+  "percentage": 58,
+  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. [Comment on word count if relevant]. Focus on [one prioritized action] to improve your next essay."
 }`;
 }
 

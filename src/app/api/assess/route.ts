@@ -1771,8 +1771,20 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Assessment error:', error);
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    // Provide more specific error messages for common Gemini API failures
+    let userError = 'Failed to assess essay';
+    if (msg.includes('API key not valid') || msg.includes('API_KEY_INVALID') || msg.includes('invalid API key')) {
+      userError = 'Gemini API key is invalid. Please update your API key in Settings.';
+    } else if (msg.includes('model not found') || msg.includes('does not exist') || msg.includes('MODEL_NOT_FOUND')) {
+      userError = 'The AI model is currently unavailable. Please try again later.';
+    } else if (msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
+      userError = 'Gemini API quota exceeded. Please wait a few minutes and try again.';
+    } else if (msg.includes('PERMISSION_DENIED') || msg.includes('forbidden')) {
+      userError = 'Gemini API access denied. The API key may not have permission to use this model.';
+    }
     return NextResponse.json(
-      { error: 'Failed to assess essay', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: userError, details: msg },
       { status: 500 }
     );
   }

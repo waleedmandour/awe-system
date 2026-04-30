@@ -44,8 +44,8 @@ const PageTransition = ({ children, direction = 'right' }: { children: React.Rea
   </motion.div>
 );
 
-// Cooldown duration in seconds (90 seconds = 1.5 minutes)
-const COOLDOWN_SECONDS = 90;
+// Cooldown duration in seconds (60 seconds = 1 minute)
+const COOLDOWN_SECONDS = 60;
 
 // Review Screen Component
 const ReviewScreen = ({ onSubmit, onBack }: { onSubmit: (text: string) => void; onBack: () => void }) => {

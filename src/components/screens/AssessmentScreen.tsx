@@ -104,7 +104,9 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
         if (controller.signal.aborted) return;
 
         if (!response.ok) {
-          throw new Error(result.error || 'Failed to assess essay');
+          const errMsg = result.error || 'Failed to assess essay';
+          const detail = result.details ? ` (${result.details})` : '';
+          throw new Error(errMsg + detail);
         }
 
         // Transform the API response to match Assessment type

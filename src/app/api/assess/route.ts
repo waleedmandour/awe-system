@@ -772,106 +772,150 @@ JSON OUTPUT FORMAT:
 }
 
 // Synthesis assignments data (defined here to avoid import issues with @/lib/store in server-side route)
-interface SynthesisAssignmentData {
-  id: string;
-  title: string;
-  description: string;
-  cefrLevel: string;
-  expectedParagraphs: number;
-  sources: {
-    id: string;
-    title: string;
-    content: string;
-  }[];
-  targetWordCount: {
-    min: number;
-    max: number;
-    ideal: number;
-  };
+// NOTE: Synthesis assignment data is imported dynamically from the store
+// to avoid duplicating data and causing ID mismatches between frontend and API.
+
+// Build prompt for LANC1070 Synthesis Essay (single source text)
+function buildLanc1070Prompt(
+  studentText: string,
+  sourceContent: string,
+  sourceTitle: string,
+  assignmentTitle: string,
+  assignmentDescription: string,
+  wordCount: number,
+  targetWordCount: { min: number; max: number; ideal: number }
+): string {
+  const rubrics = SYNTHESIS_RUBRICS;
+  const totalMaxScore = SYNTHESIS_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0); // 20
+
+  const tenPercentBelow = Math.round(targetWordCount.min * 0.9);
+  const tenPercentAbove = Math.round(targetWordCount.max * 1.1);
+
+  const wordCountStatus = wordCount < tenPercentBelow
+    ? `WARNING: Word count (${wordCount}) is MORE THAN 10% BELOW the required minimum of ${targetWordCount.min} words. This MUST lower the Task Achievement score per the rubric.`
+    : wordCount < targetWordCount.min
+    ? `NOTE: Word count (${wordCount}) is below the required range of ${targetWordCount.min}-${targetWordCount.max} words. Up to 10% below is acceptable for the Satisfactory band.`
+    : wordCount > tenPercentAbove
+    ? `WARNING: Word count (${wordCount}) is MORE THAN 10% ABOVE the required maximum of ${targetWordCount.max} words. This MUST lower the Task Achievement score per the rubric.`
+    : wordCount > targetWordCount.max
+    ? `NOTE: Word count (${wordCount}) exceeds the recommended range of ${targetWordCount.min}-${targetWordCount.max} words. Up to 10% above is acceptable for the Satisfactory band.`
+    : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
+
+  const criteriaDetails = rubrics.criteria.map(c => {
+    const rubricLevels = Object.entries(c.rubric)
+      .map(([score, desc]) => `  Score ${score}: ${desc}`)
+      .join('\n');
+    return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
+  }).join('\n\n');
+
+  return `You are an expert writing assessor evaluating a Credit level student's synthesis essay for Sultan Qaboos University's Center for Preparatory Studies, course LANC1070 (Academic English).
+
+STUDENT LEVEL: CEFR A2-B1 (Elementary to Pre-Intermediate). Feedback must use simple, clear language appropriate for A2-B1 learners. Be encouraging while maintaining appropriate academic standards. Avoid overly technical linguistic terminology.
+
+ASSIGNMENT: ${assignmentTitle}
+
+WRITING TASK: ${assignmentDescription}
+
+TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}). A tolerance of +/-10% is acceptable (effective range: ${tenPercentBelow}-${tenPercentAbove}).
+
+${wordCountStatus}
+
+SOURCE TEXT:
+Title: "${sourceTitle}"
+"""
+${sourceContent}
+"""
+
+STUDENT'S ESSAY:
+"""
+${studentText}
+"""
+
+ASSESSMENT RUBRICS (LANC1070 - Synthesis Essay based on a single source text):
+
+${criteriaDetails}
+
+POINTS TO CONSIDER FOR EACH CRITERION:
+
+Task Achievement:
+- Does the essay address the required discussion points from the assignment?
+- Is information from the source text synthesized effectively?
+- Does the essay stay within the target word count?
+
+Coherence and Cohesion:
+- Logical organization of information and ideas
+- Use of cohesive devices (conjunctions and linkers)
+- Paragraphing and essay structure
+
+Lexical Resource:
+- Vocabulary range and accuracy
+- Paraphrasing quality (student uses own words rather than copying)
+- Spelling and word formation
+
+Grammatical Range and Accuracy:
+- Range and accuracy of grammatical structures
+- Sentence variety
+- Punctuation
+
+============================================================
+SCORING AND FEEDBACK INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
+============================================================
+
+STEP 1 — SCORE each criterion using WHOLE or HALF numbers (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, or 5). If the essay's quality falls between two adjacent score bands, award a half-point (e.g., 3.5). Use 0.5 increments only — never use 0.25 or 0.75.
+
+STEP 2 — For EACH criterion, write a "Justification" paragraph that:
+  (a) Explicitly names the score band you chose (e.g. "Score 3.5 — Satisfactory")
+  (b) Quotes at least ONE specific phrase or sentence from the student's essay as evidence
+  (c) Explains why the essay fits that band descriptor — connect the evidence to the rubric
+  (d) If you awarded a half-point, explain which aspects place it in the lower band and which in the higher band
+  (e) If the score is below 4, clearly state what is missing compared to the next higher band
+  (f) If the score is 5, explain what the student did beyond expectations
+
+STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
+  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+
+STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 level writer.
+
+STEP 5 — overallFeedback must be a comprehensive summary (4-6 sentences) that:
+  - Highlights the student's strongest criterion and what they did well
+  - Identifies the weakest area needing the most attention
+  - Evaluates how well the essay addresses the assigned discussion points
+  - Evaluates how effectively the student used the source text (paraphrasing vs copying)
+  - Gives one prioritized action item to focus on next
+
+STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
+
+============================================================
+CRITICAL OUTPUT RULES:
+- Respond with ONLY the raw JSON object. No markdown, no code fences, no commentary.
+- Do NOT wrap the JSON in triple-backtick code blocks.
+- Use straight double quotes, not smart/curly quotes.
+- Do NOT add trailing commas after the last item in arrays or objects.
+- All string values must have properly escaped quotes inside them.
+- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
+
+JSON OUTPUT FORMAT:
+============================================================
+{
+  "scores": [
+    {
+      "criterionName": "Task Achievement",
+      "score": 4,
+      "maxScore": 5,
+      "justification": "Score 4: Good. The essay addresses the task by [explanation]. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
+      "strengths": "The student demonstrates solid understanding of the source material and addresses the main discussion points.",
+      "mistakes": [
+        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+      ],
+      "suggestions": "Include more specific examples from the source text to support your discussion points. Use your own words more consistently when paraphrasing."
+    }
+  ],
+  "totalScore": 16,
+  "maxScore": ${totalMaxScore},
+  "percentage": 80,
+  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Focus on [one prioritized action] to improve your next essay."
+}`;
 }
-
-const SYNTHESIS_ASSIGNMENTS: SynthesisAssignmentData[] = [
-  {
-    id: 'nitrates-poisoning',
-    title: 'Two Common Sources of Poisoning Nitrates',
-    description: 'Write a synthesis essay (4 paragraphs) based on three source texts about nitrates and their effects on human health. Synthesize information from all three sources to explain two common sources of nitrate poisoning: contaminated well water and contaminated vegetables.',
-    cefrLevel: 'A2-B1',
-    expectedParagraphs: 4,
-    targetWordCount: {
-      min: 200,
-      max: 300,
-      ideal: 250,
-    },
-    sources: [
-      {
-        id: 'source-1-nitrates',
-        title: 'What are Nitrates?',
-        content: `Nitrates (NO3) are chemical compounds made from nitrogen (N) and oxygen (O). The primary toxic effects of the inorganic nitrate ion (NO3) result from its reduction to nitrite (NO2) by microorganisms in the upper digestive tract. The gastrointestinal tract of adults can process this chemical and it naturally passes out of the body through urine, but it can cause a dangerous blood condition in children. High levels of nitrate in food or drinking water are known to be dangerous to babies in the first three months of life, and may result in the so-called "blue baby syndrome". The chemical causes the blood to carry less oxygen, and the infant may suffocate. Other symptoms of nitrite toxicity in children and adults can include difficulty in breathing, dizziness, headaches, nausea, and vomiting. In older children and adults, there is also a risk of cancer because nitrites are unstable and can combine readily with other compound to form nitrosamines, which can cause cancer.`,
-      },
-      {
-        id: 'source-2-well-water',
-        title: 'Well Water May Be a Common Source of Nitrate Poisoning',
-        content: `A recent study in the U.S. has said that families using water from wells in agricultural areas should have their water tested regularly to check nitrate levels. The U.S. Safe Drinking Water Act of 1974 established that the maximum safe concentration of nitrates in drinking water is 10 mg/l. Yet some wells tested during the study showed levels that were considerably above that limit. Nitrites can build up in groundwater as a result of the excessive use on farms of nitrogen-based fertilizers such as potassium nitrate and ammonium nitrate. These chemicals often seep into well water and accumulate there. If wells are found to have nitrate levels that are above the safe limit, it is not advisable to use that water for drinking.`,
-      },
-      {
-        id: 'source-3-vegetables',
-        title: 'Increased Nitrate Levels Found in Vegetables',
-        content: `Nitrates are the main form in which the essential plant nutrient, nitrogen, is absorbed naturally by plants from the soil. When fertilizers are added to the soil, the plants can use the nitrates directly and this increases plant growth. Most of the excess nitrates in the environment originate from the chemical fertilizers that are manufactured for agriculture. Unfortunately, in their search for greater profits, farmers often overuse nitrate-based chemical fertilizers to improve crop yields. Vegetables become contaminated with nitrates when crops take up more than they can use for growth. As a consequence, nitrate levels in carrots, lettuce, and spinach, for example, have roughly doubled since the 1970s in the US.`,
-      },
-    ],
-  },
-  {
-    id: 'co2-automobile-ac',
-    title: 'Two Advantages of CO2 for Automobile Air Conditioning Systems',
-    description: 'Write a synthesis essay (4 paragraphs) based on three source texts about CO2 as a refrigerant for automobile air conditioning systems. Synthesize information from all three sources to explain two advantages of CO2 for automobile air conditioning systems.',
-    cefrLevel: 'A2-B1',
-    expectedParagraphs: 4,
-    targetWordCount: {
-      min: 300,
-      max: 350,
-      ideal: 325,
-    },
-    sources: [
-      {
-        id: 'source-1-co2-cool-wars',
-        title: 'The Cool Wars',
-        content: `Mechanical refrigeration systems were developed in the late 19th and early 20th centuries. These systems were based on the compression and evaporation of gases. The primary refrigerants (gases used in cooling systems) were ammonia (NH3), sulfur dioxide (SO2) and chloromethane (Ch3Cl). These worked relatively well, but were not suitable for home use because they are toxic.
-In the late 1920s, Thomas Midgley developed chlorofluorocarbons (CFCs), which the DuPont Chemical Company marketed as Freon, for use as refrigerants. These compounds of carbon, chlorine and fluorine have many useful properties. They are non-toxic, non-flammable, non-reactive, inexpensive, and efficient as refrigerants. From the 1930s, CFCs were produced in huge quantities for use in refrigeration. Soon, CFCs were used in other applications, such as air conditioning (AC) systems, fire extinguishers and spray cans.
-However, in the early 1970s, scientists noticed that CFCs can reach the upper atmosphere. There, the molecules are broken apart by ultraviolet light from the sun, which results in a chemical reaction that breaks down the ozone molecule. Ozone in the upper atmosphere is important because it absorbs some of the ultraviolet radiation coming from the sun. When the ozone decreases, more ultraviolet radiation reaches the earth. Too much ultraviolet radiation can cause increased skin cancer and eye damage in humans.
-Governments from around the world met in the 1980s and adopted the Montreal Protocol. This was an agreement to stop the production and use of CFCs and other compounds that damage the ozone layer.
-It has not been easy to find a good replacement refrigerant that does not damage the ozone layer and does not contribute to global warming. The necessary properties for a suitable replacement gas include the following: low Ozone Depletion Potential (ODP), low Global Warming Potential (GWP), non-toxic, non-flammable, efficient refrigerant, inexpensive and easy to produce.
-Just as in the 19th century electrical Current Wars, we now have the Cool Wars. The race is on to produce refrigeration and air conditioning systems that do not endanger the ozone layer and do not contribute to global warming. Currently, the two strongest choices for a new refrigerant gas are CO2 and HFO-1234yf (C3H2F4). The winners of the Cool Wars will make billions of dollars.
-
-Refrigerant | History | ODP | GWP
-CFC-12 | Most commonly used refrigerant before Montreal Protocol | 1 | 10,890
-HFC-134a | First generation replacement for CFC-12 | 0 | 1300
-CO2 | Possible non-hydrocarbon replacement for HFC-134a | 0 | 1
-HFO-1234yf | Possible hydrocarbon-based replacement for HFC-134a | 0 | 4
-
-NOTE: This chart compares the effect of each refrigerant on the ozone and on global warming. For example, one molecule of CFC-12 has 10,890 times more effect on Global Warming than one molecule of CO2.`,
-      },
-      {
-        id: 'source-2-co2-safety',
-        title: 'The Safety of Refrigerants Used in Automobile Air Conditioning Systems',
-        content: `One of the main concerns for automobile engineers and government regulators is passenger safety. The main safety concerns about car AC refrigerants are flammability and toxicity.
-While carbon dioxide is non-flammable, many other gases which could be used as refrigerants ignite under certain conditions. For example, butane and propane, which are commonly used as fuel in domestic gas cookers, have properties that would make them efficient gases for use in refrigeration systems. They are, however, both explosive and toxic, so governments have banned their use in automobile air conditioners.
-The new DuPont compound HFO-1234yf is flammable. However, DuPont says it is only slightly flammable and does not ignite at most temperatures that could be encountered. Independent tests have shown that in case of a front-end accident, air conditioning systems using HFO-1234yf would significantly increase the risk of fire. Additional safety measures would thus be necessary to reduce this risk. This would have a negative impact on the system's efficiency, while increasing its costs at the same time.
-Carbon dioxide also can have harmful effects on the human body if inhaled in sufficient quantities. If the concentration of CO2 reaches 3%, a person's respiration rate will increase by 100%. People with heart conditions could be at risk. This has been a concern to engineers and governments. However, the total amount of CO2 in a car AC system is very small (less than 500 grams). This is not enough to harm a person, even if the total amount was released at one time, and tests have shown that a leak of gas from a CO2 car AC system would probably not be very large.
-Information about the toxicity of HFO-1234yf is not known. Two years after the introduction of this compound, the DuPont company has not released the results of their toxicity tests.`,
-      },
-      {
-        id: 'source-3-co2-cost',
-        title: 'How Much Will it Cost?',
-        content: `The Cool Wars may, in the end, be won or lost over the issue of cost. Different participants in the competition have different cost concerns. The chemical industry, led by DuPont, wants to produce and sell a new synthetic refrigerant for many years to come. The automotive industry does not want the increased costs of developing and manufacturing new AC systems. On the other hand, many companies want to develop a new technology that they will be able to produce and sell in the future. Consumers do not want to spend extra money when buying a new car, and they also want to have lower costs over the life of their vehicle. Finally, governments do not want to pay for the costs that could result from the effects of global warming. Below is a chart that summarizes some of the costs involved:
-
-Refrigerant | Production cost (OMR/ton) | Extra cost for new system design | AC system service cost | Lifetime energy use of AC equipped car (varies depending on climate)
-HFC-134a | 2.5 | None; currently exists | High recharge cost; expensive special equipment needed to collect and recycle refrigerant at the end of system service life | —
-CO2 | 0.25 | About 10 rials per car; high pressure system components must be designed and produced | Low recharge cost; expensive special equipment needed to deal with the very high pressures needed for CO2 to function as an effective refrigerant | More fuel efficient than HFC-134a systems; thus lower fuel consumption for the vehicle
-HFO-1234yf | 25 | None; uses existing HFC-134a systems | Very high recharge cost; expensive special equipment needed to collect and recycle refrigerant at the end of system service life | AC system 10-15% lower than HFC-134a systems; thus increased overall fuel use for the vehicle`,
-      },
-    ],
-  },
-];
 
 // Build prompt for Synthesis Essay (LANC2160)
 function buildSynthesisPrompt(
@@ -1252,6 +1296,7 @@ export async function POST(request: NextRequest) {
     const isFoundation = ['0230', '0340'].includes(courseCode);
     const isSummaryWriting = courseCode === 'LANC2160' && writingType === 'summary';
     const isSynthesisWriting = courseCode === 'LANC2160' && writingType === 'synthesis';
+    const isLanc1070 = courseCode === 'LANC1070';
     const isLanc2146 = courseCode === 'LANC2146';
 
     // Resolve target word count based on exam type (for FP0340) or summary target
@@ -1289,7 +1334,8 @@ export async function POST(request: NextRequest) {
       prompt = buildSummaryPrompt(text, sourceTextData.originalText, sourceTextData.title, wordCount, activeTargetWordCount);
       criteria = SUMMARY_CRITERIA;
     } else if (isSynthesisWriting) {
-      // Synthesis Essay for LANC2160 — look up assignment by sourceTextId
+      // Synthesis Essay for LANC2160 — look up assignment by sourceTextId (import from store to stay in sync)
+      const { SYNTHESIS_ASSIGNMENTS } = await import('@/lib/store');
       const assignmentData = SYNTHESIS_ASSIGNMENTS.find(a => a.id === sourceTextId);
       
       if (!assignmentData) {
@@ -1341,6 +1387,34 @@ export async function POST(request: NextRequest) {
         activeTargetWordCount
       );
       criteria = LANC2146_CRITERIA;
+    } else if (isLanc1070) {
+      // LANC1070 Synthesis Essay — single source text practice tests
+      const { LANC1070_PRACTICE_TESTS } = await import('@/lib/store');
+      const practiceData = LANC1070_PRACTICE_TESTS.find(t => t.id === sourceTextId);
+
+      if (!practiceData) {
+        return NextResponse.json(
+          { error: 'LANC1070 practice test not found. Please select a valid practice test.' },
+          { status: 400 }
+        );
+      }
+
+      activeTargetWordCount = {
+        min: practiceData.targetWordCount.min,
+        max: practiceData.targetWordCount.max,
+        ideal: practiceData.targetWordCount.ideal,
+        label: `LANC1070: "${practiceData.title}"`
+      };
+      prompt = buildLanc1070Prompt(
+        text,
+        practiceData.sourceText.content,
+        practiceData.sourceText.title,
+        practiceData.title,
+        practiceData.description,
+        wordCount,
+        activeTargetWordCount
+      );
+      criteria = SYNTHESIS_CRITERIA; // Reuse synthesis criteria (A2-B1, 0-5 scale)
     } else {
       // Credit/Post-foundation — general
       activeTargetWordCount = null;
@@ -1356,6 +1430,8 @@ export async function POST(request: NextRequest) {
       ? 'You are an expert writing assessment AI for the Credit level course LANC2160 (Academic English: Summary Writing & Synthesis Essay) at Sultan Qaboos University. For summary writing tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student summary against the provided source text, (2) quote exact words from the student summary as evidence, (3) explicitly justify why the score matches the rubric band, (4) list specific errors with quoted text, (5) assess paraphrasing quality, and (6) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : isSynthesisWriting
       ? 'You are an expert writing assessment AI for the Credit level course LANC2160 (Academic English: Summary Writing & Synthesis Essay) at Sultan Qaboos University. For synthesis essay tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student essay against ALL THREE provided source texts, (2) check that information from all sources is synthesized, (3) quote exact words from the student essay as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) assess paraphrasing quality and estimate copying percentage, (7) check word count against the target range, and (8) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
+      : isLanc1070
+      ? 'You are an expert writing assessment AI for the Credit level course LANC1070 (Academic English) at Sultan Qaboos University. For synthesis essay tasks based on a single source text, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student essay against the provided source text, (2) check that the student addresses the required discussion points, (3) quote exact words from the student essay as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) assess paraphrasing quality and estimate copying percentage, (7) check word count against the target range, and (8) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : isLanc2146
       ? 'You are an expert writing assessment AI for the Credit level course LANC2146 (Report Writing) at Sultan Qaboos University. For lab report Discussion and Conclusion tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) evaluate the Discussion section for analysis and interpretation of data with details/examples/statistics, (2) evaluate the Conclusion for summary of results, reference to previous research, restatement of aim, and recommendations, (3) quote exact words from the student text as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) check word count against the 350-450 word target range with a +/-20 word tolerance (effective acceptable range: 330-470), and (7) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : 'You are an expert writing assessment AI for Foundation and Credit level university courses at Sultan Qaboos University. All students are at CEFR A1-A2 level (Basic User). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. CRITICAL: For each criterion you MUST (1) quote exact words from the student essay as evidence, (2) explicitly justify why the score matches the rubric band, (3) list specific errors with quoted text, and (4) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.';
@@ -1684,7 +1760,7 @@ export async function POST(request: NextRequest) {
 
     // Add word count info
     assessment.wordCount = wordCount;
-    assessment.targetWordCount = (isFoundation || isSummaryWriting || isSynthesisWriting || isLanc2146) ? activeTargetWordCount : null;
+    assessment.targetWordCount = (isFoundation || isSummaryWriting || isSynthesisWriting || isLanc1070 || isLanc2146) ? activeTargetWordCount : null;
 
     return NextResponse.json({
       success: true,

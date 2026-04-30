@@ -1392,7 +1392,7 @@ export async function POST(request: NextRequest) {
     // Try generation with increasing token limits on truncation
     let responseText = '';
     let parsedOk = false;
-    const tokenLimits = [8192, 16384, 32768];
+    const tokenLimits = [16384, 32768];
 
     for (const maxTokens of tokenLimits) {
       // Inner retry loop for rate-limit (429) errors
@@ -1463,20 +1463,17 @@ export async function POST(request: NextRequest) {
             console.warn(`Response truncated at ${maxTokens} tokens, attempting to parse anyway...`);
           }
 
-          // Try to parse the JSON
+          // Try to parse the JSON and validate structure
+          let assessment: any = null;
+          let parseFailed = false;
           try {
-            const assessment = extractJSON(rawText);
-            if (assessment && assessment.scores && Array.isArray(assessment.scores)) {
-              responseText = rawText;
-              parsedOk = true;
-              // If it parsed successfully even with MAX_TOKENS, use it
-              break;
-            }
+            assessment = extractJSON(rawText);
           } catch (_e) {
-            // JSON parse failed — if truncated, try next token limit
+            parseFailed = true;
+            // JSON parse failed — if truncated, break to try next token limit
             if (finishReason === 'MAX_TOKENS' && maxTokens !== tokenLimits[tokenLimits.length - 1]) {
               console.warn(`JSON parse failed after truncation at ${maxTokens} tokens, retrying with higher limit...`);
-              continue;
+              break; // Break out of rate-limit loop to try next token limit
             }
             // Otherwise, fall through to error
             console.error('Failed to parse assessment response. Raw text (first 500 chars):', rawText.substring(0, 500));
@@ -1486,10 +1483,23 @@ export async function POST(request: NextRequest) {
             );
           }
 
-          // Parsed OK with STOP
-          responseText = rawText;
-          parsedOk = true;
-          break;
+          // Validate structure: must have a scores array
+          if (assessment && assessment.scores && Array.isArray(assessment.scores)) {
+            responseText = rawText;
+            parsedOk = true;
+            break;
+          }
+
+          // JSON parsed but structure invalid (no scores array) — treat as parse failure
+          console.error('Assessment JSON parsed but has no valid scores array. Raw text (first 500 chars):', rawText.substring(0, 500));
+          if (finishReason === 'MAX_TOKENS' && maxTokens !== tokenLimits[tokenLimits.length - 1]) {
+            console.warn('Truncated response missing scores array, retrying with higher token limit...');
+            break; // Break to try next token limit
+          }
+          return NextResponse.json(
+            { error: 'AI returned an invalid assessment structure. Please try again.', details: 'No scores array in response.' },
+            { status: 500 }
+          );
 
         } catch (genError: any) {
           const errMsg = genError?.message || String(genError);

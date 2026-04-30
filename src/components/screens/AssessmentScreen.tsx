@@ -16,7 +16,11 @@ import {
   AlertCircle,
   Cpu,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
+
+// Auto-retry configuration
+const RETRY_DELAY_SECONDS = 30;
 
 // Animation variants
 const slideInRight = {
@@ -51,16 +55,16 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
   const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [retryCountdown, setRetryCountdown] = useState(0);
   const { toast } = useToast();
 
-  // Use refs to prevent race conditions:
-  // - onCompleteRef: stable reference so useEffect doesn't re-fire on parent re-renders
-  // - completedRef: guard flag to prevent double completion (success + error from duplicate calls)
-  // - abortRef: AbortController to cancel in-flight fetch on cleanup
+  // Refs for race-condition safety
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
   const completedRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
+  const retryCountRef = useRef(0);
 
   const phases = [
     { text: 'Analyzing structure', icon: FileText },
@@ -70,93 +74,137 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
     { text: 'Generating feedback', icon: MessageSquare },
   ];
 
-  useEffect(() => {
-    // Reset guard on mount
-    completedRef.current = false;
-
-    // Create AbortController for this effect instance
+  // Core assessment function — callable multiple times for auto-retry
+  const performAssessment = useCallback(async () => {
+    // Cancel any in-flight request
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
     const controller = new AbortController();
     abortRef.current = controller;
 
-    // Start the actual assessment API call
-    const performAssessment = async () => {
-      try {
-        const response = await fetch('/api/assess', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: extractedText,
-            courseCode: selectedCourse?.code,
-            topic: writingPrompt || null,
-            apiKey: assessmentApiKey || geminiApiKey,
-            examType: selectedExamType || undefined,
-            writingType: selectedWritingType || undefined,
-            sourceTextId: selectedSourceTextId || undefined,
-          }),
-          signal: controller.signal,
-        });
+    // Clear error/retry state for fresh attempt
+    setError(null);
+    setRetryCountdown(0);
+    setProgress(0);
+    setCurrentPhase(0);
 
-        const result = await response.json();
+    try {
+      const response = await fetch('/api/assess', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: extractedText,
+          courseCode: selectedCourse?.code,
+          topic: writingPrompt || null,
+          apiKey: assessmentApiKey || geminiApiKey,
+          examType: selectedExamType || undefined,
+          writingType: selectedWritingType || undefined,
+          sourceTextId: selectedSourceTextId || undefined,
+        }),
+        signal: controller.signal,
+      });
 
-        // Check if this call was aborted during fetch
-        if (controller.signal.aborted) return;
+      const result = await response.json();
 
-        if (!response.ok) {
-          const errMsg = result.error || 'Failed to assess essay';
-          const detail = result.details ? ` (${result.details})` : '';
-          throw new Error(errMsg + detail);
-        }
+      // Check if this call was aborted during fetch
+      if (controller.signal.aborted) return;
 
-        // Transform the API response to match Assessment type
-        const rawAssessment: Assessment = {
-          id: `assess-${Date.now()}`,
-          totalScore: result.assessment.totalScore,
-          maxScore: result.assessment.maxScore,
-          percentage: result.assessment.percentage,
-          overallFeedback: result.assessment.overallFeedback,
-          wordCount: result.assessment.wordCount,
-          targetWordCount: result.assessment.targetWordCount,
-          scores: result.assessment.scores.map((s: any, index: number) => ({
-            criterionId: s.criterionId || `criterion-${index}`,
-            criterionName: s.criterionName,
-            score: s.score,
-            maxScore: s.maxScore,
-            feedback: s.feedback,
-          })),
-          createdAt: result.assessment.createdAt,
-        };
-
-        // Always recalculate total score from individual criterion scores (ignore AI total)
-        const assessment = recalculateScores(rawAssessment);
-
-        // Guard: only complete once (prevent race condition where duplicate call succeeds)
-        if (completedRef.current) return;
-        completedRef.current = true;
-
-        // Wait for progress to complete before showing results
-        setProgress(100);
-        setTimeout(() => onCompleteRef.current(assessment), 500);
-      } catch (err) {
-        // Ignore aborted requests — they are expected during cleanup
-        if (err instanceof DOMException && err.name === 'AbortError') return;
-        // Ignore if already completed by another call
-        if (completedRef.current) return;
-
-        console.error('Assessment error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to assess essay');
-        toast({
-          title: 'Assessment Failed',
-          description: err instanceof Error ? err.message : 'Failed to assess essay',
-          variant: 'destructive',
-        });
+      if (!response.ok) {
+        const errMsg = result.error || 'Failed to assess essay';
+        const detail = result.details ? ` (${result.details})` : '';
+        throw new Error(errMsg + detail);
       }
-    };
 
+      // Transform the API response to match Assessment type
+      const rawAssessment: Assessment = {
+        id: `assess-${Date.now()}`,
+        totalScore: result.assessment.totalScore,
+        maxScore: result.assessment.maxScore,
+        percentage: result.assessment.percentage,
+        overallFeedback: result.assessment.overallFeedback,
+        wordCount: result.assessment.wordCount,
+        targetWordCount: result.assessment.targetWordCount,
+        scores: result.assessment.scores.map((s: any, index: number) => ({
+          criterionId: s.criterionId || `criterion-${index}`,
+          criterionName: s.criterionName,
+          score: s.score,
+          maxScore: s.maxScore,
+          feedback: s.feedback,
+        })),
+        createdAt: result.assessment.createdAt,
+      };
+
+      // Always recalculate total score from individual criterion scores (ignore AI total)
+      const assessment = recalculateScores(rawAssessment);
+
+      // Guard: only complete once (prevent race condition where duplicate call succeeds)
+      if (completedRef.current) return;
+      completedRef.current = true;
+
+      // Wait for progress to complete before showing results
+      setProgress(100);
+      setTimeout(() => onCompleteRef.current(assessment), 500);
+    } catch (err) {
+      // Ignore aborted requests — they are expected during cleanup or retry
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      // Ignore if already completed by another call
+      if (completedRef.current) return;
+
+      const errorMsg = err instanceof Error ? err.message : 'Failed to assess essay';
+      console.error('Assessment error:', err);
+      setError(errorMsg);
+
+      // Start auto-retry countdown
+      retryCountRef.current += 1;
+      setRetryCount(retryCountRef.current);
+      setRetryCountdown(RETRY_DELAY_SECONDS);
+
+      toast({
+        title: 'Assessment Failed',
+        description: `Auto-retrying in ${RETRY_DELAY_SECONDS} seconds... (Attempt ${retryCountRef.current})`,
+        variant: 'destructive',
+      });
+    }
+  }, [extractedText, selectedCourse, geminiApiKey, assessmentApiKey, selectedExamType, writingPrompt, selectedSourceTextId, toast]);
+
+  // Initial mount — start first assessment
+  useEffect(() => {
+    completedRef.current = false;
+    retryCountRef.current = 0;
     performAssessment();
 
-    // Progress animation
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Countdown timer — ticks every second when retryCountdown > 0
+  useEffect(() => {
+    if (retryCountdown <= 0) return;
+
+    const timer = setTimeout(() => {
+      setRetryCountdown(prev => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [retryCountdown]);
+
+  // Auto-retry trigger — when countdown reaches 0 and there's still an error
+  useEffect(() => {
+    if (retryCountdown === 0 && error !== null && !completedRef.current && retryCountRef.current > 0) {
+      performAssessment();
+    }
+  }, [retryCountdown, error, performAssessment]);
+
+  // Progress animation — runs when actively assessing (no error shown)
+  useEffect(() => {
+    if (error !== null) return;
+
     const progressInterval = setInterval(() => {
       setProgress((prev) => (prev >= 90 ? 90 : prev + 2)); // Cap at 90% until API returns
     }, 100);
@@ -166,13 +214,17 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
     }, 1500);
 
     return () => {
-      // Abort in-flight fetch on cleanup to prevent stale callbacks
-      controller.abort();
       clearInterval(progressInterval);
       clearInterval(phaseInterval);
     };
-  }, [extractedText, selectedCourse, geminiApiKey, selectedExamType, writingPrompt, toast]); // REMOVED onComplete from deps — uses ref instead
+  }, [error]);
 
+  // Manual retry — skip countdown and retry immediately
+  const handleRetryNow = () => {
+    performAssessment();
+  };
+
+  // Error + auto-retry countdown UI
   if (error) {
     return (
       <PageTransition>
@@ -182,16 +234,26 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
             animate={{ opacity: 1, scale: 1 }}
             className="w-full max-w-sm text-center"
           >
-            <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="w-10 h-10 text-red-500" />
+            <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-6">
+              <RefreshCw className="w-10 h-10 text-amber-600" />
             </div>
             <h2 className="text-xl font-semibold mb-2">Assessment Failed</h2>
-            <p className="text-muted-foreground text-sm mb-6">{error}</p>
+            <p className="text-muted-foreground text-sm mb-2">{error}</p>
+            {retryCountdown > 0 ? (
+              <p className="text-sm font-medium text-amber-600 mb-6">
+                Auto-retrying in {retryCountdown}s... (Attempt {retryCount})
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground mb-6">
+                Starting retry...
+              </p>
+            )}
             <Button
-              onClick={() => window.location.reload()}
+              onClick={handleRetryNow}
               className="bg-[#1a5f2a] hover:bg-[#1a5f2a]/90"
             >
-              Try Again
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry Now
             </Button>
           </motion.div>
         </div>

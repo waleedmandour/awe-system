@@ -326,6 +326,7 @@ function buildLanc2146Prompt(
   studentText: string,
   reportSections: { title: string; content: string }[],
   resultsCaption: string | null,
+  resultsGraphDescription: string | null,
   assignmentTitle: string,
   wordCount: number,
   targetWordCount: { min: number; max: number; ideal: number }
@@ -370,7 +371,7 @@ ${wordCountStatus}
 
 PROVIDED REPORT SECTIONS:
 ${sectionsText}
-${resultsCaption ? `\nRESULTS FIGURE CAPTION: ${resultsCaption}\nNote: The student was expected to read the bar graph showing the results of the experiment. The graph shows the effects of four different concentrations of PEG (5%, 10%, 15%, 20%) on the radical length of wheat seedlings, compared to a control group.` : ''}
+${resultsCaption ? `\nRESULTS FIGURE CAPTION: ${resultsCaption}${resultsGraphDescription ? `\nNote: The student was expected to read the bar graph showing the results of the experiment. ${resultsGraphDescription}` : ''}` : ''}
 
 STUDENT'S DISCUSSION AND CONCLUSION:
 """
@@ -640,7 +641,7 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
 STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
   - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
 
-STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A1-A2 learner.
+STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 learner.
 
 STEP 5 — overallFeedback must be a comprehensive summary (3-5 sentences) that highlights the student's strongest criterion, identifies the weakest area, and gives one prioritized action item.
 
@@ -1330,14 +1331,14 @@ export async function POST(request: NextRequest) {
 
     if (!text) {
       return NextResponse.json(
-        { error: 'No text provided for assessment' },
+        { error: 'No text provided for assessment', details: 'The text field is empty or missing from the request.' },
         { status: 400 }
       );
     }
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Gemini API key is required' },
+        { error: 'Gemini API key is required', details: 'No API key was provided in the request. Please add a Gemini API key in Settings.' },
         { status: 400 }
       );
     }
@@ -1351,6 +1352,22 @@ export async function POST(request: NextRequest) {
     const isSynthesisWriting = courseCode === 'LANC2160' && writingType === 'synthesis';
     const isLanc1070 = courseCode === 'LANC1070';
     const isLanc2146 = courseCode === 'LANC2146';
+
+    // Validate that LANC2160 has a writingType selected
+    if (courseCode === 'LANC2160' && !writingType) {
+      return NextResponse.json(
+        { error: 'Writing type is required for LANC2160. Please select either "Summary" or "Synthesis" before assessing.', details: 'Missing writingType parameter for LANC2160' },
+        { status: 400 }
+      );
+    }
+
+    // Validate that courses requiring a sourceTextId have one provided
+    if ((isLanc1070 || isLanc2146 || isSummaryWriting || isSynthesisWriting) && !sourceTextId) {
+      return NextResponse.json(
+        { error: 'A source text or assignment must be selected before assessment. Please go back and select one.', details: `Missing sourceTextId for course ${courseCode}` },
+        { status: 400 }
+      );
+    }
 
     // Resolve target word count based on exam type (for FP0340) or summary target
     let activeTargetWordCount: { min: number; max: number; ideal: number; label?: string } | null = null;
@@ -1373,7 +1390,7 @@ export async function POST(request: NextRequest) {
       
       if (!sourceTextData) {
         return NextResponse.json(
-          { error: 'Source text not found. Please select a valid source text for summary writing.' },
+          { error: 'Source text not found. Please select a valid source text for summary writing.', details: `No source text found for sourceTextId: ${sourceTextId}` },
           { status: 400 }
         );
       }
@@ -1393,7 +1410,7 @@ export async function POST(request: NextRequest) {
       
       if (!assignmentData) {
         return NextResponse.json(
-          { error: 'Synthesis assignment not found. Please select a valid assignment for synthesis essay writing.' },
+          { error: 'Synthesis assignment not found. Please select a valid assignment for synthesis essay writing.', details: `No synthesis assignment found for sourceTextId: ${sourceTextId}` },
           { status: 400 }
         );
       }
@@ -1420,7 +1437,7 @@ export async function POST(request: NextRequest) {
 
       if (!practiceData) {
         return NextResponse.json(
-          { error: 'Report writing assignment not found. Please select a valid practice test.' },
+          { error: 'Report writing assignment not found. Please select a valid practice test.', details: `No LANC2146 practice test found for sourceTextId: ${sourceTextId}` },
           { status: 400 }
         );
       }
@@ -1435,6 +1452,7 @@ export async function POST(request: NextRequest) {
         text,
         practiceData.reportSections.map(s => ({ title: s.title, content: s.content })),
         practiceData.resultsFigure?.caption || null,
+        practiceData.resultsFigure?.graphDescription || null,
         practiceData.title,
         wordCount,
         activeTargetWordCount
@@ -1447,7 +1465,7 @@ export async function POST(request: NextRequest) {
 
       if (!practiceData) {
         return NextResponse.json(
-          { error: 'LANC1070 practice test not found. Please select a valid practice test.' },
+          { error: 'LANC1070 practice test not found. Please select a valid practice test.', details: `No LANC1070 practice test found for sourceTextId: ${sourceTextId}` },
           { status: 400 }
         );
       }
@@ -1487,7 +1505,7 @@ export async function POST(request: NextRequest) {
       ? 'You are an expert writing assessment AI for the Credit level course LANC1070 (Academic English) at Sultan Qaboos University. For synthesis essay tasks based on a single source text, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student essay against the provided source text, (2) check that the student addresses the required discussion points, (3) quote exact words from the student essay as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) assess paraphrasing quality and estimate copying percentage, (7) check word count against the target range, and (8) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : isLanc2146
       ? 'You are an expert writing assessment AI for the Credit level course LANC2146 (Report Writing) at Sultan Qaboos University. For lab report Discussion and Conclusion tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) evaluate the Discussion section for analysis and interpretation of data with details/examples/statistics, (2) evaluate the Conclusion for summary of results, reference to previous research, restatement of aim, and recommendations, (3) quote exact words from the student text as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) check word count against the target range specified in the prompt, and (7) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
-      : 'You are an expert writing assessment AI for Foundation and Credit level university courses at Sultan Qaboos University. All students are at CEFR A1-A2 level (Basic User). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. CRITICAL: For each criterion you MUST (1) quote exact words from the student essay as evidence, (2) explicitly justify why the score matches the rubric band, (3) list specific errors with quoted text, and (4) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.';
+      : 'You are an expert writing assessment AI for university courses at Sultan Qaboos University. Students are at CEFR A2-B1 level (Elementary to Pre-Intermediate). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. CRITICAL: For each criterion you MUST (1) quote exact words from the student essay as evidence, (2) explicitly justify why the score matches the rubric band, (3) list specific errors with quoted text, and (4) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.';
 
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
@@ -1669,7 +1687,7 @@ export async function POST(request: NextRequest) {
 
     if (!parsedOk) {
       return NextResponse.json(
-        { error: 'Failed to get a valid assessment from the AI after multiple attempts. Please try again.' },
+        { error: 'Failed to get a valid assessment from the AI after multiple attempts. Please try again.', details: 'All token limit attempts and rate-limit retries exhausted without a valid response.' },
         { status: 500 }
       );
     }
@@ -1690,7 +1708,7 @@ export async function POST(request: NextRequest) {
     // Validate the assessment structure
     if (!assessment.scores || !Array.isArray(assessment.scores)) {
       return NextResponse.json(
-        { error: 'Invalid assessment structure' },
+        { error: 'Invalid assessment structure', details: 'The parsed assessment JSON does not contain a valid scores array.' },
         { status: 500 }
       );
     }

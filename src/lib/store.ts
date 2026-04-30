@@ -348,6 +348,7 @@ export interface Lanc2146PracticeTest {
   resultsFigure?: {
     caption: string;
     imageUrl: string;
+    graphDescription?: string;
   };
   targetWordCount: {
     min: number;
@@ -393,6 +394,7 @@ Treatment methods for seed priming include \u201chydropriming, biopriming, seed 
     resultsFigure: {
       caption: 'Figure 1: The effects of four different concentrations of PEG used for seed priming on the radical length of wheat seedlings',
       imageUrl: '/lanc2146-seed-priming-results.png',
+      graphDescription: 'The graph shows the effects of four different concentrations of PEG (5%, 10%, 15%, 20%) on the radical length of wheat seedlings, compared to a control group.',
     },
   },
 ];

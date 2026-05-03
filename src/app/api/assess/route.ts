@@ -4,14 +4,23 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/ge
 // IMPORTANT: Prevents Vercel from timing out the assessment process on the FREE tier
 export const maxDuration = 60;
 
-// Word count targets by exam type for Foundation courses
-const EXAM_WORD_COUNTS: Record<string, { min: number; max: number; ideal: number; label: string }> = {
-  'mid-semester': { min: 110, max: 130, ideal: 120, label: 'Mid-semester Exam' },
-  'final':        { min: 190, max: 210, ideal: 200, label: 'Final Exam' },
+// Word count targets by course and exam type for Foundation courses
+const FOUNDATION_WORD_COUNTS: Record<string, Record<string, { min: number; max: number; ideal: number; label: string }>> = {
+  '0230': {
+    'mid-semester': { min: 90, max: 130, ideal: 120, label: 'FP0230 Mid-semester Exam' },
+    'final':        { min: 110, max: 140, ideal: 120, label: 'FP0230 Final Exam' },
+  },
+  '0340': {
+    'mid-semester': { min: 110, max: 150, ideal: 120, label: 'FP0340 Mid-semester Exam' },
+    'final':        { min: 140, max: 220, ideal: 200, label: 'FP0340 Final Exam' },
+  },
 };
 
-// Default word count target (used when no exam type is specified)
-const DEFAULT_FOUNDATION_WORD_COUNT = { min: 110, max: 130, ideal: 120, label: 'Foundation Exam' };
+// Default word count target per course (used when no exam type is specified)
+const DEFAULT_FOUNDATION_WORD_COUNTS: Record<string, { min: number; max: number; ideal: number; label: string }> = {
+  '0230': { min: 90, max: 130, ideal: 120, label: 'FP0230 Foundation Exam' },
+  '0340': { min: 110, max: 150, ideal: 120, label: 'FP0340 Foundation Exam' },
+};
 
 // Detailed assessment rubrics for Foundation courses (0230, 0340)
 const FOUNDATION_RUBRICS = {
@@ -1375,11 +1384,15 @@ export async function POST(request: NextRequest) {
     let criteria: any[];
 
     if (isFoundation) {
-      // Foundation courses (FP0230, FP0340)
-      if (examType && EXAM_WORD_COUNTS[examType]) {
-        activeTargetWordCount = EXAM_WORD_COUNTS[examType];
+      // Foundation courses (FP0230, FP0340) — per-course word count targets
+      const courseWordCounts = FOUNDATION_WORD_COUNTS[courseCode];
+      const courseDefault = DEFAULT_FOUNDATION_WORD_COUNTS[courseCode];
+      if (examType && courseWordCounts && courseWordCounts[examType]) {
+        activeTargetWordCount = courseWordCounts[examType];
+      } else if (courseDefault) {
+        activeTargetWordCount = { ...courseDefault };
       } else {
-        activeTargetWordCount = { ...DEFAULT_FOUNDATION_WORD_COUNT };
+        activeTargetWordCount = { min: 110, max: 130, ideal: 120, label: 'Foundation Exam' };
       }
       prompt = buildFoundationPrompt(text, topic, wordCount, activeTargetWordCount);
       criteria = FOUNDATION_RUBRICS.criteria;

@@ -1767,6 +1767,18 @@ export async function POST(request: NextRequest) {
       s.justification = clean(s.justification);
       s.suggestions = clean(s.suggestions);
 
+      // Ensure strengths, mistakes, and suggestions are never empty
+      // This prevents the UI from silently hiding these sections
+      if (!s.strengths) {
+        s.strengths = 'No specific strengths identified for this criterion.';
+      }
+      if (!s.suggestions) {
+        s.suggestions = 'No specific suggestions for this criterion.';
+      }
+      if (!Array.isArray(s.mistakes) || s.mistakes.length === 0) {
+        s.mistakes = [{ quote: '', explanation: 'No specific mistakes identified for this criterion.' }];
+      }
+
       // Clean mistakes array items
       if (Array.isArray(s.mistakes)) {
         s.mistakes = s.mistakes.map((m: any) => {
@@ -1790,26 +1802,28 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Build a clean, professional feedback string (no markdown)
+      // Build a clean, professional feedback string with section headers
+      // These headers are required by parseFeedback() in scoring-utils.ts
+      // to reliably identify each section (avoids fragile heuristic parsing)
       const parts: string[] = [];
 
-      if (s.strengths) {
-        parts.push(s.strengths);
-      }
       if (s.justification) {
-        parts.push(s.justification);
+        parts.push(`Justification: ${s.justification}`);
+      }
+      if (s.strengths) {
+        parts.push(`Strengths: ${s.strengths}`);
       }
       if (Array.isArray(s.mistakes) && s.mistakes.length > 0) {
         const mistakeLines = s.mistakes
           .map((m: any) => {
-            if (typeof m === 'string') return m;
-            return m.quote ? `${m.quote}: ${m.explanation}` : m.explanation;
+            if (typeof m === 'string') return `- "${m}"`;
+            return m.quote ? `- "${m.quote}": ${m.explanation}` : `- ${m.explanation}`;
           })
           .join('\n');
-        parts.push(mistakeLines);
+        parts.push(`Mistakes found:\n${mistakeLines}`);
       }
       if (s.suggestions) {
-        parts.push(s.suggestions);
+        parts.push(`Suggestions: ${s.suggestions}`);
       }
 
       // Use the clean structured string, fallback to raw feedback

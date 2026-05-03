@@ -68,19 +68,21 @@ export const parseFeedback = (feedback: string): ParsedFeedback => {
         return;
       }
       if (/^mistakes?\s*(found)?:/i.test(lower)) {
-        const mistakeText = clean(para.replace(/^mistakes?\s*(found)?:\s*/i, ''));
-        // Parse mistake lines: "quoted text": explanation
+        const mistakeText = para.replace(/^mistakes?\s*(found)?:\s*/i, '');
+        // Parse mistake lines: "quoted text": explanation  OR  - "quoted text": explanation
         const lines = mistakeText.split('\n');
         lines.forEach((line) => {
           line = line.trim();
           if (!line) return;
+          // Strip leading list marker (-, *, •)
+          const stripped = line.replace(/^[\-\*•]\s+/, '');
           // Match pattern: "quote" — explanation  OR  "quote": explanation
-          const match = line.match(/^[\"'\u201C\u201D]([^\"\u201C\u201D]+)[\"'\u201C\u201D]\s*[—\-:]\s*(.+)/);
+          const match = stripped.match(/^[\"'\u201C\u201D]([^\"\u201C\u201D]+)[\"'\u201C\u201D]\s*[—\-:]\s*(.+)/);
           if (match) {
             sections.mistakes.push({ quote: match[1].trim(), explanation: match[2].trim() });
-          } else if (line.length > 5) {
+          } else if (stripped.length > 5) {
             // If no quote pattern, treat the whole line as an explanation
-            sections.mistakes.push({ quote: '', explanation: line });
+            sections.mistakes.push({ quote: '', explanation: stripped });
           }
         });
         return;

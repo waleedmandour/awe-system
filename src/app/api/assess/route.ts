@@ -1561,7 +1561,7 @@ export async function POST(request: NextRequest) {
           const result = await model.generateContent({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             generationConfig: {
-              temperature: 0.2,
+              temperature: 0.1,
               maxOutputTokens: maxTokens,
               thinkingConfig: {
                 thinkingBudget: 0,  // Disable thinking — prevents thought tokens from consuming output budget or polluting JSON
@@ -1595,7 +1595,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Extract text — manually filter out "thought" parts from thinking models
-          // gemini-2.5-flash may include thought parts in the response even with thinkingBudget: 0
+          // Gemini 2.5 models may include thought parts in the response even with thinkingBudget: 0
           // We only want the actual text (non-thought) parts for JSON parsing
           let rawText = '';
           if (candidate?.content?.parts) {

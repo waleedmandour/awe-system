@@ -122,60 +122,56 @@ const SUMMARY_CRITERIA = [
   },
 ];
 
-// Detailed rubric band descriptors for Summary Writing (A2-B1 level)
-// Condensed from per-0.5 bands to range bands to reduce token consumption
+// Condensed rubric band descriptors for Summary Writing (A2-B1 level)
+// Optimised: shorter descriptors reduce prompt token count for faster free-tier response
 const SUMMARY_RUBRICS = {
   criteria: [
     {
       name: 'Task Achievement',
       maxScore: 5,
       rubric: {
-        '0-1': 'Poor: No summary written, completely irrelevant, or only isolated words/phrases. No main ideas captured. May be largely copied without comprehension.',
-        '1.5-2': 'Unsatisfactory: Captures at most one main idea; misses most key points. May include irrelevant details or personal opinions. Paraphrasing is minimal with heavy reliance on copying.',
-        '2.5': 'Below expectations: Captures most main ideas but misses one or two points. Some paraphrasing attempted but noticeable copying remains. Does not clearly distinguish main from minor ideas.',
-        '3': 'Satisfactory: Captures main ideas adequately with reasonable understanding. Some paraphrasing used though some phrases may be copied. Distinction between main and minor ideas is generally clear.',
-        '3.5': 'Good: Captures all or nearly all main ideas effectively. Solid understanding with consistent paraphrasing, only minor copied phrases. Supporting details appropriately selected.',
-        '4-4.5': 'Very good to Excellent: Captures all main ideas clearly and accurately. Strong/excellent comprehension. Effective paraphrasing throughout with focused, cohesive summary. Minor or no irrelevant details.',
-        '5': 'Outstanding: Highly accurate, comprehensive reflection of source text. Sophisticated comprehension with consistently natural paraphrasing. Reads as a well-constructed independent text.',
+        '0-1': 'No summary, irrelevant, or isolated words. No main ideas captured. Largely copied.',
+        '2': 'Captures at most one main idea. Misses most key points. Minimal paraphrasing, heavy copying.',
+        '2.5-3': 'Captures main ideas adequately but may miss 1-2 points. Some paraphrasing with noticeable copying.',
+        '3.5': 'Captures all main ideas effectively. Consistent paraphrasing with minor copied phrases.',
+        '4-4.5': 'All main ideas captured clearly. Effective paraphrasing throughout. Focused, cohesive.',
+        '5': 'Comprehensive, accurate reflection of source. Natural paraphrasing. Reads as independent text.',
       }
     },
     {
       name: 'Coherence & Cohesion',
       maxScore: 5,
       rubric: {
-        '0-1': 'Poor: No coherence. Random words/fragments with no logical connection or structure. No linking words used. Ideas cannot be followed.',
-        '1.5-2': 'Unsatisfactory: Minimal organization — ideas listed but not connected. Very few or no linking words. Disjointed presentation requiring reader effort to follow logic.',
-        '2.5': 'Below expectations: Basic organization present but inconsistent. Some simple linking words used but transitions are abrupt. Paragraph structure may be weak or absent. Generally understandable but not smooth.',
-        '3': 'Satisfactory: Logical structure generally easy to follow. Simple linking words and basic transitional devices used appropriately. Ideas connected so reader can follow without significant difficulty.',
-        '3.5': 'Good: Well-organized with clear logical progression. Range of linking words/transitional devices used correctly (e.g., "moreover", "as a result"). Smooth flow between ideas. Appropriate paragraph structure.',
-        '4-4.5': 'Very good to Excellent: Clearly and logically organized with strong progression. Good/wide range of cohesive devices used effectively and naturally. Highly readable with smooth flow.',
-        '5': 'Outstanding: Exceptionally well-organized with flawless logical flow. Cohesive devices used with mastery. Structure serves the content and enhances comprehension.',
+        '0-1': 'No coherence. Random fragments. No linking words. Ideas cannot be followed.',
+        '2': 'Minimal organisation. Ideas listed, not connected. Very few linking words. Disjointed.',
+        '2.5-3': 'Basic organisation. Simple linking words used appropriately. Generally easy to follow.',
+        '3.5': 'Well-organised with clear logical progression. Good range of cohesive devices. Smooth flow.',
+        '4-4.5': 'Clearly organised with strong progression. Cohesive devices used effectively and naturally.',
+        '5': 'Exceptional organisation with flawless logical flow. Cohesive devices used with mastery.',
       }
     },
     {
       name: 'Lexical Resource',
       maxScore: 5,
       rubric: {
-        '0-1': 'Poor: No meaningful or extremely limited vocabulary. Insufficient to convey meaning. Word choice frequently inaccurate. Spelling errors pervasive and impede understanding.',
-        '1.5-2': 'Unsatisfactory: Limited vocabulary with frequent repetition. Some paraphrasing attempted but word choice often awkward/inaccurate. Spelling errors frequent and sometimes affect communication.',
-        '2.5': 'Below expectations: Vocabulary limited but generally adequate. Paraphrasing attempted with some success though word choice may be awkward. Core vocabulary correct but little range. Some spelling errors.',
-        '3': 'Satisfactory: Adequate range of vocabulary for the task. Basic paraphrasing attempted and usually effective. Core vocabulary generally accurate. Spelling errors present but do not significantly affect communication.',
-        '3.5': 'Good: Good range of vocabulary. Paraphrasing generally effective, expressing source ideas in own words. Some less common vocabulary attempted. Spelling generally accurate.',
-        '4-4.5': 'Very good to Excellent: Varied and appropriate vocabulary. Effective, natural-sounding paraphrasing. Strong control of word choice and collocation. Spelling mostly to consistently accurate.',
-        '5': 'Outstanding: Sophisticated, precise vocabulary with excellent control. Consistently natural and effective paraphrasing. Word choice enhances clarity and quality. Spelling consistently accurate.',
+        '0-1': 'Extremely limited vocabulary. Inaccurate word choice. Pervasive spelling errors.',
+        '2': 'Limited vocabulary, frequent repetition. Awkward word choice. Frequent spelling errors.',
+        '2.5-3': 'Adequate vocabulary range. Basic paraphrasing usually effective. Some spelling errors.',
+        '3.5': 'Good vocabulary range. Paraphrasing effective. Some less common vocabulary attempted.',
+        '4-4.5': 'Varied vocabulary. Natural paraphrasing. Strong word choice and collocation.',
+        '5': 'Sophisticated, precise vocabulary. Consistently natural paraphrasing. Flawless spelling.',
       }
     },
     {
       name: 'Grammar & Accuracy',
       maxScore: 5,
       rubric: {
-        '0-1': 'Poor: No grammatical control. Only random words/fragments. Errors in every sentence prevent meaningful communication. Punctuation largely absent or inaccurate.',
-        '1.5-2': 'Unsatisfactory: Simple sentence structures attempted but often contain errors. Limited variety in sentence structure. Common errors (articles, prepositions, tenses) occur frequently. Punctuation often incorrect.',
-        '2.5': 'Below expectations: Can form simple sentences with reasonable accuracy, but complex sentences contain errors. Some variety attempted. Common errors still occur but do not always impede understanding. Basic punctuation generally correct.',
-        '3': 'Satisfactory: Simple sentences accurate with some complex structures attempted. Reasonable range of grammatical structures. Errors in articles, prepositions, tenses occur but do not significantly affect meaning. Punctuation generally effective.',
-        '3.5': 'Good: Good range of simple and some complex structures with reasonable accuracy. Errors typically minor and do not impede communication. Sentence variety evident. Punctuation generally accurate.',
-        '4-4.5': 'Very good to Excellent: Good/strong control of grammatical structures including complex sentences. Errors infrequent/rare and minor. Sentence variety enhances quality. Punctuation accurate and effective.',
-        '5': 'Outstanding: Near-native control. Wide variety of sentence structures used naturally and accurately. Errors virtually non-existent. Punctuation flawless.',
+        '0-1': 'No grammatical control. Random fragments. Errors prevent communication.',
+        '2': 'Simple structures with frequent errors. Limited variety. Common errors (articles, tenses).',
+        '2.5-3': 'Simple sentences accurate, some complex attempted. Errors occur but do not significantly affect meaning.',
+        '3.5': 'Good range of structures with reasonable accuracy. Minor errors. Good sentence variety.',
+        '4-4.5': 'Strong control including complex sentences. Errors infrequent/rare. Sentence variety enhances quality.',
+        '5': 'Near-native control. Wide variety of structures used naturally and accurately. Flawless punctuation.',
       }
     },
   ],
@@ -205,52 +201,52 @@ const SYNTHESIS_CRITERIA = [
   },
 ];
 
-// Detailed rubric band descriptors for Synthesis Essay (A2-B1 level, TWO-POINT ESSAY WRITING MARKING CRITERIA)
-// Condensed by merging duplicate adjacent bands to reduce token consumption
+// Condensed rubric band descriptors for Synthesis Essay (A2-B1 level, TWO-POINT ESSAY WRITING MARKING CRITERIA)
+// Optimised: shorter descriptors reduce prompt token count for faster free-tier response
 const SYNTHESIS_RUBRICS = {
   criteria: [
     {
       name: 'Task Achievement',
       maxScore: 5,
       rubric: {
-        '0-1.5': 'Poor: Fails to fulfil any task requirements. 10% or more outside word count.',
-        '2-2.5': 'Unsatisfactory: Does not adequately fulfil task requirements. Most details are unimportant. 10% or more outside word count.',
-        '3-3.5': 'Satisfactory: Adequately fulfils task requirements. Most main ideas present. Meaning generally accurate; some unimportant details may be included. Up to 10% outside word count.',
-        '4-4.5': 'Good: Fulfils all task requirements but a little more could be expected. Main ideas present. Meaning mostly accurate, most details relevant. Stays within word count.',
-        '5': 'Excellent: Fulfils all task requirements and exceeds expectations. All main ideas present. Meaning accurate, all details relevant. Stays within word count.',
+        '0-1.5': 'Fails task requirements. Most details unimportant. 10%+ outside word count.',
+        '2-2.5': 'Does not adequately fulfil requirements. Many unimportant details. 10%+ outside word count.',
+        '3-3.5': 'Adequately fulfils requirements. Most main ideas present, generally accurate meaning. Up to 10% outside word count.',
+        '4-4.5': 'Fulfils all requirements. Main ideas present, meaning mostly accurate, details relevant. Within word count.',
+        '5': 'Exceeds expectations. All main ideas present, meaning accurate, all details relevant. Within word count.',
       }
     },
     {
       name: 'Coherence and Cohesion',
       maxScore: 5,
       rubric: {
-        '0-1.5': 'Poor: Lacks organization and coherence. Text largely confused and incoherent, challenging for reader to process.',
-        '2-2.5': 'Unsatisfactory: Organization and coherence limited. Some re-reading necessary. Most cohesive devices are simple, used inaccurately and mechanically.',
-        '3-3.5': 'Satisfactory: Organization and coherence often adequate, but supporting ideas may be limited. Text may be stilted. Cohesive devices sometimes inaccurate, repetitive, or over/under used.',
-        '4-4.5': 'Good: Organization makes text clear and easy to understand. Cohesive devices almost always used accurately and appropriately within and between sentences.',
-        '5': 'Excellent: Effective organization with logical flow throughout. Good range of cohesive devices used accurately and appropriately.',
+        '0-1.5': 'Lacks organisation. Text confused and incoherent.',
+        '2-2.5': 'Limited organisation. Simple, inaccurate cohesive devices used mechanically.',
+        '3-3.5': 'Adequate organisation. Supporting ideas may be limited. Cohesive devices sometimes inaccurate/repetitive.',
+        '4-4.5': 'Clear and easy to understand. Cohesive devices almost always accurate within and between sentences.',
+        '5': 'Effective organisation with logical flow. Good range of cohesive devices used accurately.',
       }
     },
     {
       name: 'Lexical Resource',
       maxScore: 5,
       rubric: {
-        '0-1.5': 'Poor: Paraphrasing largely absent. Poor word choice, word form, and spelling prevent communication.',
-        '2-2.5': 'Unsatisfactory: Very little paraphrasing; more than 15% directly copied. Inadequate vocabulary range. Errors in word choice, word form, and spelling predominate and affect communication.',
-        '3-3.5': 'Satisfactory: Generally paraphrased; some copying but less than 15%. Limited but adequate vocabulary. Errors in word choice and spelling sometimes affect communication.',
-        '4-4.5': 'Good: Well paraphrased with very little copying. Good vocabulary range. Spelling mostly correct.',
-        '5': 'Excellent: Completely and accurately paraphrased. Wider vocabulary range than expected for the level. Spelling accurate.',
+        '0-1.5': 'Paraphrasing largely absent. Poor word choice, form, spelling prevent communication.',
+        '2-2.5': 'Minimal paraphrasing, >15% copied. Inadequate vocabulary. Errors predominate and affect communication.',
+        '3-3.5': 'Generally paraphrased, <15% copied. Adequate vocabulary. Errors sometimes affect communication.',
+        '4-4.5': 'Well paraphrased with very little copying. Good vocabulary range. Spelling mostly correct.',
+        '5': 'Completely paraphrased. Wider vocabulary than expected. Spelling accurate.',
       }
     },
     {
       name: 'Grammatical Range and Accuracy',
       maxScore: 5,
       rubric: {
-        '0-1.5': 'Poor: Inaccurate structures, errors predominate, preventing communication. Punctuation inadequate and/or inaccurate.',
-        '2-2.5': 'Unsatisfactory: Very limited structures inadequate for the level. Grammatical errors noticeable and often affect communication. Punctuation may be inadequate/inaccurate.',
-        '3-3.5': 'Satisfactory: Structures sometimes limited but adequate for the task. Grammatical errors may affect communication in places. Punctuation generally correct and effective.',
-        '4-4.5': 'Good: Good range of structures. Some inaccuracy but communication not affected. Punctuation well managed and effective.',
-        '5': 'Excellent: Wider range of structures than expected for the level. Most sentences error-free. Punctuation well managed and effective.',
+        '0-1.5': 'Inaccurate structures predominate, preventing communication. Punctuation inadequate.',
+        '2-2.5': 'Very limited structures. Errors noticeable and often affect communication.',
+        '3-3.5': 'Adequate structures for the task. Errors may affect communication in places. Punctuation generally correct.',
+        '4-4.5': 'Good range of structures. Some inaccuracy but communication not affected. Punctuation well managed.',
+        '5': 'Wider range than expected. Most sentences error-free. Punctuation well managed.',
       }
     },
   ],
@@ -716,14 +712,12 @@ function buildSummaryPrompt(
     return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
   }).join('\n\n');
 
-  return `You are an expert writing assessor evaluating a Credit level student's summary for Sultan Qaboos University's Center for Preparatory Studies, course LANC2160 (Academic English: Summary Writing & Synthesis Essay).
+  return `You are an expert writing assessor for LANC2160 (Summary Writing & Synthesis) at Sultan Qaboos University. CEFR A2-B1 level. Use simple, clear language.
 
-STUDENT LEVEL: CEFR A2-B1 (Elementary to Pre-Intermediate). Feedback must use simple, clear language that A2-B1 learners can understand. Be encouraging while maintaining appropriate academic standards. Avoid overly technical linguistic terminology.
-
-TASK: The student was asked to read the source text below and write a summary of approximately one-third of the original text length.
+TASK: The student read the source text and wrote a summary of approximately one-third of the original length.
 
 SOURCE TEXT:
-Title: "${sourceTitle}"
+"${sourceTitle}" (${sourceText.trim().split(/\s+/).filter(Boolean).length} words)
 """
 ${sourceText}
 """
@@ -734,105 +728,48 @@ ${studentText}
 """
 
 ${wordCountStatus}
-Target summary length: ${targetWordCount.min}-${targetWordCount.max} words (approximately one-third of the ${sourceText.trim().split(/\s+/).filter(Boolean).length}-word source text).
+Target summary length: ${targetWordCount.min}-${targetWordCount.max} words.
 
-SUMMARY WRITING ASSESSMENT RUBRICS (LANC2160 — Summary Writing):
-
+ASSESSMENT RUBRICS (LANC2160 — Summary Writing):
 ${criteriaDetails}
 
-SUMMARY-SPECIFIC ASSESSMENT RULES:
-1. A summary must capture the MAIN IDEAS of the source text — focus on key points, not minor details.
-2. The student must use their OWN WORDS (paraphrasing). Direct copying of phrases or sentences from the source text without paraphrasing indicates poor summarizing skills and should lower the Task Achievement and Lexical Resource scores.
-3. A summary should NOT include the student's personal opinions, arguments, or new information not present in the source text.
-4. The summary should be approximately one-third of the original text length. Significantly shorter summaries likely miss key points; significantly longer ones likely include unnecessary details.
-5. If the summary is off-topic (not about the source text at all), give Task Achievement = 0.
-6. If the student has simply copied large portions of the source text, this is NOT an acceptable summary — it should score low on Task Achievement and Lexical Resource regardless of how "accurate" the text is.
+SUMMARY-SPECIFIC RULES:
+1. Capture MAIN IDEAS only — no minor details.
+2. Use OWN WORDS (paraphrasing). Direct copying = poor summarising.
+3. NO personal opinions or new information not in the source.
+4. Target ~1/3 of source text length.
+5. Off-topic summary → Task Achievement = 0.
+6. Large copied portions → low Task Achievement and Lexical Resource.
 
 ============================================================
-SCORING AND FEEDBACK INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
+SCORING INSTRUCTIONS:
 ============================================================
+1. Score each criterion 0-5 (0.5 increments only).
+2. For each criterion provide:
+   - justification: Name the score band, quote evidence from summary, explain why it fits. If half-point, explain what places it between bands. For Task Achievement: address how many main ideas were captured and paraphrasing quality. Keep to 2-3 sentences.
+   - strengths: What the student did well (1 sentence).
+   - mistakes: List up to 3 specific errors as "[quoted text]" — explain the error. Do NOT give corrections.
+   - suggestions: 1 actionable improvement tip for A2-B1 level.
+3. overallFeedback: 2-3 sentences covering main ideas captured/missed, strongest area, weakest area, paraphrasing quality, and one priority action.
+4. totalScore = sum of scores (max ${totalMaxScore}). percentage = round(totalScore/${totalMaxScore}*100).
 
-STEP 1 — SCORE each criterion using WHOLE or HALF numbers (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, or 5). Use 0.5 increments only — never use 0.25 or 0.75. If the summary's quality falls between two adjacent score bands, award a half-point (e.g., 3.5).
-
-STEP 2 — For EACH criterion, write a "Justification" paragraph that:
-  (a) Explicitly names the score band you chose (e.g. "Score 3.5 — Good achievement")
-  (b) Quotes at least ONE specific phrase or sentence from the student's summary as evidence
-  (c) Explains why the summary fits that band descriptor — connect the evidence to the rubric
-  (d) If you awarded a half-point, explain which aspects place it in the lower band and which aspects place it in the higher band
-  (e) For Task Achievement: specifically address how many main ideas from the source text were captured, whether paraphrasing was used, and whether irrelevant details were excluded
-  (f) If the score is below 3, clearly state what is missing compared to a higher score
-  (g) If the score is 4 or 5, explain what the student did beyond basic expectations
-
-STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
-
-STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 learner. For example: "Try using linking words like 'Furthermore' or 'In addition' to connect your ideas."
-
-STEP 5 — overallFeedback must be a comprehensive summary (4-6 sentences) that:
-  - Identifies which main ideas from the source text the student captured and which ones were missing
-  - Highlights the student's strongest criterion and what they did well
-  - Identifies the weakest area needing the most attention
-  - Comments on the paraphrasing quality (own words vs. copied text)
-  - Gives one prioritized action item to focus on next
-
-STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Scores may include 0.5 increments (e.g., 3.5, 4.5). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
-
-============================================================
-CRITICAL OUTPUT RULES:
-- Respond with ONLY the raw JSON object. No markdown, no code fences, no commentary.
-- Do NOT wrap the JSON in triple-backtick code blocks.
-- Use straight double quotes, not smart/curly quotes.
-- Do NOT add trailing commas after the last item in arrays or objects.
-- All string values must have properly escaped quotes inside them.
-- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
-
-JSON OUTPUT FORMAT:
-============================================================
+OUTPUT: Valid JSON only. No markdown, no code fences, no commentary. Use straight double quotes.
 {
   "scores": [
     {
       "criterionName": "Task Achievement",
       "score": 3.5,
       "maxScore": 5,
-      "justification": "Score 3.5 — Good achievement. The summary captures most main ideas effectively. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment]. The student paraphrased well in most places, though some phrases were copied directly from the source text.",
-      "strengths": "The student captures the main points about [X] and [Y] effectively. The paraphrasing shows reasonable comprehension of the source text.",
-      "mistakes": [
-        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
-      ],
-      "suggestions": "Try to capture ALL main ideas from the source text. Remember to use your own words rather than copying phrases directly."
-    },
-    {
-      "criterionName": "Coherence & Cohesion",
-      "score": 3,
-      "maxScore": 5,
-      "justification": "Score 3 — Satisfactory coherence. [explanation with quoted evidence]",
-      "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
-      "suggestions": "[1-2 improvement suggestions]"
-    },
-    {
-      "criterionName": "Lexical Resource",
-      "score": 3,
-      "maxScore": 5,
-      "justification": "Score 3 — Satisfactory vocabulary. [explanation with quoted evidence]",
-      "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
-      "suggestions": "[1-2 improvement suggestions]"
-    },
-    {
-      "criterionName": "Grammar & Accuracy",
-      "score": 3.5,
-      "maxScore": 5,
-      "justification": "Score 3.5 — Good grammar. [explanation with quoted evidence]",
-      "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
-      "suggestions": "[1-2 improvement suggestions]"
+      "justification": "Score 3.5 — [Brief evidence quote and rubric alignment in 2-3 sentences].",
+      "strengths": "[1 sentence].",
+      "mistakes": ["[quoted text] — explanation"],
+      "suggestions": "[1 tip]."
     }
   ],
   "totalScore": 13,
   "maxScore": ${totalMaxScore},
   "percentage": 65,
-  "overallFeedback": "Your summary captures the main ideas about [X, Y, Z] from the source text, but misses [key point]. Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. [Comment on paraphrasing]. Focus on [one prioritized action] to improve your next summary."
+  "overallFeedback": "[2-3 sentences: main ideas captured/missed, strongest area, weakest area, paraphrasing, one action item]."
 }`;
 }
 
@@ -1232,19 +1169,15 @@ function buildSynthesisPrompt(
   }).join('\n\n');
 
   const sourceTextsBlock = sources.map((s, i) => {
-    const wordCountOfSource = s.content.trim().split(/\s+/).filter(Boolean).length;
-    return `SOURCE TEXT ${i + 1}:
-Title: "${s.title}" (${wordCountOfSource} words)
+    return `SOURCE ${i + 1}: "${s.title}"
 """
 ${s.content}
 """`;
   }).join('\n\n');
 
-  return `You are an expert writing assessor evaluating a Credit level student's synthesis essay for Sultan Qaboos University's Center for Preparatory Studies, course LANC2160 (Academic English: Summary Writing & Synthesis Essay).
+  return `You are an expert writing assessor for LANC2160 (Summary Writing & Synthesis) at Sultan Qaboos University. CEFR A2-B1 level. Use simple, clear language.
 
-STUDENT LEVEL: CEFR A2-B1 (Elementary to Pre-Intermediate). Feedback must use simple, clear language that A2-B1 learners can understand. Be encouraging while maintaining appropriate academic standards. Avoid overly technical linguistic terminology.
-
-TASK: The student was asked to read ALL THREE source texts below and write a 4-paragraph synthesis essay (${targetWordCount.min}-${targetWordCount.max} words) based on the assignment below.
+TASK: The student read ALL THREE source texts and wrote a 4-paragraph synthesis essay (${targetWordCount.min}-${targetWordCount.max} words).
 
 ASSIGNMENT: ${assignmentTitle}
 INSTRUCTIONS: ${assignmentDescription}
@@ -1257,107 +1190,48 @@ ${studentText}
 """
 
 ${wordCountStatus}
-Target essay length: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal} words).
 
-SYNTHESIS ESSAY ASSESSMENT RUBRICS (LANC2160 — Two-Point Essay Writing Marking Criteria):
-
+SYNTHESIS ESSAY ASSESSMENT RUBRICS (LANC2160):
 ${criteriaDetails}
 
-SYNTHESIS-SPECIFIC ASSESSMENT RULES:
-1. A synthesis essay must combine information from ALL THREE source texts — not just one or two. The student should demonstrate the ability to integrate ideas from multiple sources into a coherent whole.
-2. The essay must address the specific assignment prompt: "${assignmentTitle}". The essay should cover the key points required by the prompt, drawing evidence from all three sources.
-3. The essay should be exactly 4 paragraphs in structure (typically: introduction, body paragraph 1, body paragraph 2, and conclusion). If the student has written significantly more or fewer paragraphs, note this in the Coherence and Cohesion assessment.
-4. The student MUST use their OWN WORDS (paraphrasing). Direct copying of phrases or sentences from the source texts without paraphrasing is NOT acceptable and must lower the Task Achievement and Lexical Resource scores. Estimate the percentage of directly copied text.
-5. A synthesis essay should NOT include the student's personal opinions, arguments, or new information not present in the source texts.
-6. If the essay is off-topic (not addressing the assignment prompt), give Task Achievement = 0.
-7. If the student has simply copied large portions of any source text, this is NOT an acceptable synthesis — it should score low on Task Achievement and Lexical Resource regardless of how "accurate" the text is.
-8. Check word count: if the word count is 10% or more above or below the target range, this MUST lower the Task Achievement score according to the rubric bands.
+SYNTHESIS-SPECIFIC RULES:
+1. Must combine information from ALL THREE sources — not just one or two.
+2. Must address the assignment prompt: "${assignmentTitle}".
+3. Must be exactly 4 paragraphs (intro, body 1, body 2, conclusion).
+4. Must use OWN WORDS (paraphrasing). Copying > 15% = low Task Achievement and Lexical Resource.
+5. NO personal opinions or new information not in the sources.
+6. Off-topic essay → Task Achievement = 0.
+7. Word count 10%+ outside range → lower Task Achievement per rubric.
 
 ============================================================
-SCORING AND FEEDBACK INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
+SCORING INSTRUCTIONS:
 ============================================================
+1. Score each criterion 0-5 (0.5 increments only).
+2. For each criterion provide:
+   - justification: Name the score band, quote evidence from essay, explain why it fits. If half-point, explain what places it between bands. For Task Achievement: specifically address whether ALL THREE sources were synthesised, assignment prompt addressed, word count met, paraphrasing used. Keep to 2-3 sentences.
+   - strengths: What the student did well (1 sentence).
+   - mistakes: List up to 3 specific errors as "[quoted text]" — explain the error. Do NOT give corrections.
+   - suggestions: 1 actionable improvement tip for A2-B1 level.
+3. overallFeedback: 2-3 sentences covering which sources were used (all 3?), strongest area, weakest area, paraphrasing/copied text %, and one priority action.
+4. totalScore = sum of scores (max ${totalMaxScore}). percentage = round(totalScore/${totalMaxScore}*100).
 
-STEP 1 — SCORE each criterion using WHOLE or HALF numbers (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, or 5). Use 0.5 increments only — never use 0.25 or 0.75. If the essay's quality falls between two adjacent score bands, award a half-point (e.g., 3.5).
-
-STEP 2 — For EACH criterion, write a "Justification" paragraph that:
-  (a) Explicitly names the score band you chose (e.g. "Score 3.5 — between Satisfactory and Good")
-  (b) Quotes at least ONE specific phrase or sentence from the student's essay as evidence
-  (c) Explains why the essay fits that band descriptor — connect the evidence to the rubric
-  (d) If you awarded a half-point, explain which aspects place it in the lower band and which aspects place it in the higher band
-  (e) For Task Achievement: specifically address whether the student synthesized ALL THREE sources, addressed the assignment prompt requirements, stayed within word count, and used own words
-  (f) If the score is below 3, clearly state what is missing compared to a higher score
-  (g) If the score is 4 or 5, explain what the student did beyond basic expectations
-
-STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
-
-STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 learner. For example: "Try using linking words like 'Furthermore' or 'In addition' to connect your ideas."
-
-STEP 5 — overallFeedback must be a comprehensive summary (4-6 sentences) that:
-  - Identifies which sources the student used and whether all three were synthesized
-  - Highlights the student's strongest criterion and what they did well
-  - Identifies the weakest area needing the most attention
-  - Comments on the paraphrasing quality (own words vs. copied text) and estimated copying percentage
-  - Gives one prioritized action item to focus on next
-
-STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Scores may include 0.5 increments (e.g., 3.5, 4.5). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
-
-============================================================
-CRITICAL OUTPUT RULES:
-- Respond with ONLY the raw JSON object. No markdown, no code fences, no commentary.
-- Do NOT wrap the JSON in triple-backtick code blocks.
-- Use straight double quotes, not smart/curly quotes.
-- Do NOT add trailing commas after the last item in arrays or objects.
-- All string values must have properly escaped quotes inside them.
-- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
-
-JSON OUTPUT FORMAT:
-============================================================
+OUTPUT: Valid JSON only. No markdown, no code fences, no commentary. Use straight double quotes.
 {
   "scores": [
     {
       "criterionName": "Task Achievement",
       "score": 3.5,
       "maxScore": 5,
-      "justification": "Score 3.5 — between Satisfactory and Good. The essay synthesizes information from all three sources, addressing the assignment prompt. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment]. The student paraphrased in most places. Word count is within the acceptable range.",
-      "strengths": "The student successfully integrates information from all three source texts and addresses the assignment prompt requirements.",
-      "mistakes": [
-        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
-      ],
-      "suggestions": "Try to ensure ALL main ideas from each source are represented. Remember to use your own words throughout."
-    },
-    {
-      "criterionName": "Coherence and Cohesion",
-      "score": 3,
-      "maxScore": 5,
-      "justification": "Score 3 — Satisfactory. [explanation with quoted evidence]",
-      "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
-      "suggestions": "[1-2 improvement suggestions]"
-    },
-    {
-      "criterionName": "Lexical Resource",
-      "score": 3,
-      "maxScore": 5,
-      "justification": "Score 3 — Satisfactory. [explanation with quoted evidence]",
-      "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
-      "suggestions": "[1-2 improvement suggestions]"
-    },
-    {
-      "criterionName": "Grammatical Range and Accuracy",
-      "score": 3.5,
-      "maxScore": 5,
-      "justification": "Score 3.5 — between Satisfactory and Good. [explanation with quoted evidence]",
-      "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT correct it],
-      "suggestions": "[1-2 improvement suggestions]"
+      "justification": "Score 3.5 — [Brief evidence quote and rubric alignment in 2-3 sentences].",
+      "strengths": "[1 sentence].",
+      "mistakes": ["[quoted text] — explanation"],
+      "suggestions": "[1 tip]."
     }
   ],
   "totalScore": 13,
   "maxScore": ${totalMaxScore},
   "percentage": 65,
-  "overallFeedback": "Your synthesis essay draws on [X of 3] source texts to address [key points from the assignment prompt]. Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. [Comment on paraphrasing/copied text percentage]. Focus on [one prioritized action] to improve your next essay."
+  "overallFeedback": "[2-3 sentences: sources used, strongest area, weakest area, paraphrasing %, one action item]."
 }`;
 }
 

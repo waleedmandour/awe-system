@@ -1091,9 +1091,43 @@ function buildLanc2070Prompt(
     return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
   }).join('\n\n');
 
-  const excerptsList = excerpts.map((e, i) => `${i + 1}. ${e.author} (${e.year}). ${e.title}\n   "${e.content}"`).join('\n\n');
+  const hasExcerpts = excerpts && excerpts.length > 0;
+  const excerptsList = hasExcerpts
+    ? excerpts.map((e, i) => `${i + 1}. ${e.author} (${e.year}). ${e.title}\n   "${e.content}"`).join('\n\n')
+    : '';
 
-  return `You are an expert writing assessor evaluating a Credit level student's article review for Sultan Qaboos University's Center for Preparatory Studies, course LANC2070 (Academic English).
+  // Build essay structure instructions based on whether excerpts are provided
+  const essayStructure = hasExcerpts
+    ? `- Paragraph 1 (Introduction): Introduce the article, write a focus statement, and present a clear thesis statement.
+- Paragraph 2 (Summary): Summarise the main ideas of the article concisely and accurately, without unnecessary detail.
+- Paragraph 3 (Critique): Analyse and evaluate two points from the article, synthesising a minimum of two excerpts from the provided source texts.
+- Paragraph 4 (Conclusion): Restate the thesis statement, summarise the critique, and end with a final thought.`
+    : `- Paragraph 1 (Introduction): Introduce the topic, write a focus statement, and present a clear thesis statement.
+- Paragraph 2 (Body Paragraph 1): Discuss the first way colleges can prepare students for future jobs, using evidence from the source text.
+- Paragraph 3 (Body Paragraph 2): Discuss the second way colleges can prepare students for future jobs, using evidence from the source text.
+- Paragraph 4 (Conclusion): Restate the thesis statement, summarise the main points, and end with a final thought.`;
+
+  const excerptsSection = hasExcerpts
+    ? `AVAILABLE SOURCE EXCERPTS (student must use at least 2):
+${excerptsList}
+
+NOTE: The student must cite all sources in-text using APA format (e.g., Author, year). All source material must be paraphrased — copying chunks of 3 or more words is not allowed.`
+    : `NOTE: The student must cite the source article in-text using APA format (e.g., Author, year). All source material must be paraphrased — copying chunks of 3 or more words is not allowed.`;
+
+  const taskResponsePoints = hasExcerpts
+    ? `- Does the review have exactly 4 paragraphs (Introduction, Summary, Critique, Conclusion)?
+- Does the summary capture the main ideas of the article without unnecessary detail?
+- Does the critique analyse and evaluate exactly 2 points from the article?
+- Are at least 2 excerpts from the provided sources used and synthesised effectively?
+- Is there evidence of analysis (original insights about how/why) and evaluation (critical judgment about value/validity)?
+- Is the word count within the required range?`
+    : `- Does the essay have exactly 4 paragraphs (Introduction, Body 1, Body 2, Conclusion)?
+- Does each body paragraph discuss one distinct way colleges can prepare students for future jobs?
+- Are ideas from the source text used effectively to support the discussion?
+- Is there evidence of analysis (original insights about how/why) and evaluation (critical judgment)?
+- Is the word count within the required range?`;
+
+  return `You are an expert writing assessor evaluating a Credit level student's writing for Sultan Qaboos University's Center for Preparatory Studies, course LANC2070 (Academic English).
 
 STUDENT LEVEL: CEFR A2-B1 (Elementary to Pre-Intermediate). Feedback must use simple, clear language appropriate for A2-B1 learners. Be encouraging while maintaining appropriate academic standards. Avoid overly technical linguistic terminology.
 
@@ -1109,47 +1143,36 @@ TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: $
 ${wordCountStatus}
 
 REQUIRED ESSAY STRUCTURE (4 paragraphs):
-- Paragraph 1 (Introduction): Introduce the article, write a focus statement, and present a clear thesis statement.
-- Paragraph 2 (Summary): Summarise the main ideas of the article concisely and accurately, without unnecessary detail.
-- Paragraph 3 (Critique): Analyse and evaluate two points from the article, synthesising a minimum of two excerpts from the provided source texts.
-- Paragraph 4 (Conclusion): Restate the thesis statement, summarise the critique, and end with a final thought.
+${essayStructure}
 
-MAIN ARTICLE TO REVIEW:
+SOURCE TEXT:
 Title: "${mainArticleTitle}" by ${mainArticleAuthor} (${mainArticleYear})
 """
 ${mainArticleContent}
 """
 
-AVAILABLE SOURCE EXCERPTS (student must use at least 2):
-${excerptsList}
+${excerptsSection}
 
-NOTE: The student must cite all sources in-text using APA format (e.g., Author, year). All source material must be paraphrased — copying chunks of 3 or more words is not allowed.
-
-STUDENT'S ARTICLE REVIEW:
+STUDENT'S ESSAY:
 """
 ${studentText}
 """
 
-ASSESSMENT RUBRICS (LANC2070 - Article Review):
+ASSESSMENT RUBRICS (LANC2070):
 
 ${criteriaDetails}
 
 POINTS TO CONSIDER FOR EACH CRITERION:
 
 Task Response:
-- Does the review have exactly 4 paragraphs (Introduction, Summary, Critique, Conclusion)?
-- Does the summary capture the main ideas of the article without unnecessary detail?
-- Does the critique analyse and evaluate exactly 2 points from the article?
-- Are at least 2 excerpts from the provided sources used and synthesised effectively?
-- Is there evidence of analysis (original insights about how/why) and evaluation (critical judgment about value/validity)?
-- Is the word count within the required range (320-350 words)?
+${taskResponsePoints}
 
 Coherence and Cohesion:
 - Is there a clear focus statement and thesis statement in the introduction?
 - Are the introduction and conclusion clear and thorough?
-- Are attributive phrases and reporting verbs used with APA in-text citations?
+- Are attributive phrases and reporting verbs used with in-text citations where appropriate?
 - Are cohesive devices used accurately and appropriately within and between sentences?
-- Does the text flow logically from introduction through summary, critique, to conclusion?
+- Does the text flow logically from introduction through body paragraphs to conclusion?
 
 Lexical Resource:
 - Is all source material paraphrased using synonyms, word form changes, and/or sentence restructuring?
@@ -1185,8 +1208,8 @@ STEP 5 — overallFeedback must be a comprehensive summary (4-6 sentences) that:
   - Highlights the student's strongest criterion and what they did well
   - Identifies the weakest area needing the most attention
   - Evaluates the quality of paraphrasing and source integration
-  - Evaluates how well the student followed the 4-paragraph article review structure
-  - Comments on the effectiveness of in-text citations and APA referencing
+  - Evaluates how well the student followed the required 4-paragraph essay structure
+  - Comments on the effectiveness of in-text citations where applicable
   - Gives one prioritized action item to focus on next
 
 STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
@@ -1208,8 +1231,8 @@ JSON OUTPUT FORMAT:
       "criterionName": "Task Response",
       "score": 4,
       "maxScore": 5,
-      "justification": "Score 4: Good. The article review has a clear 4-paragraph structure. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
-      "strengths": "The student demonstrates solid understanding of the article structure and addresses two points from the article with supporting excerpts.",
+      "justification": "Score 4: Good. The essay has a clear 4-paragraph structure. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
+      "strengths": "The student demonstrates solid understanding of the topic and supports their discussion with relevant evidence from the source text.",
       "mistakes": [
         "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
       ],
@@ -1219,7 +1242,7 @@ JSON OUTPUT FORMAT:
   "totalScore": 16,
   "maxScore": ${totalMaxScore},
   "percentage": 80,
-  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Focus on [one prioritized action] to improve your next article review."
+  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Focus on [one prioritized action] to improve your next essay."
 }`;
 }
 

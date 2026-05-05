@@ -399,6 +399,104 @@ Treatment methods for seed priming include \u201chydropriming, biopriming, seed 
   },
 ];
 
+// LANC2070 practice test interface (article review with main article + source excerpts, A2-B1 level)
+export interface Lanc2070PracticeTest {
+  id: string;
+  title: string;
+  description: string;
+  writingPrompt: string;
+  cefrLevel: string;
+  expectedParagraphs: number;
+  mainArticle: {
+    id: string;
+    title: string;
+    author: string;
+    year: number;
+    content: string;
+  };
+  excerpts: {
+    id: string;
+    author: string;
+    year: number;
+    title: string;
+    content: string;
+  }[];
+  targetWordCount: {
+    min: number;
+    max: number;
+    ideal: number;
+  };
+  practiceType: 'mid-semester' | 'final';
+}
+
+export const LANC2070_PRACTICE_TESTS: Lanc2070PracticeTest[] = [
+  {
+    id: 'lanc2070-p1-final-article-review',
+    title: 'Final Exam Writing Practice — Article Review',
+    description: 'Write a FOUR paragraph article review (320-350 words) that critically analyses the assigned article. Review any 2 points discussed by the author, use at least 2 excerpts to support your answer, and cite sources in-text using APA format.',
+    writingPrompt: 'Write a FOUR paragraph article review (320-350 words) that critically analyses the article "The Impact of Artificial Intelligence in Business" written by Ben Eubanks in 2021.\n\nReview any 2 points discussed by the author.\nYou must use at least 2 excerpts to support your answer. You may use more.\nYou must cite the sources in-text.\nYou MUST paraphrase. Do not copy chunks of 3 words or more.',
+    cefrLevel: 'A2-B1',
+    expectedParagraphs: 4,
+    practiceType: 'final',
+    targetWordCount: { min: 320, max: 350, ideal: 335 },
+    mainArticle: {
+      id: 'lanc2070-p1-main-article',
+      title: 'The Impact of Artificial Intelligence in Business',
+      author: 'Ben Eubanks',
+      year: 2021,
+      content: `Artificial intelligence (AI) refers to a range of computer technologies that are designed to learn, reason, and make decisions in ways that resemble human thinking. In the business world, AI is no longer a distant concept; it is already being used across many industries to improve efficiency, reduce costs, and create new opportunities. Examples of these technologies are already familiar to most people, from personalised recommendations on streaming platforms to customer service chatbots. As these tools become more widely available and affordable, their influence on how organisations operate is growing rapidly, making it essential for business leaders to understand both the opportunities and the risks that AI presents.
+One of the most significant ways AI is transforming business is by increasing operational efficiency and generating valuable insights. Companies are integrating AI tools into their daily operations to automate repetitive tasks, analyse large volumes of data more quickly than any human team could, and identify patterns that would otherwise go unnoticed. This allows organisations to make faster and more informed decisions, reduce human error, and allocate their human workforce toward more complex and creative responsibilities. In sectors such as finance, healthcare, logistics, and retail, AI-driven systems are already producing measurable improvements in speed, accuracy, and cost-effectiveness. However, these benefits are not equally accessible to all organisations. Smaller businesses with limited budgets and weaker digital infrastructure may struggle to implement AI solutions effectively, meaning that the efficiency gains AI offers risk widening the gap between large and small competitors in many industries.
+A second major impact of AI on business concerns the workforce and the future of employment. As AI systems become capable of performing tasks that were previously done by humans, including data analysis, customer interaction, and even elements of decision-making, concerns about job displacement have grown significantly. Some roles will undoubtedly be reduced or eliminated as automation becomes more cost-effective than human labour. However, it is important to recognise that technological change has historically created new types of work alongside the jobs it removes. Search engine optimisation, for example, is a professional discipline that did not exist before the rise of internet search tools, yet it now supports thousands of careers worldwide. Similarly, the growth of AI is already generating demand for new roles in areas such as data science, AI ethics, and technology management. The key challenge for businesses is therefore not simply to adopt AI, but to prepare their workforce for the changes it will bring through targeted training, reskilling, and a clear understanding of which human capabilities machines cannot replicate.
+A third area of impact involves the growing importance of uniquely human skills in an increasingly automated workplace. As machines take over more routine and analytical tasks, the abilities that remain distinctly human, such as empathy, creativity, ethical judgement, and the capacity to build genuine relationships, become more valuable rather than less. Businesses that rely heavily on trust, personal interaction, and nuanced communication cannot simply replace their human workforce with algorithms, as these qualities are difficult to automate convincingly. At the same time, organisations must ensure that their employees develop the skills needed to work effectively alongside AI tools, including the ability to evaluate the reliability of AI-generated information, adapt to rapidly changing technological environments, and apply sound judgement in situations where data alone cannot provide a complete answer. Achieving this balance between the efficiency of machines and the irreplaceable qualities of human workers is one of the central leadership challenges that AI presents to businesses today and in the years ahead.
+AI is transforming the way businesses operate, and its influence will only grow in the years ahead. Organisations that use AI to improve efficiency, adapt their workforce, and maintain a strong human element are best positioned for long-term success. However, the benefits of AI are not equally accessible to all businesses, and without careful planning, smaller organisations and lower-skilled workers risk being left behind. AI is ultimately a tool, and its value depends entirely on how responsibly and thoughtfully it is applied.`,
+    },
+    excerpts: [
+      {
+        id: 'lanc2070-p1-excerpt-eclac',
+        author: 'Economic Commission for Latin America and the Caribbean (ECLAC)',
+        year: 2021,
+        title: 'Digital technologies for a new future',
+        content: 'Technological progress has gone along with socially negative outcomes, such as the exclusion of a large proportion of the world\'s people from the benefits of digitalization, essentially because their incomes are too low for them to have good connectivity (i.e., high-quality access), access to devices, fixed home connections, and the ability to use these day to day.',
+      },
+      {
+        id: 'lanc2070-p1-excerpt-ahmed',
+        author: 'Ahmed, A.',
+        year: 2025,
+        title: 'Things humans can still do better than machines',
+        content: 'Freeing professionals from the difficult aspect of their work could allow them to dedicate more time and attention to cultivating skills that are peculiarly human, such as empathy and interpersonal relationships, which, for the time being, clearly remain a human element.',
+      },
+      {
+        id: 'lanc2070-p1-excerpt-williams',
+        author: 'Williams, M.',
+        year: 2021,
+        title: 'Career in Search Engine Optimization: The Definitive Guide',
+        content: 'SEO or Search Engine Optimization is a growing field that offers many opportunities for creative thinkers and problem solvers. If you enjoy researching and finding the underlying cause of things, you have the potential to earn a great living while helping the world find the information they are looking for.',
+      },
+      {
+        id: 'lanc2070-p1-excerpt-tucci',
+        author: 'Tucci, L.',
+        year: 2021,
+        title: 'A guide to artificial intelligence in the enterprise',
+        content: 'The application of artificial intelligence in the enterprise is profoundly changing the way businesses work. Companies are incorporating AI technologies into their business operations with the aim of saving money, boosting efficiency, generating insights and creating new markets.',
+      },
+      {
+        id: 'lanc2070-p1-excerpt-rainie',
+        author: 'Rainie, L., and Anderson, J.',
+        year: 2018,
+        title: 'Artificial Intelligence and the Future of Humans',
+        content: 'The experts predicted networked artificial intelligence would amplify human effectiveness but also threaten human autonomy, agency and capabilities. They spoke of the wide-ranging possibilities; that computers might match or even exceed human intelligence and capabilities on tasks such as complex decision-making, reasoning and learning, sophisticated analytics and pattern recognition, visual acuity, speech recognition and language translation.',
+      },
+      {
+        id: 'lanc2070-p1-excerpt-echeverri',
+        author: 'Echeverri, M.',
+        year: 2020,
+        title: 'Three steps to advance AI skills in your organization',
+        content: 'The enormous opportunities and benefits artificial intelligence can bring to an organization require skills development programs designed to ensure consistency and intentional outcomes. A prescriptive approach to AI skills development in AI literacy, contextual AI knowledge, and AI solution-building capabilities are critical for success.',
+      },
+    ],
+  },
+];
+
 export interface AssessmentRecord {
   id: string;
   assessment: Assessment;
@@ -511,6 +609,13 @@ const defaultCourses: Course[] = [
     name: 'Report Writing (LANC2146)',
     program: 'post-foundation',
     description: 'Post-foundation course focusing on academic report writing, including lab report Discussion and Conclusion sections.'
+  },
+  {
+    id: 'course-lanc2070',
+    code: 'LANC2070',
+    name: 'Academic English: Article Review (LANC2070)',
+    program: 'post-foundation',
+    description: 'Post-foundation course focusing on academic article review writing with in-text citation and paraphrasing skills.'
   }
 ];
 

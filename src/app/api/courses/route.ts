@@ -41,6 +41,19 @@ const defaultCourses = [
       { id: 'cr-11', name: 'Lexical Resource', maxScore: 5, description: 'Range and accuracy of vocabulary' },
       { id: 'cr-12', name: 'Grammatical Range & Accuracy', maxScore: 5, description: 'Range and accuracy of grammar' },
     ]
+  },
+  {
+    id: 'course-lanc2070',
+    code: 'LANC2070',
+    name: 'Academic English: Article Review',
+    program: 'credit',
+    description: 'Credit course focusing on academic article review writing with APA citation and paraphrasing skills',
+    criteria: [
+      { id: 'cr-13', name: 'Task Response', maxScore: 5, description: '4-paragraph article review structure; critique of 2 points; use of 2 excerpts; analysis and evaluation' },
+      { id: 'cr-14', name: 'Coherence and Cohesion', maxScore: 5, description: 'Focus and thesis statements; APA referencing; cohesive devices' },
+      { id: 'cr-15', name: 'Lexical Resource', maxScore: 5, description: 'Paraphrasing quality; vocabulary range; spelling and word form' },
+      { id: 'cr-16', name: 'Grammatical Range and Accuracy', maxScore: 5, description: 'Range of structures; accuracy; punctuation and capitalization' },
+    ]
   }
 ];
 

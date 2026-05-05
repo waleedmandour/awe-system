@@ -838,6 +838,82 @@ JSON OUTPUT FORMAT:
 // NOTE: Synthesis assignment data is imported dynamically from the store
 // to avoid duplicating data and causing ID mismatches between frontend and API.
 
+// ─── LANC2070 Article Review Assessment ──────────────────────────────────────
+
+// Article Review criteria for LANC2070 (A2-B1 level, 0-5 per criterion)
+const LANC2070_CRITERIA = [
+  {
+    name: 'Task Response',
+    maxScore: 5,
+    description: '4-paragraph article review (introduction, summary, critique of 2 points, conclusion); synthesis of minimum 2 excerpts; analysis and evaluation of 2 points; word count adherence.',
+  },
+  {
+    name: 'Coherence and Cohesion',
+    maxScore: 5,
+    description: 'Flow of ideas; focus and thesis statements; attributive and reporting phrases with APA referencing; cohesive devices.',
+  },
+  {
+    name: 'Lexical Resource',
+    maxScore: 5,
+    description: 'Paraphrasing quality (synonyms, word form changes, sentence restructuring); vocabulary range; word choice and form; spelling.',
+  },
+  {
+    name: 'Grammatical Range and Accuracy',
+    maxScore: 5,
+    description: 'Grammatical range (compound and complex sentences, relative clauses); grammatical accuracy (subject-verb agreement, verb tense, pronouns, articles); punctuation and capitalization.',
+  },
+];
+
+// Detailed rubric band descriptors for LANC2070 Article Review (A2-B1 level)
+const LANC2070_RUBRICS = {
+  criteria: [
+    {
+      name: 'Task Response',
+      maxScore: 5,
+      rubric: {
+        '0-1.5': 'Poor: Text fails to fulfil any task requirements and shows no understanding of audience, purpose or genre. Does not address required points. No meaningful use of excerpts. No analysis or evaluation. Does not meet the minimum word length (less than 300 words).',
+        '2': 'Unsatisfactory: Response does not adequately fulfil task requirements. Structure is incomplete or unclear (missing or weak paragraph(s)). The response includes 0-1 excerpts with insufficient or inappropriate use. Minimal or inaccurate analysis/evaluation. Does not meet the minimum word length.',
+        '3': 'Satisfactory: The summary is adequate but misses some main ideas and may contain unnecessary details. The response attempts to synthesize 2 excerpts but may be limited, predictable, or irrelevant. The analysis is adequate but support may be limited and may lack logical development. Evaluation may not be apparent. The word length requirement of 320-350 words is met.',
+        '4': 'Good: The summary contains most of the main ideas with no details. The response synthesizes 2 excerpts well. The analysis shows logical development with limited insight. Some evaluation is apparent. The word length requirement of 320-350 words is met.',
+        '5': 'Excellent: The summary contains all of the main ideas with no details. Information and ideas from 2 excerpts are synthesized so well as to give a fluent progression throughout. The analysis shows logical development and insight. The evaluation is clear and convincing. The word length requirement of 320-350 words is met.',
+      }
+    },
+    {
+      name: 'Coherence and Cohesion',
+      maxScore: 5,
+      rubric: {
+        '0-1': 'Poor: Text lacks organization and coherence. No focus or thesis statement. No use of attribution. No logical connections between ideas. No use of cohesive devices.',
+        '2': 'Unsatisfactory: Introduction and/or conclusion are inappropriate or missing. There may be no thesis or focus statement. There may be no attribution. Most cohesive devices are simple and may be used inaccurately and mechanically in most places.',
+        '3': 'Satisfactory: Introduction and conclusion are appropriate and thorough. The thesis and/or focus statement may be unclear. Attribution is attempted but may be inaccurate or missing in some places. Cohesive devices are sometimes inaccurate and repetitive and may be over or underused.',
+        '4': 'Good: The introduction and conclusion are generally clear and thorough. There are clear focus and thesis statements. There are some attributive phrases, but they may be over/underused and repetitive. Cohesive devices are almost always used accurately and appropriately both within and between sentences.',
+        '5': 'Excellent: Introduction and conclusion are clear and thorough. There are strong focus and thesis statements. There are a variety of attributive phrases and reporting verbs used flexibly and accurately. A good range of cohesive devices is consistently used accurately and appropriately.',
+      }
+    },
+    {
+      name: 'Lexical Resource',
+      maxScore: 5,
+      rubric: {
+        '0-1': 'Poor: Paraphrasing is largely absent. Most of the text is copied. Limited range of vocabulary. Poor word choice, word form, and spelling prevent the communication of ideas.',
+        '2': 'Unsatisfactory: Very little attempt at paraphrasing: whole sentences are directly copied. Chunks of more than 4 words are frequently copied. Inadequate range of vocabulary. Errors in word choice, word form, and spelling predominate and affect communication.',
+        '3': 'Satisfactory: Generally paraphrased using a few techniques; there may be some copying in chunks of 3 words or less. Limited but adequate range of vocabulary. Errors in word choice, form, and spelling sometimes affect communication.',
+        '4': 'Good: Mostly paraphrased well using a variety of techniques with very little copying of chunks of 3 words or less. Good range of vocabulary. Spelling and word form are mostly accurate.',
+        '5': 'Excellent: Completely and accurately paraphrased with no copying. Wide range of vocabulary used flexibly and accurately. Spelling and word form are accurate.',
+      }
+    },
+    {
+      name: 'Grammatical Range and Accuracy',
+      maxScore: 5,
+      rubric: {
+        '0-1': 'Poor: An extremely limited range of structures is used. Core structures are almost always used inaccurately, causing severe communication breakdowns. Punctuation and capitalization are consistently inaccurate, making the text difficult to follow.',
+        '2': 'Unsatisfactory: A very limited range of structures is used. Core structures are often used inaccurately, and these errors significantly impact communication. Punctuation and capitalization are frequently inaccurate, making the text difficult to follow.',
+        '3': 'Satisfactory: A limited but adequate range of structures is used, with some inaccuracies, and these errors may occasionally affect communication. Punctuation and capitalization are sometimes inaccurate and may hinder clarity in places.',
+        '4': 'Good: Good range of structures for the level. Core structures are frequently used accurately. There may be some inaccuracy, but communication is not affected. Punctuation and capitalization are mostly error-free.',
+        '5': 'Excellent: A wide range of structures exceed task expectations. Core structures are used accurately. There might be minor errors in more complex attempts, but they do not affect communication. Punctuation and capitalization are well-managed and effective.',
+      }
+    },
+  ],
+};
+
 // Build prompt for LANC1070 Synthesis Essay (single source text)
 function buildLanc1070Prompt(
   studentText: string,
@@ -977,6 +1053,173 @@ JSON OUTPUT FORMAT:
   "maxScore": ${totalMaxScore},
   "percentage": 80,
   "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Focus on [one prioritized action] to improve your next essay."
+}`;
+}
+
+// Build prompt for LANC2070 Article Review (main article + source excerpts)
+function buildLanc2070Prompt(
+  studentText: string,
+  mainArticleContent: string,
+  mainArticleTitle: string,
+  mainArticleAuthor: string,
+  mainArticleYear: number,
+  excerpts: { id: string; author: string; year: number; title: string; content: string }[],
+  assignmentTitle: string,
+  assignmentDescription: string,
+  writingPrompt: string,
+  wordCount: number,
+  targetWordCount: { min: number; max: number; ideal: number }
+): string {
+  const rubrics = LANC2070_RUBRICS;
+  const totalMaxScore = LANC2070_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0); // 20
+
+  const tenPercentBelow = Math.round(targetWordCount.min * 0.9);
+  const tenPercentAbove = Math.round(targetWordCount.max * 1.1);
+
+  const wordCountStatus = wordCount < 300
+    ? `WARNING: Word count (${wordCount}) is BELOW the minimum of 300 words. Per the rubric, this MUST result in a Poor (0-1.5) score for Task Response.`
+    : wordCount < targetWordCount.min
+    ? `NOTE: Word count (${wordCount}) is below the required range of ${targetWordCount.min}-${targetWordCount.max} words. This should be reflected in the Task Response score.`
+    : wordCount > targetWordCount.max
+    ? `NOTE: Word count (${wordCount}) exceeds the recommended maximum of ${targetWordCount.max} words. This should be reflected in the Task Response score.`
+    : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
+
+  const criteriaDetails = rubrics.criteria.map(c => {
+    const rubricLevels = Object.entries(c.rubric)
+      .map(([score, desc]) => `  Score ${score}: ${desc}`)
+      .join('\n');
+    return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
+  }).join('\n\n');
+
+  const excerptsList = excerpts.map((e, i) => `${i + 1}. ${e.author} (${e.year}). ${e.title}\n   "${e.content}"`).join('\n\n');
+
+  return `You are an expert writing assessor evaluating a Credit level student's article review for Sultan Qaboos University's Center for Preparatory Studies, course LANC2070 (Academic English).
+
+STUDENT LEVEL: CEFR A2-B1 (Elementary to Pre-Intermediate). Feedback must use simple, clear language appropriate for A2-B1 learners. Be encouraging while maintaining appropriate academic standards. Avoid overly technical linguistic terminology.
+
+ASSIGNMENT: ${assignmentTitle}
+
+WRITING TASK: ${assignmentDescription}
+
+WRITING PROMPT:
+${writingPrompt}
+
+TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}). The rubric specifies a hard minimum of 300 words — anything below 300 MUST receive a Poor score for Task Response.
+
+${wordCountStatus}
+
+REQUIRED ESSAY STRUCTURE (4 paragraphs):
+- Paragraph 1 (Introduction): Introduce the article, write a focus statement, and present a clear thesis statement.
+- Paragraph 2 (Summary): Summarise the main ideas of the article concisely and accurately, without unnecessary detail.
+- Paragraph 3 (Critique): Analyse and evaluate two points from the article, synthesising a minimum of two excerpts from the provided source texts.
+- Paragraph 4 (Conclusion): Restate the thesis statement, summarise the critique, and end with a final thought.
+
+MAIN ARTICLE TO REVIEW:
+Title: "${mainArticleTitle}" by ${mainArticleAuthor} (${mainArticleYear})
+"""
+${mainArticleContent}
+"""
+
+AVAILABLE SOURCE EXCERPTS (student must use at least 2):
+${excerptsList}
+
+NOTE: The student must cite all sources in-text using APA format (e.g., Author, year). All source material must be paraphrased — copying chunks of 3 or more words is not allowed.
+
+STUDENT'S ARTICLE REVIEW:
+"""
+${studentText}
+"""
+
+ASSESSMENT RUBRICS (LANC2070 - Article Review):
+
+${criteriaDetails}
+
+POINTS TO CONSIDER FOR EACH CRITERION:
+
+Task Response:
+- Does the review have exactly 4 paragraphs (Introduction, Summary, Critique, Conclusion)?
+- Does the summary capture the main ideas of the article without unnecessary detail?
+- Does the critique analyse and evaluate exactly 2 points from the article?
+- Are at least 2 excerpts from the provided sources used and synthesised effectively?
+- Is there evidence of analysis (original insights about how/why) and evaluation (critical judgment about value/validity)?
+- Is the word count within the required range (320-350 words)?
+
+Coherence and Cohesion:
+- Is there a clear focus statement and thesis statement in the introduction?
+- Are the introduction and conclusion clear and thorough?
+- Are attributive phrases and reporting verbs used with APA in-text citations?
+- Are cohesive devices used accurately and appropriately within and between sentences?
+- Does the text flow logically from introduction through summary, critique, to conclusion?
+
+Lexical Resource:
+- Is all source material paraphrased using synonyms, word form changes, and/or sentence restructuring?
+- Are there any copied chunks of 3 or more words?
+- Is there a good range of vocabulary used flexibly and accurately?
+- Are word choice, word form, and spelling accurate?
+
+Grammatical Range and Accuracy:
+- Is there a good range of structures including compound and complex sentences and relative clauses?
+- Are core structures (subject-verb agreement, verb tense, pronouns, articles) used accurately?
+- Are punctuation and capitalization well-managed and effective?
+
+============================================================
+SCORING AND FEEDBACK INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
+============================================================
+
+STEP 1 — SCORE each criterion using WHOLE or HALF numbers (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, or 5). If the essay's quality falls between two adjacent score bands, award a half-point (e.g., 3.5). Use 0.5 increments only — never use 0.25 or 0.75.
+
+STEP 2 — For EACH criterion, write a "Justification" paragraph that:
+  (a) Explicitly names the score band you chose (e.g. "Score 3.5 — Satisfactory")
+  (b) Quotes at least ONE specific phrase or sentence from the student's essay as evidence
+  (c) Explains why the essay fits that band descriptor — connect the evidence to the rubric
+  (d) If you awarded a half-point, explain which aspects place it in the lower band and which in the higher band
+  (e) If the score is below 4, clearly state what is missing compared to the next higher band
+  (f) If the score is 5, explain what the student did beyond expectations
+
+STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
+  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+
+STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 level writer.
+
+STEP 5 — overallFeedback must be a comprehensive summary (4-6 sentences) that:
+  - Highlights the student's strongest criterion and what they did well
+  - Identifies the weakest area needing the most attention
+  - Evaluates the quality of paraphrasing and source integration
+  - Evaluates how well the student followed the 4-paragraph article review structure
+  - Comments on the effectiveness of in-text citations and APA referencing
+  - Gives one prioritized action item to focus on next
+
+STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
+
+============================================================
+CRITICAL OUTPUT RULES:
+- Respond with ONLY the raw JSON object. No markdown, no code fences, no commentary.
+- Do NOT wrap the JSON in triple-backtick code blocks.
+- Use straight double quotes, not smart/curly quotes.
+- Do NOT add trailing commas after the last item in arrays or objects.
+- All string values must have properly escaped quotes inside them.
+- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points or numbered lists wherever possible. Each bullet should be a separate, clear point.
+
+JSON OUTPUT FORMAT:
+============================================================
+{
+  "scores": [
+    {
+      "criterionName": "Task Response",
+      "score": 4,
+      "maxScore": 5,
+      "justification": "Score 4: Good. The article review has a clear 4-paragraph structure. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
+      "strengths": "The student demonstrates solid understanding of the article structure and addresses two points from the article with supporting excerpts.",
+      "mistakes": [
+        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+      ],
+      "suggestions": "Ensure your summary paragraph captures only the main ideas without unnecessary detail. Use a wider variety of attributive phrases when citing sources."
+    }
+  ],
+  "totalScore": 16,
+  "maxScore": ${totalMaxScore},
+  "percentage": 80,
+  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Focus on [one prioritized action] to improve your next article review."
 }`;
 }
 
@@ -1361,6 +1604,7 @@ export async function POST(request: NextRequest) {
     const isSynthesisWriting = courseCode === 'LANC2160' && writingType === 'synthesis';
     const isLanc1070 = courseCode === 'LANC1070';
     const isLanc2146 = courseCode === 'LANC2146';
+    const isLanc2070 = courseCode === 'LANC2070';
 
     // Validate that LANC2160 has a writingType selected
     if (courseCode === 'LANC2160' && !writingType) {
@@ -1371,7 +1615,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate that courses requiring a sourceTextId have one provided
-    if ((isLanc1070 || isLanc2146 || isSummaryWriting || isSynthesisWriting) && !sourceTextId) {
+    if ((isLanc1070 || isLanc2146 || isLanc2070 || isSummaryWriting || isSynthesisWriting) && !sourceTextId) {
       return NextResponse.json(
         { error: 'A source text or assignment must be selected before assessment. Please go back and select one.', details: `Missing sourceTextId for course ${courseCode}` },
         { status: 400 }
@@ -1499,6 +1743,38 @@ export async function POST(request: NextRequest) {
         activeTargetWordCount
       );
       criteria = SYNTHESIS_CRITERIA; // Reuse synthesis criteria (A2-B1, 0-5 scale)
+    } else if (isLanc2070) {
+      // LANC2070 Article Review — main article + source excerpts
+      const { LANC2070_PRACTICE_TESTS } = await import('@/lib/store');
+      const practiceData = LANC2070_PRACTICE_TESTS.find(t => t.id === sourceTextId);
+
+      if (!practiceData) {
+        return NextResponse.json(
+          { error: 'LANC2070 practice test not found. Please select a valid practice test.', details: `No LANC2070 practice test found for sourceTextId: ${sourceTextId}` },
+          { status: 400 }
+        );
+      }
+
+      activeTargetWordCount = {
+        min: practiceData.targetWordCount.min,
+        max: practiceData.targetWordCount.max,
+        ideal: practiceData.targetWordCount.ideal,
+        label: `LANC2070: "${practiceData.title}"`
+      };
+      prompt = buildLanc2070Prompt(
+        text,
+        practiceData.mainArticle.content,
+        practiceData.mainArticle.title,
+        practiceData.mainArticle.author,
+        practiceData.mainArticle.year,
+        practiceData.excerpts,
+        practiceData.title,
+        practiceData.description,
+        practiceData.writingPrompt,
+        wordCount,
+        activeTargetWordCount
+      );
+      criteria = LANC2070_CRITERIA;
     } else {
       // Credit/Post-foundation — general
       activeTargetWordCount = null;
@@ -1518,6 +1794,8 @@ export async function POST(request: NextRequest) {
       ? 'You are an expert writing assessment AI for the Credit level course LANC1070 (Academic English) at Sultan Qaboos University. For synthesis essay tasks based on a single source text, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student essay against the provided source text, (2) check that the student addresses the required discussion points, (3) quote exact words from the student essay as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) assess paraphrasing quality and estimate copying percentage, (7) check word count against the target range, and (8) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : isLanc2146
       ? 'You are an expert writing assessment AI for the Credit level course LANC2146 (Report Writing) at Sultan Qaboos University. For lab report Discussion and Conclusion tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) evaluate the Discussion section for analysis and interpretation of data with details/examples/statistics, (2) evaluate the Conclusion for summary of results, reference to previous research, restatement of aim, and recommendations, (3) quote exact words from the student text as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) check word count against the target range specified in the prompt, and (7) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
+      : isLanc2070
+      ? 'You are an expert writing assessment AI for the Credit level course LANC2070 (Academic English: Article Review) at Sultan Qaboos University. For article review tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) check that the review has exactly 4 paragraphs (Introduction, Summary, Critique, Conclusion), (2) evaluate the quality of analysis (original insights about how/why) and evaluation (critical judgment about value/validity) of 2 points from the main article, (3) verify that at least 2 excerpts from the provided source texts are used and synthesised, (4) check APA in-text citation format and attributive phrases, (5) assess paraphrasing quality — copied chunks of 3+ words must be penalised, (6) quote exact words from the student review as evidence, (7) explicitly justify why the score matches the rubric band, (8) list specific errors with quoted text, and (9) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : 'You are an expert writing assessment AI for university courses at Sultan Qaboos University. Students are at CEFR A2-B1 level (Elementary to Pre-Intermediate). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. CRITICAL: For each criterion you MUST (1) quote exact words from the student essay as evidence, (2) explicitly justify why the score matches the rubric band, (3) list specific errors with quoted text, and (4) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.';
 
     const model = genAI.getGenerativeModel({
@@ -1858,7 +2136,7 @@ export async function POST(request: NextRequest) {
 
     // Add word count info
     assessment.wordCount = wordCount;
-    assessment.targetWordCount = (isFoundation || isSummaryWriting || isSynthesisWriting || isLanc1070 || isLanc2146) ? activeTargetWordCount : null;
+    assessment.targetWordCount = (isFoundation || isSummaryWriting || isSynthesisWriting || isLanc1070 || isLanc2146 || isLanc2070) ? activeTargetWordCount : null;
 
     return NextResponse.json({
       success: true,

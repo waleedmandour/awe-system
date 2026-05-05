@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
-// IMPORTANT: Prevents Vercel from timing out the assessment process on the FREE tier
+// IMPORTANT: Vercel Hobby plan ($20/mo) allows maxDuration = 60.
+// On the FREE tier, Vercel caps serverless functions at 10 seconds regardless of this setting.
+// LANC2070 prompts are optimised to complete within the 10-second free tier limit.
 export const maxDuration = 60;
 
 // Word count targets by course and exam type for Foundation courses
@@ -864,51 +866,52 @@ const LANC2070_CRITERIA = [
   },
 ];
 
-// Detailed rubric band descriptors for LANC2070 Article Review (A2-B1 level)
+// Condensed rubric band descriptors for LANC2070 Article Review (A2-B1 level)
+// Optimised: shorter descriptors reduce prompt token count for faster free-tier response
 const LANC2070_RUBRICS = {
   criteria: [
     {
       name: 'Task Response',
       maxScore: 5,
       rubric: {
-        '0-1.5': 'Poor: Text fails to fulfil any task requirements and shows no understanding of audience, purpose or genre. Does not address required points. No meaningful use of excerpts. No analysis or evaluation. Does not meet the minimum word length (less than 300 words).',
-        '2': 'Unsatisfactory: Response does not adequately fulfil task requirements. Structure is incomplete or unclear (missing or weak paragraph(s)). The response includes 0-1 excerpts with insufficient or inappropriate use. Minimal or inaccurate analysis/evaluation. Does not meet the minimum word length.',
-        '3': 'Satisfactory: The summary is adequate but misses some main ideas and may contain unnecessary details. The response attempts to synthesize 2 excerpts but may be limited, predictable, or irrelevant. The analysis is adequate but support may be limited and may lack logical development. Evaluation may not be apparent. The word length requirement of 320-350 words is met.',
-        '4': 'Good: The summary contains most of the main ideas with no details. The response synthesizes 2 excerpts well. The analysis shows logical development with limited insight. Some evaluation is apparent. The word length requirement of 320-350 words is met.',
-        '5': 'Excellent: The summary contains all of the main ideas with no details. Information and ideas from 2 excerpts are synthesized so well as to give a fluent progression throughout. The analysis shows logical development and insight. The evaluation is clear and convincing. The word length requirement of 320-350 words is met.',
+        '0-1.5': 'Fails task requirements. No use of excerpts. No analysis or evaluation. Below 300 words.',
+        '2': 'Incomplete structure, 0-1 excerpts, minimal analysis/evaluation. Below word count.',
+        '3': 'Adequate summary, attempts 2 excerpts with limited synthesis. Basic analysis, weak evaluation. Word count met.',
+        '4': 'Good summary of main ideas, 2 excerpts synthesised well. Logical analysis with some evaluation.',
+        '5': 'All main ideas captured, 2 excerpts fluently synthesised. Insightful analysis, clear evaluation.',
       }
     },
     {
       name: 'Coherence and Cohesion',
       maxScore: 5,
       rubric: {
-        '0-1': 'Poor: Text lacks organization and coherence. No focus or thesis statement. No use of attribution. No logical connections between ideas. No use of cohesive devices.',
-        '2': 'Unsatisfactory: Introduction and/or conclusion are inappropriate or missing. There may be no thesis or focus statement. There may be no attribution. Most cohesive devices are simple and may be used inaccurately and mechanically in most places.',
-        '3': 'Satisfactory: Introduction and conclusion are appropriate and thorough. The thesis and/or focus statement may be unclear. Attribution is attempted but may be inaccurate or missing in some places. Cohesive devices are sometimes inaccurate and repetitive and may be over or underused.',
-        '4': 'Good: The introduction and conclusion are generally clear and thorough. There are clear focus and thesis statements. There are some attributive phrases, but they may be over/underused and repetitive. Cohesive devices are almost always used accurately and appropriately both within and between sentences.',
-        '5': 'Excellent: Introduction and conclusion are clear and thorough. There are strong focus and thesis statements. There are a variety of attributive phrases and reporting verbs used flexibly and accurately. A good range of cohesive devices is consistently used accurately and appropriately.',
+        '0-1': 'No organisation. No focus/thesis. No attribution. No cohesive devices.',
+        '2': 'Weak or missing intro/conclusion/thesis. Attribution missing. Cohesive devices inaccurate.',
+        '3': 'Adequate intro/conclusion. Thesis may be unclear. Attribution attempted but inconsistent. Cohesive devices repetitive.',
+        '4': 'Clear intro/conclusion with focus and thesis. Some attributive phrases. Cohesive devices mostly accurate.',
+        '5': 'Strong intro/conclusion with clear thesis. Varied attributive phrases and reporting verbs. Cohesive devices used accurately.',
       }
     },
     {
       name: 'Lexical Resource',
       maxScore: 5,
       rubric: {
-        '0-1': 'Poor: Paraphrasing is largely absent. Most of the text is copied. Limited range of vocabulary. Poor word choice, word form, and spelling prevent the communication of ideas.',
-        '2': 'Unsatisfactory: Very little attempt at paraphrasing: whole sentences are directly copied. Chunks of more than 4 words are frequently copied. Inadequate range of vocabulary. Errors in word choice, word form, and spelling predominate and affect communication.',
-        '3': 'Satisfactory: Generally paraphrased using a few techniques; there may be some copying in chunks of 3 words or less. Limited but adequate range of vocabulary. Errors in word choice, form, and spelling sometimes affect communication.',
-        '4': 'Good: Mostly paraphrased well using a variety of techniques with very little copying of chunks of 3 words or less. Good range of vocabulary. Spelling and word form are mostly accurate.',
-        '5': 'Excellent: Completely and accurately paraphrased with no copying. Wide range of vocabulary used flexibly and accurately. Spelling and word form are accurate.',
+        '0-1': 'Largely copied. Very limited vocabulary. Poor word choice, form, spelling.',
+        '2': 'Minimal paraphrasing, frequent copied chunks (>4 words). Inadequate vocabulary range.',
+        '3': 'Generally paraphrased, minor copying (≤3 words). Adequate vocabulary. Some word choice/spelling errors.',
+        '4': 'Well paraphrased with variety of techniques. Good vocabulary. Spelling/word form mostly accurate.',
+        '5': 'Fully paraphrased with no copying. Wide, flexible vocabulary. Accurate spelling and word form.',
       }
     },
     {
       name: 'Grammatical Range and Accuracy',
       maxScore: 5,
       rubric: {
-        '0-1': 'Poor: An extremely limited range of structures is used. Core structures are almost always used inaccurately, causing severe communication breakdowns. Punctuation and capitalization are consistently inaccurate, making the text difficult to follow.',
-        '2': 'Unsatisfactory: A very limited range of structures is used. Core structures are often used inaccurately, and these errors significantly impact communication. Punctuation and capitalization are frequently inaccurate, making the text difficult to follow.',
-        '3': 'Satisfactory: A limited but adequate range of structures is used, with some inaccuracies, and these errors may occasionally affect communication. Punctuation and capitalization are sometimes inaccurate and may hinder clarity in places.',
-        '4': 'Good: Good range of structures for the level. Core structures are frequently used accurately. There may be some inaccuracy, but communication is not affected. Punctuation and capitalization are mostly error-free.',
-        '5': 'Excellent: A wide range of structures exceed task expectations. Core structures are used accurately. There might be minor errors in more complex attempts, but they do not affect communication. Punctuation and capitalization are well-managed and effective.',
+        '0-1': 'Extremely limited structures. Core structures inaccurate. Punctuation/capitalisation consistently wrong.',
+        '2': 'Very limited structures. Core structures often inaccurate, impairing communication.',
+        '3': 'Limited but adequate structures with some inaccuracies. Punctuation sometimes inaccurate.',
+        '4': 'Good range of structures. Core structures mostly accurate. Punctuation mostly error-free.',
+        '5': 'Wide range exceeding expectations. Core structures accurate. Effective punctuation and capitalisation.',
       }
     },
   ],
@@ -1073,9 +1076,6 @@ function buildLanc2070Prompt(
   const rubrics = LANC2070_RUBRICS;
   const totalMaxScore = LANC2070_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0); // 20
 
-  const tenPercentBelow = Math.round(targetWordCount.min * 0.9);
-  const tenPercentAbove = Math.round(targetWordCount.max * 1.1);
-
   const wordCountStatus = wordCount < 300
     ? `WARNING: Word count (${wordCount}) is BELOW the minimum of 300 words. Per the rubric, this MUST result in a Poor (0-1.5) score for Task Response.`
     : wordCount < targetWordCount.min
@@ -1127,26 +1127,20 @@ NOTE: The student must cite all sources in-text using APA format (e.g., Author, 
 - Is there evidence of analysis (original insights about how/why) and evaluation (critical judgment)?
 - Is the word count within the required range?`;
 
-  return `You are an expert writing assessor evaluating a Credit level student's writing for Sultan Qaboos University's Center for Preparatory Studies, course LANC2070 (Academic English).
-
-STUDENT LEVEL: CEFR A2-B1 (Elementary to Pre-Intermediate). Feedback must use simple, clear language appropriate for A2-B1 learners. Be encouraging while maintaining appropriate academic standards. Avoid overly technical linguistic terminology.
+  return `You are an expert writing assessor for LANC2070 (Academic English: Article Review) at Sultan Qaboos University. CEFR A2-B1 level. Use simple, clear language.
 
 ASSIGNMENT: ${assignmentTitle}
-
 WRITING TASK: ${assignmentDescription}
+WRITING PROMPT: ${writingPrompt}
 
-WRITING PROMPT:
-${writingPrompt}
-
-TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}). The rubric specifies a hard minimum of 300 words — anything below 300 MUST receive a Poor score for Task Response.
-
+TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}). Below 300 words = Poor for Task Response.
 ${wordCountStatus}
 
-REQUIRED ESSAY STRUCTURE (4 paragraphs):
+REQUIRED STRUCTURE (4 paragraphs):
 ${essayStructure}
 
 SOURCE TEXT:
-Title: "${mainArticleTitle}" by ${mainArticleAuthor} (${mainArticleYear})
+"${mainArticleTitle}" by ${mainArticleAuthor} (${mainArticleYear})
 """
 ${mainArticleContent}
 """
@@ -1159,90 +1153,49 @@ ${studentText}
 """
 
 ASSESSMENT RUBRICS (LANC2070):
-
 ${criteriaDetails}
 
-POINTS TO CONSIDER FOR EACH CRITERION:
+KEY CHECKS PER CRITERION:
 
-Task Response:
-${taskResponsePoints}
+Task Response: ${hasExcerpts
+    ? '4-paragraph structure (Intro, Summary, Critique, Conclusion)? Summary captures main ideas? Critique analyses + evaluates 2 points? At least 2 excerpts synthesised? Word count met?'
+    : '4-paragraph structure (Intro, Body 1, Body 2, Conclusion)? Each body paragraph discusses one distinct point? Source text evidence used? Word count met?'}
 
-Coherence and Cohesion:
-- Is there a clear focus statement and thesis statement in the introduction?
-- Are the introduction and conclusion clear and thorough?
-- Are attributive phrases and reporting verbs used with in-text citations where appropriate?
-- Are cohesive devices used accurately and appropriately within and between sentences?
-- Does the text flow logically from introduction through body paragraphs to conclusion?
+Coherence & Cohesion: Clear focus/thesis statement in intro? Intro and conclusion thorough? Attributive phrases + APA citations? Cohesive devices accurate?
 
-Lexical Resource:
-- Is all source material paraphrased using synonyms, word form changes, and/or sentence restructuring?
-- Are there any copied chunks of 3 or more words?
-- Is there a good range of vocabulary used flexibly and accurately?
-- Are word choice, word form, and spelling accurate?
+Lexical Resource: Source material paraphrased (not copied)? Any copied chunks of 3+ words? Vocabulary range and accuracy? Spelling?
 
-Grammatical Range and Accuracy:
-- Is there a good range of structures including compound and complex sentences and relative clauses?
-- Are core structures (subject-verb agreement, verb tense, pronouns, articles) used accurately?
-- Are punctuation and capitalization well-managed and effective?
+Grammar: Range of structures (compound/complex, relative clauses)? Core structures accurate (subject-verb, tense, articles)? Punctuation?
 
 ============================================================
-SCORING AND FEEDBACK INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
+SCORING INSTRUCTIONS:
 ============================================================
+1. Score each criterion 0-5 (0.5 increments only).
+2. For each criterion provide:
+   - justification: Name the score band, quote evidence from essay, explain why it fits. If half-point, explain what places it between bands. Keep to 2-3 sentences.
+   - strengths: What the student did well (1 sentence).
+   - mistakes: List up to 3 specific errors as "[quoted text]" — explain the error. Do NOT give corrections.
+   - suggestions: 1 actionable improvement tip for A2-B1 level.
+3. overallFeedback: 2-3 sentences covering strongest area, weakest area, paraphrasing quality, and one priority action.
+4. totalScore = sum of scores (max ${totalMaxScore}). percentage = round(totalScore/${totalMaxScore}*100).
 
-STEP 1 — SCORE each criterion using WHOLE or HALF numbers (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, or 5). If the essay's quality falls between two adjacent score bands, award a half-point (e.g., 3.5). Use 0.5 increments only — never use 0.25 or 0.75.
-
-STEP 2 — For EACH criterion, write a "Justification" paragraph that:
-  (a) Explicitly names the score band you chose (e.g. "Score 3.5 — Satisfactory")
-  (b) Quotes at least ONE specific phrase or sentence from the student's essay as evidence
-  (c) Explains why the essay fits that band descriptor — connect the evidence to the rubric
-  (d) If you awarded a half-point, explain which aspects place it in the lower band and which in the higher band
-  (e) If the score is below 4, clearly state what is missing compared to the next higher band
-  (f) If the score is 5, explain what the student did beyond expectations
-
-STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
-
-STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 level writer.
-
-STEP 5 — overallFeedback must be a comprehensive summary (4-6 sentences) that:
-  - Highlights the student's strongest criterion and what they did well
-  - Identifies the weakest area needing the most attention
-  - Evaluates the quality of paraphrasing and source integration
-  - Evaluates how well the student followed the required 4-paragraph essay structure
-  - Comments on the effectiveness of in-text citations where applicable
-  - Gives one prioritized action item to focus on next
-
-STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
-
-============================================================
-CRITICAL OUTPUT RULES:
-- Respond with ONLY the raw JSON object. No markdown, no code fences, no commentary.
-- Do NOT wrap the JSON in triple-backtick code blocks.
-- Use straight double quotes, not smart/curly quotes.
-- Do NOT add trailing commas after the last item in arrays or objects.
-- All string values must have properly escaped quotes inside them.
-- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points or numbered lists wherever possible. Each bullet should be a separate, clear point.
-
-JSON OUTPUT FORMAT:
-============================================================
+OUTPUT: Valid JSON only. No markdown, no code fences, no commentary. Use straight double quotes.
 {
   "scores": [
     {
       "criterionName": "Task Response",
       "score": 4,
       "maxScore": 5,
-      "justification": "Score 4: Good. The essay has a clear 4-paragraph structure. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
-      "strengths": "The student demonstrates solid understanding of the topic and supports their discussion with relevant evidence from the source text.",
-      "mistakes": [
-        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
-      ],
-      "suggestions": "Ensure your summary paragraph captures only the main ideas without unnecessary detail. Use a wider variety of attributive phrases when citing sources."
+      "justification": "Score 4: Good. [Brief evidence quote and rubric alignment in 2-3 sentences].",
+      "strengths": "[1 sentence].",
+      "mistakes": ["[quoted text] — explanation"],
+      "suggestions": "[1 tip]."
     }
   ],
   "totalScore": 16,
   "maxScore": ${totalMaxScore},
   "percentage": 80,
-  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Focus on [one prioritized action] to improve your next essay."
+  "overallFeedback": "[2-3 sentences: strongest area, weakest area, paraphrasing, one action item]."
 }`;
 }
 
@@ -1851,9 +1804,12 @@ export async function POST(request: NextRequest) {
     const RATE_LIMIT_DELAYS = [5000, 15000, 30000]; // 5s, 15s, 30s
 
     // Try generation with increasing token limits on truncation
+    // NOTE: Gemini free tier caps maxOutputTokens at 8192. Start there to avoid
+    // API errors on free-tier keys. If response is truncated, retry at 16384
+    // (which works on paid tiers and will be silently capped on free tier).
     let responseText = '';
     let parsedOk = false;
-    const tokenLimits = [16384, 32768];
+    const tokenLimits = [8192, 16384];
 
     for (const maxTokens of tokenLimits) {
       // Inner retry loop for rate-limit (429) errors
@@ -2181,6 +2137,8 @@ export async function POST(request: NextRequest) {
       userError = 'Gemini API quota exceeded. Please wait a few minutes and try again.';
     } else if (msg.includes('PERMISSION_DENIED') || msg.includes('forbidden')) {
       userError = 'Gemini API access denied. The API key may not have permission to use this model.';
+    } else if (msg.includes('timeout') || msg.includes('TIMEOUT') || msg.includes('Function exceeded time limits') || msg.includes('504')) {
+      userError = 'Assessment timed out. The AI took too long to respond. This can happen on the free plan for complex assignments. Please try again.';
     }
     return NextResponse.json(
       { error: userError, details: msg },

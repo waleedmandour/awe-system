@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, SchemaType } from '@google/generative-ai';
 
 // IMPORTANT: Vercel Hobby plan ($20/mo) allows maxDuration = 60.
 // On the FREE tier, Vercel caps serverless functions at 10 seconds regardless of this setting.
@@ -122,8 +122,7 @@ const SUMMARY_CRITERIA = [
   },
 ];
 
-// Condensed rubric band descriptors for Summary Writing (A2-B1 level)
-// Optimised: shorter descriptors reduce prompt token count for faster free-tier response
+// Detailed rubric band descriptors for Summary Writing (A2-B1 level)
 const SUMMARY_RUBRICS = {
   criteria: [
     {
@@ -201,8 +200,7 @@ const SYNTHESIS_CRITERIA = [
   },
 ];
 
-// Condensed rubric band descriptors for Synthesis Essay (A2-B1 level, TWO-POINT ESSAY WRITING MARKING CRITERIA)
-// Optimised: shorter descriptors reduce prompt token count for faster free-tier response
+// Detailed rubric band descriptors for Synthesis Essay (A2-B1 level, TWO-POINT ESSAY WRITING MARKING CRITERIA)
 const SYNTHESIS_RUBRICS = {
   criteria: [
     {
@@ -328,6 +326,47 @@ const LANC2146_RUBRICS = {
   ],
 };
 
+// Anti-anchoring warning: prevents Gemini from copying example scores
+const ANTI_ANCHORING_WARNING = `\n\u26a0\ufe0f ANTI-ANCHORING: All scores in the example below are 0 \u2014 these are INVALID placeholder values showing FORMAT ONLY. You MUST calculate real scores based on the actual student text quality against the rubric bands. Use the FULL score range. Every essay is different \u2014 scores MUST reflect the specific text.\n`;
+
+// Shared JSON response schema for all assessment prompts
+const assessmentResponseSchema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    scores: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          criterionName: { type: SchemaType.STRING },
+          score: { type: SchemaType.NUMBER },
+          maxScore: { type: SchemaType.NUMBER },
+          justification: { type: SchemaType.STRING },
+          strengths: { type: SchemaType.STRING },
+          mistakes: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                quote: { type: SchemaType.STRING },
+                explanation: { type: SchemaType.STRING },
+              },
+              required: ['quote', 'explanation'],
+            },
+          },
+          suggestions: { type: SchemaType.STRING },
+        },
+        required: ['criterionName', 'score', 'maxScore', 'justification', 'strengths', 'mistakes', 'suggestions'],
+      },
+    },
+    totalScore: { type: SchemaType.NUMBER },
+    maxScore: { type: SchemaType.NUMBER },
+    percentage: { type: SchemaType.NUMBER },
+    overallFeedback: { type: SchemaType.STRING },
+  },
+  required: ['scores', 'totalScore', 'maxScore', 'percentage', 'overallFeedback'],
+};
+
 // Build prompt for LANC2146 Report Writing (Discussion & Conclusion)
 function buildLanc2146Prompt(
   studentText: string,
@@ -423,8 +462,10 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
   (e) If the score is below 4, clearly state what is missing compared to the next higher band
   (f) If the score is 5, explain what the student did beyond expectations
 
-STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+STEP 3 — List up to 3 specific errors per criterion in the "mistakes" array. Each mistake MUST have:
+  - "quote": the EXACT words from the student's text that contain the error
+  - "explanation": WHY it is wrong (grammar rule broken, wrong word choice, etc.) — do NOT provide corrections
+  If you genuinely cannot find any error for a criterion, you may set mistakes to [] — but this should be rare.
 
 STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 level writer.
 
@@ -446,25 +487,26 @@ CRITICAL OUTPUT RULES:
 - All string values must have properly escaped quotes inside them.
 - FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 
+${ANTI_ANCHORING_WARNING}
 JSON OUTPUT FORMAT:
 ============================================================
 {
   "scores": [
     {
       "criterionName": "Task Response",
-      "score": 4,
+      "score": 0,
       "maxScore": 5,
       "justification": "Score 4: Good. The discussion section analyses the main trend with adequate details and statistics. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment]. The conclusion restates the aim and provides general recommendations.",
       "strengths": "The student demonstrates solid analysis of the main trend with supporting details.",
       "mistakes": [
-        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+        { "quote": "[exact error from text]", "explanation": "[why wrong, no correction]" }
       ],
       "suggestions": "Include more specific statistics from the results to strengthen your analysis. Reference previous research more explicitly in the conclusion."
     }
   ],
-  "totalScore": 16,
+  "totalScore": 0,
   "maxScore": ${totalMaxScore},
-  "percentage": 80,
+  "percentage": 0,
   "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Your discussion effectively [evaluation]. Your conclusion could be improved by [suggestion]. Focus on [one prioritized action] to improve your next report."
 }`;
 }
@@ -499,7 +541,7 @@ function buildFoundationPrompt(text: string, topic: string | null, wordCount: nu
 
   return `You are an expert writing assessor evaluating a Foundation level student essay for Sultan Qaboos University's Center for Preparatory Studies.
 
-STUDENT LEVEL: CEFR A1-A2 (Basic User). Feedback must use simple, clear language that A1-A2 learners can understand. Be encouraging while maintaining appropriate standards. Avoid overly technical linguistic terminology.
+STUDENT LEVEL: CEFR A1 (Beginner). Feedback must use simple, clear language that A1 learners can understand. Be encouraging while maintaining appropriate standards. Avoid overly technical linguistic terminology.
 
 EXAM TYPE: ${examLabel}
 ${topic ? `Essay Topic: ${topic}` : 'No specific topic provided.'}
@@ -537,10 +579,12 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
 
 This justification must make the score transparent and defensible. A reader should understand exactly why that score was given based on the evidence.
 
-STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+STEP 3 — List up to 3 specific errors per criterion in the "mistakes" array. Each mistake MUST have:
+  - "quote": the EXACT words from the student's text that contain the error
+  - "explanation": WHY it is wrong (grammar rule broken, wrong word choice, etc.) — do NOT provide corrections
+  If you genuinely cannot find any error for a criterion, you may set mistakes to [] — but this should be rare.
 
-STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A1-A2 learner.
+STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A1 learner.
 
 STEP 5 — overallFeedback must be a comprehensive summary (3-5 sentences) that:
   - Highlights the student's strongest criterion and what they did well
@@ -560,52 +604,53 @@ CRITICAL OUTPUT RULES:
 - All string values must have properly escaped quotes inside them.
 - FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 
+${ANTI_ANCHORING_WARNING}
 JSON OUTPUT FORMAT (you MUST include exactly 4 score entries — one for EACH criterion):
 ============================================================
 {
   "scores": [
     {
       "criterionName": "Task Response",
-      "score": 4,
+      "score": 0,
       "maxScore": 6,
       "justification": "Score 4: Good. The essay addresses the task by [explanation]. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
       "strengths": "The student clearly addresses the topic and provides relevant examples.",
       "mistakes": [
-        "[exact quoted text]: Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version"
+        { "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }
       ],
       "suggestions": "Try to add a clear concluding sentence that summarizes your main point. Use transition words like 'In conclusion' or 'To sum up'."
     },
     {
       "criterionName": "Coherence and Cohesion",
-      "score": 3.5,
+      "score": 0,
       "maxScore": 6,
       "justification": "Score 3.5: [justification with quoted evidence]",
       "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]: explanation"],
+      "mistakes": [{ "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }],
       "suggestions": "[1-2 improvement suggestions]"
     },
     {
       "criterionName": "Lexical Resource",
-      "score": 3,
+      "score": 0,
       "maxScore": 6,
       "justification": "Score 3: [justification with quoted evidence]",
       "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]: explanation"],
+      "mistakes": [{ "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }],
       "suggestions": "[1-2 improvement suggestions]"
     },
     {
       "criterionName": "Grammatical Range and Accuracy",
-      "score": 3.5,
+      "score": 0,
       "maxScore": 6,
       "justification": "Score 3.5: [justification with quoted evidence]",
       "strengths": "[specific strengths]",
-      "mistakes": ["[exact quoted text]: explanation"],
+      "mistakes": [{ "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }],
       "suggestions": "[1-2 improvement suggestions]"
     }
   ],
-  "totalScore": 14,
+  "totalScore": 0,
   "maxScore": ${totalMaxScore},
-  "percentage": 58,
+  "percentage": 0,
   "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. [Comment on word count if relevant]. Focus on [one prioritized action] to improve your next essay."
 }`;
 }
@@ -645,8 +690,10 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
   (e) If the score is below 3, clearly state what is missing compared to a higher score
   (f) If the score is 4 or 5, explain what the student did beyond basic expectations
 
-STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+STEP 3 — List up to 3 specific errors per criterion in the "mistakes" array. Each mistake MUST have:
+  - "quote": the EXACT words from the student's text that contain the error
+  - "explanation": WHY it is wrong (grammar rule broken, wrong word choice, etc.) — do NOT provide corrections
+  If you genuinely cannot find any error for a criterion, you may set mistakes to [] — but this should be rare.
 
 STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 learner.
 
@@ -663,25 +710,26 @@ CRITICAL OUTPUT RULES:
 - All string values must have properly escaped quotes inside them.
 - FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 
+${ANTI_ANCHORING_WARNING}
 JSON OUTPUT FORMAT:
 ============================================================
 {
   "scores": [
     {
       "criterionName": "Task Achievement",
-      "score": 4,
+      "score": 0,
       "maxScore": 5,
       "justification": "The essay achieves the task well by [explanation]. For example, \\"[exact quote]\\" shows [specific alignment with criterion].",
       "strengths": "The student captures the main points effectively and demonstrates good comprehension of the source material.",
       "mistakes": [
-        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+        { "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }
       ],
       "suggestions": "Make sure every main point from the original text is represented in your summary. Use your own words rather than copying phrases."
     }
   ],
-  "totalScore": 16,
+  "totalScore": 0,
   "maxScore": ${totalMaxScore},
-  "percentage": 80,
+  "percentage": 0,
   "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Focus on [one prioritized action] to improve your next essay."
 }`;
 }
@@ -748,27 +796,28 @@ SCORING INSTRUCTIONS:
 2. For each criterion provide:
    - justification: Name the score band, quote evidence from summary, explain why it fits. If half-point, explain what places it between bands. For Task Achievement: address how many main ideas were captured and paraphrasing quality. Keep to 2-3 sentences.
    - strengths: What the student did well (1 sentence).
-   - mistakes: List up to 3 specific errors as "[quoted text]" — explain the error. Do NOT give corrections.
+   - mistakes: List up to 3 specific errors. Each as { "quote": "[quoted text]", "explanation": "why wrong" }. Do NOT give corrections.
    - suggestions: 1 actionable improvement tip for A2-B1 level.
 3. overallFeedback: 2-3 sentences covering main ideas captured/missed, strongest area, weakest area, paraphrasing quality, and one priority action.
 4. totalScore = sum of scores (max ${totalMaxScore}). percentage = round(totalScore/${totalMaxScore}*100).
 
+${ANTI_ANCHORING_WARNING}
 OUTPUT: Valid JSON only. No markdown, no code fences, no commentary. Use straight double quotes.
 {
   "scores": [
     {
       "criterionName": "Task Achievement",
-      "score": 3.5,
+      "score": 0,
       "maxScore": 5,
       "justification": "Score 3.5 — [Brief evidence quote and rubric alignment in 2-3 sentences].",
       "strengths": "[1 sentence].",
-      "mistakes": ["[quoted text] — explanation"],
+      "mistakes": [{ "quote": "[quoted text]", "explanation": "[why wrong]" }],
       "suggestions": "[1 tip]."
     }
   ],
-  "totalScore": 13,
+  "totalScore": 0,
   "maxScore": ${totalMaxScore},
-  "percentage": 65,
+  "percentage": 0,
   "overallFeedback": "[2-3 sentences: main ideas captured/missed, strongest area, weakest area, paraphrasing, one action item]."
 }`;
 }
@@ -950,8 +999,10 @@ STEP 2 — For EACH criterion, write a "Justification" paragraph that:
   (e) If the score is below 4, clearly state what is missing compared to the next higher band
   (f) If the score is 5, explain what the student did beyond expectations
 
-STEP 3 — For each criterion, list SPECIFIC errors found in the text. Format each as:
-  - "[exact quoted text]" — highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+STEP 3 — List up to 3 specific errors per criterion in the "mistakes" array. Each mistake MUST have:
+  - "quote": the EXACT words from the student's text that contain the error
+  - "explanation": WHY it is wrong (grammar rule broken, wrong word choice, etc.) — do NOT provide corrections
+  If you genuinely cannot find any error for a criterion, you may set mistakes to [] — but this should be rare.
 
 STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 level writer.
 
@@ -973,25 +1024,26 @@ CRITICAL OUTPUT RULES:
 - All string values must have properly escaped quotes inside them.
 - FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 
+${ANTI_ANCHORING_WARNING}
 JSON OUTPUT FORMAT:
 ============================================================
 {
   "scores": [
     {
       "criterionName": "Task Achievement",
-      "score": 4,
+      "score": 0,
       "maxScore": 5,
       "justification": "Score 4: Good. The essay addresses the task by [explanation]. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
       "strengths": "The student demonstrates solid understanding of the source material and addresses the main discussion points.",
       "mistakes": [
-        "[exact quoted text]" — Highlight the mistake and explain why it is wrong, but do NOT provide the corrected version
+        { "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }
       ],
       "suggestions": "Include more specific examples from the source text to support your discussion points. Use your own words more consistently when paraphrasing."
     }
   ],
-  "totalScore": 16,
+  "totalScore": 0,
   "maxScore": ${totalMaxScore},
-  "percentage": 80,
+  "percentage": 0,
   "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Focus on [one prioritized action] to improve your next essay."
 }`;
 }
@@ -1111,27 +1163,28 @@ SCORING INSTRUCTIONS:
 2. For each criterion provide:
    - justification: Name the score band, quote evidence from essay, explain why it fits. If half-point, explain what places it between bands. Keep to 2-3 sentences.
    - strengths: What the student did well (1 sentence).
-   - mistakes: List up to 3 specific errors as "[quoted text]" — explain the error. Do NOT give corrections.
+   - mistakes: List up to 3 specific errors. Each as { "quote": "[quoted text]", "explanation": "why wrong" }. Do NOT give corrections.
    - suggestions: 1 actionable improvement tip for A2-B1 level.
 3. overallFeedback: 2-3 sentences covering strongest area, weakest area, paraphrasing quality, and one priority action.
 4. totalScore = sum of scores (max ${totalMaxScore}). percentage = round(totalScore/${totalMaxScore}*100).
 
+${ANTI_ANCHORING_WARNING}
 OUTPUT: Valid JSON only. No markdown, no code fences, no commentary. Use straight double quotes.
 {
   "scores": [
     {
       "criterionName": "Task Response",
-      "score": 4,
+      "score": 0,
       "maxScore": 5,
       "justification": "Score 4: Good. [Brief evidence quote and rubric alignment in 2-3 sentences].",
       "strengths": "[1 sentence].",
-      "mistakes": ["[quoted text] — explanation"],
+      "mistakes": [{ "quote": "[quoted text]", "explanation": "[why wrong]" }],
       "suggestions": "[1 tip]."
     }
   ],
-  "totalScore": 16,
+  "totalScore": 0,
   "maxScore": ${totalMaxScore},
-  "percentage": 80,
+  "percentage": 0,
   "overallFeedback": "[2-3 sentences: strongest area, weakest area, paraphrasing, one action item]."
 }`;
 }
@@ -1210,27 +1263,28 @@ SCORING INSTRUCTIONS:
 2. For each criterion provide:
    - justification: Name the score band, quote evidence from essay, explain why it fits. If half-point, explain what places it between bands. For Task Achievement: specifically address whether ALL THREE sources were synthesised, assignment prompt addressed, and paraphrasing used. If word count exceeds target, mention in feedback but do NOT deduct marks. Keep to 2-3 sentences.
    - strengths: What the student did well (1 sentence).
-   - mistakes: List up to 3 specific errors as "[quoted text]" — explain the error. Do NOT give corrections.
+   - mistakes: List up to 3 specific errors. Each as { "quote": "[quoted text]", "explanation": "why wrong" }. Do NOT give corrections.
    - suggestions: 1 actionable improvement tip for A2-B1 level.
 3. overallFeedback: 2-3 sentences covering which sources were used (all 3?), strongest area, weakest area, paraphrasing/copied text %, and one priority action.
 4. totalScore = sum of scores (max ${totalMaxScore}). percentage = round(totalScore/${totalMaxScore}*100).
 
+${ANTI_ANCHORING_WARNING}
 OUTPUT: Valid JSON only. No markdown, no code fences, no commentary. Use straight double quotes.
 {
   "scores": [
     {
       "criterionName": "Task Achievement",
-      "score": 3.5,
+      "score": 0,
       "maxScore": 5,
       "justification": "Score 3.5 — [Brief evidence quote and rubric alignment in 2-3 sentences].",
       "strengths": "[1 sentence].",
-      "mistakes": ["[quoted text] — explanation"],
+      "mistakes": [{ "quote": "[quoted text]", "explanation": "[why wrong]" }],
       "suggestions": "[1 tip]."
     }
   ],
-  "totalScore": 13,
+  "totalScore": 0,
   "maxScore": ${totalMaxScore},
-  "percentage": 65,
+  "percentage": 0,
   "overallFeedback": "[2-3 sentences: sources used, strongest area, weakest area, paraphrasing %, one action item]."
 }`;
 }
@@ -1654,6 +1708,8 @@ export async function POST(request: NextRequest) {
       ? 'You are an expert writing assessment AI for the Credit level course LANC2146 (Report Writing) at Sultan Qaboos University. For lab report Discussion and Conclusion tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) evaluate the Discussion section for analysis and interpretation of data with details/examples/statistics, (2) evaluate the Conclusion for summary of results, reference to previous research, restatement of aim, and recommendations, (3) quote exact words from the student text as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) check word count against the target range specified in the prompt, and (7) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
       : isLanc2070
       ? 'You are an expert writing assessment AI for the Credit level course LANC2070 (Academic English: Article Review) at Sultan Qaboos University. For article review tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) check that the review has exactly 4 paragraphs (Introduction, Summary, Critique, Conclusion), (2) evaluate the quality of analysis (original insights about how/why) and evaluation (critical judgment about value/validity) of 2 points from the main article, (3) verify that at least 2 excerpts from the provided source texts are used and synthesised, (4) check APA in-text citation format and attributive phrases, (5) assess paraphrasing quality — copied chunks of 3+ words must be penalised, (6) quote exact words from the student review as evidence, (7) explicitly justify why the score matches the rubric band, (8) list specific errors with quoted text, and (9) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
+      : isFoundation
+      ? 'You are an expert writing assessment AI for Foundation level courses (FP0230, FP0340) at Sultan Qaboos University. Foundation students are at CEFR A1 level (Beginner). Your feedback must use very simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) actively scan for specific grammar, vocabulary, cohesion, and task-related errors in the essay, (2) quote exact words from the student essay as evidence for EVERY score and feedback point, (3) explicitly justify why the score matches the rubric band descriptor, (4) list specific errors with quoted text in the mistakes array for each criterion, (5) identify genuine strengths with evidence, and (6) give actionable suggestions. Use the FULL score range (0-6) — do NOT default to middle scores. You respond only with valid JSON. No markdown formatting or code blocks.'
       : 'You are an expert writing assessment AI for university courses at Sultan Qaboos University. Students are at CEFR A2-B1 level (Elementary to Pre-Intermediate). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. CRITICAL: For each criterion you MUST (1) quote exact words from the student essay as evidence, (2) explicitly justify why the score matches the rubric band, (3) list specific errors with quoted text, and (4) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.';
 
     const model = genAI.getGenerativeModel({
@@ -1661,6 +1717,7 @@ export async function POST(request: NextRequest) {
       systemInstruction,
       generationConfig: {
         responseMimeType: 'application/json',
+        responseSchema: assessmentResponseSchema,
       },
     });
 
@@ -1702,6 +1759,7 @@ export async function POST(request: NextRequest) {
             generationConfig: {
               temperature: 0.1,
               maxOutputTokens: maxTokens,
+              responseSchema: assessmentResponseSchema,
               thinkingConfig: {
                 thinkingBudget: 0,  // Disable thinking — prevents thought tokens from consuming output budget or polluting JSON
               },

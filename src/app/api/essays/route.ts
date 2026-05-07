@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get('courseId');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = Math.max(1, Math.min(200, parseInt(searchParams.get('limit') || '20') || 20));
 
     // If database is not available, return memory essays
     if (!isDatabaseAvailable()) {
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     const where = courseId ? { courseId } : {};
 
-    const essays = await db?.essay.findMany({
+    const essays = await db!.essay.findMany({
       where,
       include: {
         course: true,
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ essay: essayData });
     }
 
-    const essay = await db?.essay.create({
+    const essay = await db!.essay.create({
       data: {
         studentId,
         studentName,
@@ -142,7 +142,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Essay not found' }, { status: 404 });
     }
 
-    const essay = await db?.essay.update({
+    const essay = await db!.essay.update({
       where: { id },
       data: updates,
       include: {
@@ -188,7 +188,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    await db?.essay.delete({
+    await db!.essay.delete({
       where: { id }
     });
 

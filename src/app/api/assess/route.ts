@@ -539,9 +539,9 @@ function buildFoundationPrompt(text: string, topic: string | null, wordCount: nu
     return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
   }).join('\n\n');
 
-  return `You are an expert writing assessor evaluating a Foundation level student essay for Sultan Qaboos University's Center for Preparatory Studies.
+  return `You are an expert, encouraging writing assessor evaluating a Foundation level student essay for Sultan Qaboos University's Center for Preparatory Studies.
 
-STUDENT LEVEL: CEFR A1 (Beginner). Feedback must use simple, clear language that A1 learners can understand. Be encouraging while maintaining appropriate standards. Avoid overly technical linguistic terminology.
+STUDENT LEVEL: CEFR A1-A2. Feedback must use simple, clear language that A1-A2 learners can understand. Be encouraging while maintaining appropriate standards. Avoid overly technical linguistic terminology.
 
 EXAM TYPE: ${examLabel}
 ${topic ? `Essay Topic: ${topic}` : 'No specific topic provided.'}
@@ -559,52 +559,54 @@ ASSESSMENT RUBRICS (Foundation Courses - FP0230 and FP0340):
 
 ${criteriaDetails}
 
+BAND CALIBRATION FOR CEFR A1-A2 (what each band looks like at this level):
+- 5-6/6 (Excellent): Exceptional for A1-A2. Near-fluent grammar, rich vocabulary, perfect structure. Very rare at this level.
+- 4-4.5/6 (Good): Strong for A1-A2. Clear communication with minor expected errors. This is the typical range for strong foundation students.
+- 3-3.5/6 (Satisfactory): Average for A1-A2. Meaning is usually clear despite frequent grammar/vocabulary errors. Most foundation students score here.
+- 2-2.5/6 (Weak): Below expectations even for A1-A2. Meaning often unclear, very limited vocabulary or severe structural issues.
+- 0-1.5/6 (Very Poor): Incomprehensible or completely off-topic. Reserve for genuine failures to communicate.
+
+ERROR CLASSIFICATION (apply per criterion — this is critical):
+1. Expected A1/A2 errors (e.g., missing articles, wrong preposition, subject-verb agreement for 3rd person singular, incorrect word order in complex sentences) → Do NOT lower the score. These are normal developmental errors at this level.
+2. Non-impeding errors (meaning is still clear despite the error; e.g., wrong tense form, spelling that does not obscure meaning) → Only minor score impact if the error is frequent.
+3. Impeding errors (reader genuinely cannot understand the intended meaning) → Significant score impact.
+Rate each criterion based primarily on COMMUNICATION SUCCESS and IMPEDING errors, not total error count.
+
 SPECIAL RULES:
 ${rubrics.specialRules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+1. Deduct marks for Task Response ONLY IF the text is severely off-topic. Do not penalize minor tangents.
+2. Reward successful communication of ideas. Do not be overly harsh on minor A1/A2 grammatical/spelling errors if the overall meaning is clear.
 
-============================================================
-SCORING AND FEEDBACK INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
-============================================================
-
-STEP 1 — SCORE each criterion using WHOLE or HALF numbers (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, or 6). If the essay's quality falls between two adjacent score bands, award a half-point (e.g., 3.5). Use 0.5 increments only — never use 0.25 or 0.75.
-
-STEP 2 — For EACH criterion, write a "Justification" paragraph that:
+SCORING FLOW (follow in this order):
+Step 1 — Identify what the student communicated successfully (strengths first).
+Step 2 — Determine the overall CEFR demonstrated level from the essay.
+Step 3 — Score each criterion 0-6 (0.5 increments) relative to A1-A2 expectations, not B2+ academic standards. Use the FULL range — do NOT default to middle scores.
+Step 4 — Only deduct for errors that genuinely impede meaning or show a gap below A1 level.
+Step 5 — For EACH criterion, write a "Justification" paragraph that:
   (a) Explicitly names the score band you chose (e.g. "Score 3.5" meaning between Satisfactory and Good)
   (b) Quotes at least ONE specific phrase or sentence from the student's essay as evidence
   (c) Explains why the essay fits that band descriptor — connect the evidence to the rubric
-  (d) If you awarded a half-point, explain which aspects place it in the lower band and which aspects place it in the higher band
-  (e) If the score is below 4, clearly state what is missing compared to the next higher band
-  (f) If the score is 5 or 6, explain what the student did beyond expectations
-  (g) For Task Response: specifically address whether the essay addresses the topic, and follows the expected essay structure for a ${examLabel}. If the word count exceeds the target, mention it in the feedback but do NOT deduct marks.
-
-This justification must make the score transparent and defensible. A reader should understand exactly why that score was given based on the evidence.
-
-STEP 3 — List up to 3 specific errors per criterion in the "mistakes" array. Each mistake MUST have:
+Step 6 — List up to 3 specific errors per criterion in the "mistakes" array. Each mistake MUST have:
   - "quote": the EXACT words from the student's text that contain the error
-  - "explanation": WHY it is wrong (grammar rule broken, wrong word choice, etc.) — do NOT provide corrections
-  If you genuinely cannot find any error for a criterion, you may set mistakes to [] — but this should be rare.
-
-STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A1 learner.
-
-STEP 5 — overallFeedback must be a comprehensive summary (3-5 sentences) that:
-  - Highlights the student's strongest criterion and what they did well
+  - "explanation": WHY it is wrong — do NOT provide corrections
+  Classify each as expected A1/A2, non-impeding, or impeding in your explanation.
+Step 7 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A1-A2 learner.
+Step 8 — overallFeedback must be a comprehensive summary (3-5 sentences) that:
+  - Highlights the student's strongest criterion and what they communicated well
   - Identifies the weakest area needing the most attention
   - Comments on whether the word count meets the ${examLabel} requirements
   - Gives one prioritized action item to focus on next
+Step 9 — For Task Response: address topic adherence and essay structure. If the word count exceeds the target, mention it in the feedback but do NOT deduct marks.
 
-STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Scores may include 0.5 increments (e.g., 3.5, 4.5). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
+STEP 10 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Scores may include 0.5 increments (e.g., 3.5, 4.5). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
 
 ============================================================
 CRITICAL OUTPUT RULES:
 - You MUST score ALL FOUR criteria: Task Response, Coherence and Cohesion, Lexical Resource, and Grammatical Range and Accuracy. Do NOT omit any criterion.
-- Respond with ONLY the raw JSON object. No markdown, no code fences, no commentary.
-- Do NOT wrap the JSON in triple-backtick code blocks.
+- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points or numbered lists wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 - Use straight double quotes, not smart/curly quotes.
-- Do NOT add trailing commas after the last item in arrays or objects.
 - All string values must have properly escaped quotes inside them.
-- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
 
-${ANTI_ANCHORING_WARNING}
 JSON OUTPUT FORMAT (you MUST include exactly 4 score entries — one for EACH criterion):
 ============================================================
 {
@@ -613,18 +615,18 @@ JSON OUTPUT FORMAT (you MUST include exactly 4 score entries — one for EACH cr
       "criterionName": "Task Response",
       "score": 0,
       "maxScore": 6,
-      "justification": "Score 4: Good. The essay addresses the task by [explanation]. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
+      "justification": "Score 4: Good for A1-A2. The essay addresses the task by [explanation]. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
       "strengths": "The student clearly addresses the topic and provides relevant examples.",
       "mistakes": [
         { "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }
       ],
-      "suggestions": "Try to add a clear concluding sentence that summarizes your main point. Use transition words like 'In conclusion' or 'To sum up'."
+      "suggestions": "Try to add a clear concluding sentence that summarizes your main point."
     },
     {
       "criterionName": "Coherence and Cohesion",
       "score": 0,
       "maxScore": 6,
-      "justification": "Score 3.5: [justification with quoted evidence]",
+      "justification": "Score 3.5: [justification with quoted evidence relative to A1-A2 level]",
       "strengths": "[specific strengths]",
       "mistakes": [{ "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }],
       "suggestions": "[1-2 improvement suggestions]"
@@ -633,7 +635,7 @@ JSON OUTPUT FORMAT (you MUST include exactly 4 score entries — one for EACH cr
       "criterionName": "Lexical Resource",
       "score": 0,
       "maxScore": 6,
-      "justification": "Score 3: [justification with quoted evidence]",
+      "justification": "Score 3: [justification with quoted evidence relative to A1-A2 level]",
       "strengths": "[specific strengths]",
       "mistakes": [{ "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }],
       "suggestions": "[1-2 improvement suggestions]"
@@ -642,7 +644,7 @@ JSON OUTPUT FORMAT (you MUST include exactly 4 score entries — one for EACH cr
       "criterionName": "Grammatical Range and Accuracy",
       "score": 0,
       "maxScore": 6,
-      "justification": "Score 3.5: [justification with quoted evidence]",
+      "justification": "Score 3.5: [justification with quoted evidence relative to A1-A2 level]",
       "strengths": "[specific strengths]",
       "mistakes": [{ "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }],
       "suggestions": "[1-2 improvement suggestions]"

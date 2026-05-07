@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, SchemaType } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, SchemaType, Schema } from '@google/generative-ai';
 
 // IMPORTANT: Vercel Hobby plan ($20/mo) allows maxDuration = 60.
 // On the FREE tier, Vercel caps serverless functions at 10 seconds regardless of this setting.
-// LANC2070 prompts are optimised to complete within the 10-second free tier limit.
+// Prompts are optimised to complete within the 10-second free tier limit where possible.
 export const maxDuration = 60;
 
-// Word count targets by course and exam type for Foundation courses
+// ─── Word Count Targets ─────────────────────────────────────────────────────
+
 const FOUNDATION_WORD_COUNTS: Record<string, Record<string, { min: number; max: number; ideal: number; label: string }>> = {
   '0230': {
     'mid-semester': { min: 90, max: 130, ideal: 120, label: 'FP0230 Mid-semester Exam' },
@@ -18,13 +19,13 @@ const FOUNDATION_WORD_COUNTS: Record<string, Record<string, { min: number; max: 
   },
 };
 
-// Default word count target per course (used when no exam type is specified)
 const DEFAULT_FOUNDATION_WORD_COUNTS: Record<string, { min: number; max: number; ideal: number; label: string }> = {
   '0230': { min: 90, max: 130, ideal: 120, label: 'FP0230 Foundation Exam' },
   '0340': { min: 110, max: 150, ideal: 120, label: 'FP0340 Foundation Exam' },
 };
 
-// Detailed assessment rubrics for Foundation courses (0230, 0340)
+// ─── Rubric Data ─────────────────────────────────────────────────────────────
+
 const FOUNDATION_RUBRICS = {
   criteria:[
     {
@@ -90,7 +91,6 @@ const FOUNDATION_RUBRICS = {
   ]
 };
 
-// Post-foundation/Credit course criteria (LANC2160) — Synthesis Essay
 const CREDIT_CRITERIA = [
   { name: 'Task Achievement', maxScore: 5, description: 'How well the essay achieves the task requirements' },
   { name: 'Coherence & Cohesion', maxScore: 5, description: 'Logical organization and linking of ideas' },
@@ -98,36 +98,17 @@ const CREDIT_CRITERIA = [
   { name: 'Grammatical Range & Accuracy', maxScore: 5, description: 'Range and accuracy of grammar' },
 ];
 
-// Summary Writing criteria for LANC2160 (A2-B1 level, 0-5 per criterion)
 const SUMMARY_CRITERIA = [
-  {
-    name: 'Task Achievement',
-    maxScore: 5,
-    description: 'How effectively the summary captures the main points of the source text using the student\'s own words.'
-  },
-  {
-    name: 'Coherence & Cohesion',
-    maxScore: 5,
-    description: 'How logically the summary is organized and how well ideas are linked together.'
-  },
-  {
-    name: 'Lexical Resource',
-    maxScore: 5,
-    description: 'The range and accuracy of vocabulary used, including paraphrasing ability.'
-  },
-  {
-    name: 'Grammar & Accuracy',
-    maxScore: 5,
-    description: 'The range and accuracy of grammatical structures, sentence variety, and punctuation.'
-  },
+  { name: 'Task Achievement', maxScore: 5, description: 'How effectively the summary captures the main points of the source text using the student\'s own words.' },
+  { name: 'Coherence & Cohesion', maxScore: 5, description: 'How logically the summary is organized and how well ideas are linked together.' },
+  { name: 'Lexical Resource', maxScore: 5, description: 'The range and accuracy of vocabulary used, including paraphrasing ability.' },
+  { name: 'Grammar & Accuracy', maxScore: 5, description: 'The range and accuracy of grammatical structures, sentence variety, and punctuation.' },
 ];
 
-// Detailed rubric band descriptors for Summary Writing (A2-B1 level)
 const SUMMARY_RUBRICS = {
   criteria: [
     {
-      name: 'Task Achievement',
-      maxScore: 5,
+      name: 'Task Achievement', maxScore: 5,
       rubric: {
         '0-1': 'No summary, irrelevant, or isolated words. No main ideas captured. Largely copied.',
         '2': 'Captures at most one main idea. Misses most key points. Minimal paraphrasing, heavy copying.',
@@ -138,8 +119,7 @@ const SUMMARY_RUBRICS = {
       }
     },
     {
-      name: 'Coherence & Cohesion',
-      maxScore: 5,
+      name: 'Coherence and Cohesion', maxScore: 5,
       rubric: {
         '0-1': 'No coherence. Random fragments. No linking words. Ideas cannot be followed.',
         '2': 'Minimal organisation. Ideas listed, not connected. Very few linking words. Disjointed.',
@@ -150,8 +130,7 @@ const SUMMARY_RUBRICS = {
       }
     },
     {
-      name: 'Lexical Resource',
-      maxScore: 5,
+      name: 'Lexical Resource', maxScore: 5,
       rubric: {
         '0-1': 'Extremely limited vocabulary. Inaccurate word choice. Pervasive spelling errors.',
         '2': 'Limited vocabulary, frequent repetition. Awkward word choice. Frequent spelling errors.',
@@ -162,8 +141,7 @@ const SUMMARY_RUBRICS = {
       }
     },
     {
-      name: 'Grammar & Accuracy',
-      maxScore: 5,
+      name: 'Grammar & Accuracy', maxScore: 5,
       rubric: {
         '0-1': 'No grammatical control. Random fragments. Errors prevent communication.',
         '2': 'Simple structures with frequent errors. Limited variety. Common errors (articles, tenses).',
@@ -176,112 +154,69 @@ const SUMMARY_RUBRICS = {
   ],
 };
 
-// Synthesis Essay criteria for LANC2160 (A2-B1 level, 0-5 per criterion)
 const SYNTHESIS_CRITERIA = [
-  {
-    name: 'Task Achievement',
-    maxScore: 5,
-    description: 'How effectively the synthesis essay fulfils the task requirements, synthesizes information from all source texts, and addresses the assignment prompt.',
-  },
-  {
-    name: 'Coherence and Cohesion',
-    maxScore: 5,
-    description: 'How logically the synthesis essay is organized, how well ideas are linked, and how effectively information flows.',
-  },
-  {
-    name: 'Lexical Resource',
-    maxScore: 5,
-    description: 'The range and accuracy of vocabulary, including paraphrasing ability and appropriate word choice.',
-  },
-  {
-    name: 'Grammatical Range and Accuracy',
-    maxScore: 5,
-    description: 'The range and accuracy of grammatical structures, sentence variety, and punctuation.',
-  },
+  { name: 'Task Achievement', maxScore: 5, description: 'How effectively the synthesis essay fulfils the task requirements, synthesizes information from all source texts, and addresses the assignment prompt.' },
+  { name: 'Coherence and Cohesion', maxScore: 5, description: 'How logically the synthesis essay is organized, how well ideas are linked, and how effectively information flows.' },
+  { name: 'Lexical Resource', maxScore: 5, description: 'The range and accuracy of vocabulary, including paraphrasing ability and appropriate word choice.' },
+  { name: 'Grammatical Range and Accuracy', maxScore: 5, description: 'The range and accuracy of grammatical structures, sentence variety, and punctuation.' },
 ];
 
-// Detailed rubric band descriptors for Synthesis Essay (A2-B1 level, TWO-POINT ESSAY WRITING MARKING CRITERIA)
 const SYNTHESIS_RUBRICS = {
   criteria: [
     {
-      name: 'Task Achievement',
-      maxScore: 5,
+      name: 'Task Achievement', maxScore: 5,
       rubric: {
-        '0-1.5': 'Fails task requirements. Most details unimportant. 10%+ outside word count.',
-        '2-2.5': 'Does not adequately fulfil requirements. Many unimportant details. 10%+ outside word count.',
-        '3-3.5': 'Adequately fulfils requirements. Most main ideas present, generally accurate meaning. Up to 10% outside word count.',
-        '4-4.5': 'Fulfils all requirements. Main ideas present, meaning mostly accurate, details relevant. Within word count.',
-        '5': 'Exceeds expectations. All main ideas present, meaning accurate, all details relevant. Within word count.',
+        '0-1.5': 'Poor: Fails to fulfil any task requirements. 10% or more outside word count.',
+        '2-2.5': 'Unsatisfactory: Does not adequately fulfil task requirements. Most details are unimportant. 10% or more outside word count.',
+        '3-3.5': 'Satisfactory: Adequately fulfils task requirements. Most main ideas present. Meaning generally accurate; some unimportant details may be included. Up to 10% outside word count.',
+        '4-4.5': 'Good: Fulfils all task requirements but a little more could be expected. Main ideas present. Meaning mostly accurate, most details relevant. Stays within word count.',
+        '5': 'Excellent: Fulfils all task requirements and exceeds expectations. All main ideas present. Meaning accurate, all details relevant. Stays within word count.',
       }
     },
     {
-      name: 'Coherence and Cohesion',
-      maxScore: 5,
+      name: 'Coherence and Cohesion', maxScore: 5,
       rubric: {
-        '0-1.5': 'Lacks organisation. Text confused and incoherent.',
-        '2-2.5': 'Limited organisation. Simple, inaccurate cohesive devices used mechanically.',
-        '3-3.5': 'Adequate organisation. Supporting ideas may be limited. Cohesive devices sometimes inaccurate/repetitive.',
-        '4-4.5': 'Clear and easy to understand. Cohesive devices almost always accurate within and between sentences.',
-        '5': 'Effective organisation with logical flow. Good range of cohesive devices used accurately.',
+        '0-1.5': 'Poor: Lacks organization and coherence. Text largely confused and incoherent, challenging for reader to process.',
+        '2-2.5': 'Unsatisfactory: Organization and coherence limited. Some re-reading necessary. Most cohesive devices are simple, used inaccurately and mechanically.',
+        '3-3.5': 'Satisfactory: Organization and coherence often adequate, but supporting ideas may be limited. Text may be stilted. Cohesive devices sometimes inaccurate, repetitive, or over/under used.',
+        '4-4.5': 'Good: Organization makes text clear and easy to understand. Cohesive devices almost always used accurately and appropriately within and between sentences.',
+        '5': 'Excellent: Effective organization with logical flow throughout. Good range of cohesive devices used accurately and appropriately.',
       }
     },
     {
-      name: 'Lexical Resource',
-      maxScore: 5,
+      name: 'Lexical Resource', maxScore: 5,
       rubric: {
-        '0-1.5': 'Paraphrasing largely absent. Poor word choice, form, spelling prevent communication.',
-        '2-2.5': 'Minimal paraphrasing, >15% copied. Inadequate vocabulary. Errors predominate and affect communication.',
-        '3-3.5': 'Generally paraphrased, <15% copied. Adequate vocabulary. Errors sometimes affect communication.',
-        '4-4.5': 'Well paraphrased with very little copying. Good vocabulary range. Spelling mostly correct.',
-        '5': 'Completely paraphrased. Wider vocabulary than expected. Spelling accurate.',
+        '0-1.5': 'Poor: Paraphrasing largely absent. Poor word choice, word form, and spelling prevent communication.',
+        '2-2.5': 'Unsatisfactory: Very little paraphrasing; more than 15% directly copied. Inadequate vocabulary range. Errors in word choice, word form, and spelling predominate and affect communication.',
+        '3-3.5': 'Satisfactory: Generally paraphrased; some copying but less than 15%. Limited but adequate vocabulary. Errors in word choice and spelling sometimes affect communication.',
+        '4-4.5': 'Good: Well paraphrased with very little copying. Good vocabulary range. Spelling mostly correct.',
+        '5': 'Excellent: Completely and accurately paraphrased. Wider vocabulary range than expected for the level. Spelling accurate.',
       }
     },
     {
-      name: 'Grammatical Range and Accuracy',
-      maxScore: 5,
+      name: 'Grammatical Range and Accuracy', maxScore: 5,
       rubric: {
-        '0-1.5': 'Inaccurate structures predominate, preventing communication. Punctuation inadequate.',
-        '2-2.5': 'Very limited structures. Errors noticeable and often affect communication.',
-        '3-3.5': 'Adequate structures for the task. Errors may affect communication in places. Punctuation generally correct.',
-        '4-4.5': 'Good range of structures. Some inaccuracy but communication not affected. Punctuation well managed.',
-        '5': 'Wider range than expected. Most sentences error-free. Punctuation well managed.',
+        '0-1.5': 'Poor: Inaccurate structures, errors predominate, preventing communication. Punctuation inadequate and/or inaccurate.',
+        '2-2.5': 'Unsatisfactory: Very limited structures inadequate for the level. Grammatical errors noticeable and often affect communication. Punctuation may be inadequate/inaccurate.',
+        '3-3.5': 'Satisfactory: Structures sometimes limited but adequate for the task. Grammatical errors may affect communication in places. Punctuation generally correct and effective.',
+        '4-4.5': 'Good: Good range of structures. Some inaccuracy but communication not affected. Punctuation well managed and effective.',
+        '5': 'Excellent: Wider range of structures than expected for the level. Most sentences error-free. Punctuation well managed and effective.',
       }
     },
   ],
 };
 
-// ─── LANC2146 Report Writing — Discussion & Conclusion Assessment ─────────────
-
-// Lab Report Discussion and Conclusion criteria (A2-B1 level, 0-5 per criterion)
 const LANC2146_CRITERIA = [
-  {
-    name: 'Task Response',
-    maxScore: 5,
-    description: 'Analysis and interpretation of data with details/examples/statistics; quality of the discussion section; adequacy of the conclusion (most obvious result, reference to previous research, restatement of aim, solutions/recommendations).',
-  },
-  {
-    name: 'Coherence and Cohesion',
-    maxScore: 5,
-    description: 'Logical organization of information and ideas; use of cohesive devices (conjunctions and linkers); paragraphing.',
-  },
-  {
-    name: 'Grammatical Range and Accuracy',
-    maxScore: 5,
-    description: 'Use of grammatical functions (cause/effect, compare/contrast, prediction, recommendation/suggestion/solution); grammar structures accuracy; punctuation.',
-  },
-  {
-    name: 'Lexical Resource',
-    maxScore: 5,
-    description: 'Vocabulary range and genre-specific register; spelling, word formation, and capitalization.',
-  },
+  { name: 'Task Response', maxScore: 5, description: 'Analysis and interpretation of data with details/examples/statistics; quality of the discussion section; adequacy of the conclusion (most obvious result, reference to previous research, restatement of aim, solutions/recommendations).' },
+  { name: 'Coherence and Cohesion', maxScore: 5, description: 'Logical organization of information and ideas; use of cohesive devices (conjunctions and linkers); paragraphing.' },
+  { name: 'Grammatical Range and Accuracy', maxScore: 5, description: 'Use of grammatical functions (cause/effect, compare/contrast, prediction, recommendation/suggestion/solution); grammar structures accuracy; punctuation.' },
+  { name: 'Lexical Resource', maxScore: 5, description: 'Vocabulary range and genre-specific register; spelling, word formation, and capitalization.' },
 ];
 
-// Detailed rubric band descriptors for LANC2146 Discussion & Conclusion (A2-B1 level)
 const LANC2146_RUBRICS = {
   criteria: [
     {
-      name: 'Task Response',
-      maxScore: 5,
+      name: 'Task Response', maxScore: 5,
       rubric: {
         '1': 'Poor (1-1.5): The analysis and interpretation of the main trend lacks specific details, examples, and statistics. The conclusion is missing or irrelevant.',
         '2': 'Unsatisfactory (2-2.5): The analysis and interpretation of the main trend is supported by few details, examples, and statistics. The conclusion is insufficient, may not refer to previous research, may not restate the aim, and provides irrelevant recommendations.',
@@ -291,8 +226,7 @@ const LANC2146_RUBRICS = {
       }
     },
     {
-      name: 'Coherence and Cohesion',
-      maxScore: 5,
+      name: 'Coherence and Cohesion', maxScore: 5,
       rubric: {
         '1': 'Poor (1-1.5): Lacks coherent development of ideas, with disjointed or illogical writing which is largely confused and incoherent. Cohesive devices are missing or used inaccurately. Paragraphs lack clear organization and unity, with ideas scattered or unrelated.',
         '2': 'Unsatisfactory (2-2.5): Only basic understanding of information in the text through illogical and/or incoherent writing with limited development of ideas, and connections between concepts are unclear or inconsistent. Cohesive devices are used inaccurately and inappropriately. Paragraphs demonstrate some attempt at organization.',
@@ -302,8 +236,7 @@ const LANC2146_RUBRICS = {
       }
     },
     {
-      name: 'Grammatical Range and Accuracy',
-      maxScore: 5,
+      name: 'Grammatical Range and Accuracy', maxScore: 5,
       rubric: {
         '1': 'Poor (1-1.5): Little control of grammar, with basic faulty sentence structures. Severe grammar errors that significantly impede understanding. Numerous instances of incorrect or missing punctuation throughout the text, hindering readability and comprehension.',
         '2': 'Unsatisfactory (2-2.5): Limited control of grammar, with repetitive sentence structures. Noticeable grammar errors throughout the text, making comprehension difficult. Noticeable errors in punctuation, hindering readability and comprehension.',
@@ -313,8 +246,7 @@ const LANC2146_RUBRICS = {
       }
     },
     {
-      name: 'Lexical Resource',
-      maxScore: 5,
+      name: 'Lexical Resource', maxScore: 5,
       rubric: {
         '1': 'Poor (1-1.5): Basic vocabulary which may be repetitive or inappropriate for the task, hindering understanding. Limited control of word formation and/or spelling; numerous severe spelling and capitalization errors.',
         '2': 'Unsatisfactory (2-2.5): Uses a limited range of vocabulary (vocabulary choices are often inappropriate or ineffective, detracting from the overall quality of the description), but this is minimally adequate for the task. May make frequent and noticeable errors in spelling and/or word formation throughout the text, making it difficult to understand.',
@@ -326,11 +258,12 @@ const LANC2146_RUBRICS = {
   ],
 };
 
-// Anti-anchoring warning: prevents Gemini from copying example scores
-const ANTI_ANCHORING_WARNING = `\n\u26a0\ufe0f ANTI-ANCHORING: All scores in the example below are 0 \u2014 these are INVALID placeholder values showing FORMAT ONLY. You MUST calculate real scores based on the actual student text quality against the rubric bands. Use the FULL score range. Every essay is different \u2014 scores MUST reflect the specific text.\n`;
+// ─── Gemini Structured Output Schema ────────────────────────────────────────
+// totalScore, maxScore, and percentage are NOT included — LLMs hallucinate
+// arithmetic. Those are computed purely in TypeScript after the response.
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Shared JSON response schema for all assessment prompts
-const assessmentResponseSchema = {
+const ASSESSMENT_SCHEMA: Schema = {
   type: SchemaType.OBJECT,
   properties: {
     scores: {
@@ -356,18 +289,52 @@ const assessmentResponseSchema = {
           },
           suggestions: { type: SchemaType.STRING },
         },
-        required: ['criterionName', 'score', 'maxScore', 'justification', 'strengths', 'mistakes', 'suggestions'],
+        required:['criterionName', 'score', 'maxScore', 'justification', 'strengths', 'mistakes', 'suggestions'],
       },
     },
-    totalScore: { type: SchemaType.NUMBER },
-    maxScore: { type: SchemaType.NUMBER },
-    percentage: { type: SchemaType.NUMBER },
     overallFeedback: { type: SchemaType.STRING },
   },
-  required: ['scores', 'totalScore', 'maxScore', 'percentage', 'overallFeedback'],
+  required:['scores', 'overallFeedback'],
 };
 
-// Build prompt for LANC2146 Report Writing (Discussion & Conclusion)
+const CREDIT_HUMANIZATION = `
+BAND CALIBRATION FOR CEFR A2-B1 (what each band looks like at this level):
+- 4.5-5/5 (Excellent): Exceptional for A2-B1. Approaches B1+ level. Very rare.
+- 4/5 (Good): Strong for A2-B1. Clear communication with minor expected errors.
+- 3-3.5/5 (Satisfactory): Average for A2-B1. Meaning usually clear despite grammar/vocabulary errors. Most credit students score here.
+- 2-2.5/5 (Unsatisfactory): Below expectations even for A2-B1. Frequent errors impede understanding.
+- 0-1.5/5 (Poor): Incomprehensible, completely off-task, or large-scale copying. Reserve for genuine failures.
+
+ERROR CLASSIFICATION (apply per criterion — this is critical):
+1. Expected A2/B1 errors (missing articles a/an/the, wrong prepositions in/on/at, subject-verb agreement for 3rd person singular, awkward paraphrasing from sources, limited sentence variety, minor spelling) → Do NOT lower the score. These are normal developmental errors at this level.
+2. Non-impeding errors (meaning still clear; repetitive vocabulary, minor punctuation, occasional awkward phrasing) → Only minor score impact if frequent.
+3. Impeding errors (reader cannot understand; wrong text type; large-scale copying without paraphrasing; task fundamentally not met) → Significant score impact.
+Rate each criterion based primarily on COMMUNICATION SUCCESS and IMPEDING errors, not total error count.
+
+SPECIAL RULES:
+1. Reward successful communication of ideas. Do not be overly harsh on A2/B1 grammatical/spelling errors if the overall meaning is clear.
+2. For error listings: classify each error as expected, non-impeding, or impeding. Do NOT provide corrections.
+
+SCORING FLOW (follow in this order):
+Step 1 — Identify what the student communicated successfully (strengths first).
+Step 2 — Determine the overall CEFR demonstrated level.
+Step 3 — Score each criterion 0-5 (0.5 increments) relative to A2-B1 expectations, not B2+ standards.
+Step 4 — Only deduct for errors that genuinely impede meaning or show a gap below A2 level.
+`;
+
+// ─── Prompt Builders (Lean — no JSON formatting instructions) ────────────────
+// Structured Outputs (responseSchema) guarantees valid JSON.
+// We only need rubrics + scoring quality instructions.
+
+function buildCriteriaText(rubrics: any): string {
+  return rubrics.criteria.map(c => {
+    const rubricLevels = Object.entries(c.rubric)
+      .map(([score, desc]) => `  Score ${score}: ${desc}`)
+      .join('\n');
+    return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
+  }).join('\n\n');
+}
+
 function buildLanc2146Prompt(
   studentText: string,
   reportSections: { title: string; content: string }[],
@@ -378,170 +345,71 @@ function buildLanc2146Prompt(
   targetWordCount: { min: number; max: number; ideal: number }
 ): string {
   const rubrics = LANC2146_RUBRICS;
-  const totalMaxScore = LANC2146_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0); // 20
-
-  // Word count tolerance: +/-20 words beyond the target range is acceptable without penalty
   const toleranceBelow = targetWordCount.min - 20;
   const toleranceAbove = targetWordCount.max + 20;
 
   const wordCountStatus = wordCount < toleranceBelow
-    ? `WARNING: Word count (${wordCount}) is SIGNIFICANTLY BELOW the required range of ${targetWordCount.min}-${targetWordCount.max} words (more than 20 words below minimum). This MUST lower the Task Response score.`
+    ? `WARNING: Word count (${wordCount}) is SIGNIFICANTLY BELOW ${targetWordCount.min}-${targetWordCount.max} (more than 20 words below minimum). This MUST lower the Task Response score.`
     : wordCount < targetWordCount.min
-    ? `NOTE: Word count (${wordCount}) is slightly below the required range of ${targetWordCount.min}-${targetWordCount.max} words (within 20-word tolerance). Minor flexibility is acceptable — do NOT penalize.`
+    ? `NOTE: Word count (${wordCount}) is slightly below ${targetWordCount.min}-${targetWordCount.max} (within 20-word tolerance). Do NOT penalize.`
     : wordCount > toleranceAbove
-    ? `NOTE: Word count (${wordCount}) significantly exceeds the target range of ${targetWordCount.min}-${targetWordCount.max} words (more than 20 words above maximum). Do NOT deduct marks for exceeding the word limit. However, you MUST mention this in your feedback.`
+    ? `NOTE: Word count (${wordCount}) significantly exceeds ${targetWordCount.min}-${targetWordCount.max}. Do NOT deduct marks. Mention in feedback.`
     : wordCount > targetWordCount.max
-    ? `Word count (${wordCount}) is slightly above the target range of ${targetWordCount.min}-${targetWordCount.max} words (within 20-word tolerance). Do NOT deduct marks — just note it in the feedback if relevant.`
-    : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
-
-  const criteriaDetails = rubrics.criteria.map(c => {
-    const rubricLevels = Object.entries(c.rubric)
-      .map(([score, desc]) => `  Score ${score}: ${desc}`)
-      .join('\n');
-    return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
-  }).join('\n\n');
+    ? `Word count (${wordCount}) is slightly above ${targetWordCount.min}-${targetWordCount.max} (within tolerance). Do NOT deduct marks.`
+    : `Word count (${wordCount}) is within ${targetWordCount.min}-${targetWordCount.max}.`;
 
   const sectionsText = reportSections.map(s => `=== ${s.title} ===\n${s.content}`).join('\n\n');
 
-  return `You are an expert writing assessor evaluating a Credit level student's lab report Discussion and Conclusion for Sultan Qaboos University's Center for Preparatory Studies, course LANC2146 (Report Writing).
-
-STUDENT LEVEL: CEFR A2-B1 (Elementary to Pre-Intermediate). Feedback must use simple, clear language appropriate for A2-B1 learners. Be encouraging while maintaining appropriate academic standards. Avoid overly technical linguistic terminology.
+  return `You are an expert writing assessor for LANC2146 (Report Writing — Discussion & Conclusion) at Sultan Qaboos University. CEFR A2-B1 level.
 
 ASSIGNMENT: ${assignmentTitle}
-
-WRITING TASK: Write an appropriate Discussion and Conclusion for the report based on the provided sections.
-
-TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}). A tolerance of +/-20 words is acceptable (effective range: ${toleranceBelow}-${toleranceAbove}).
-
+TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} (ideal: ${targetWordCount.ideal}). Tolerance: +/-20 words.
 ${wordCountStatus}
 
 PROVIDED REPORT SECTIONS:
 ${sectionsText}
-${resultsCaption ? `\nRESULTS FIGURE CAPTION: ${resultsCaption}${resultsGraphDescription ? `\nNote: The student was expected to read the bar graph showing the results of the experiment. ${resultsGraphDescription}` : ''}` : ''}
+${resultsCaption ? `\nRESULTS FIGURE CAPTION: ${resultsCaption}${resultsGraphDescription ? `\nNote: The student was expected to read the bar graph showing the results. ${resultsGraphDescription}` : ''}` : ''}
 
 STUDENT'S DISCUSSION AND CONCLUSION:
 """
 ${studentText}
 """
 
-ASSESSMENT RUBRICS (LANC2146 - Discussion and Conclusion of a Lab Report):
+ASSESSMENT RUBRICS:
+${buildCriteriaText(rubrics)}
 
-${criteriaDetails}
-
-POINTS TO CONSIDER FOR EACH CRITERION:
-
-Task Response:
-- Discussion: analysis and interpretation with details/examples/statistics; reference to the hypothesis
-- Conclusion: most obvious result, reference to previous research; restatement of the aim; solutions/recommendations
-
-Coherence and Cohesion:
-- Logical organization of information and ideas
-- Cohesive devices (conjunctions and linkers)
-- Paragraphing
-
-Grammatical Range and Accuracy:
-- Functions: cause/effect, compare/contrast, prediction, recommendation/suggestion/solution
-- Grammar structures
-- Punctuation
-
-Lexical Resource:
-- Vocabulary range and genre-specific register
-- Spelling and/or word formation and capitalization
-
-============================================================
-SCORING AND FEEDBACK INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
-============================================================
-
-STEP 1 — SCORE each criterion using WHOLE or HALF numbers (1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, or 5). If the text's quality falls between two adjacent score bands, award a half-point (e.g., 3.5). Use 0.5 increments only — never use 0.25 or 0.75.
-
-STEP 2 — For EACH criterion, write a "Justification" paragraph that:
-  (a) Explicitly names the score band you chose (e.g. "Score 3.5 — Satisfactory")
-  (b) Quotes at least ONE specific phrase or sentence from the student's text as evidence
-  (c) Explains why the text fits that band descriptor — connect the evidence to the rubric
-  (d) If you awarded a half-point, explain which aspects place it in the lower band and which in the higher band
-  (e) If the score is below 4, clearly state what is missing compared to the next higher band
-  (f) If the score is 5, explain what the student did beyond expectations
-
-STEP 3 — List up to 3 specific errors per criterion in the "mistakes" array. Each mistake MUST have:
-  - "quote": the EXACT words from the student's text that contain the error
-  - "explanation": WHY it is wrong (grammar rule broken, wrong word choice, etc.) — do NOT provide corrections
-  If you genuinely cannot find any error for a criterion, you may set mistakes to [] — but this should be rare.
-
-STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 level writer.
-
-STEP 5 — overallFeedback must be a comprehensive summary (4-6 sentences) that:
-  - Highlights the student's strongest criterion and what they did well
-  - Identifies the weakest area needing the most attention
-  - Evaluates whether the Discussion section effectively analyzes and interprets the data
-  - Evaluates whether the Conclusion section adequately summarizes results and provides recommendations
-  - Gives one prioritized action item to focus on next
-
-STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
-
-============================================================
-CRITICAL OUTPUT RULES:
-- Respond with ONLY the raw JSON object. No markdown, no code fences, no commentary.
-- Do NOT wrap the JSON in triple-backtick code blocks.
-- Use straight double quotes, not smart/curly quotes.
-- Do NOT add trailing commas after the last item in arrays or objects.
-- All string values must have properly escaped quotes inside them.
-- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
-
-${ANTI_ANCHORING_WARNING}
-JSON OUTPUT FORMAT:
-============================================================
-{
-  "scores": [
-    {
-      "criterionName": "Task Response",
-      "score": 0,
-      "maxScore": 5,
-      "justification": "Score 4: Good. The discussion section analyses the main trend with adequate details and statistics. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment]. The conclusion restates the aim and provides general recommendations.",
-      "strengths": "The student demonstrates solid analysis of the main trend with supporting details.",
-      "mistakes": [
-        { "quote": "[exact error from text]", "explanation": "[why wrong, no correction]" }
-      ],
-      "suggestions": "Include more specific statistics from the results to strengthen your analysis. Reference previous research more explicitly in the conclusion."
-    }
-  ],
-  "totalScore": 0,
-  "maxScore": ${totalMaxScore},
-  "percentage": 0,
-  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Your discussion effectively [evaluation]. Your conclusion could be improved by [suggestion]. Focus on [one prioritized action] to improve your next report."
-}`;
+${CREDIT_HUMANIZATION}
+SCORING INSTRUCTIONS:
+1. Score each criterion 0-5 (0.5 increments). Use the FULL range — do NOT default to middle scores.
+2. For each criterion: quote at least ONE exact phrase from the student text as evidence in your justification.
+3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
+5. overallFeedback (3-4 sentences): strongest/weakest criterion, Discussion analysis quality, Conclusion adequacy, one prioritized action item.
+6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
 
-// Build detailed rubric prompt for Foundation courses
-function buildFoundationPrompt(text: string, topic: string | null, wordCount: number, targetWordCount: { min: number; max: number; ideal: number; label?: string }): string {
+function buildFoundationPrompt(
+  text: string,
+  topic: string | null,
+  wordCount: number,
+  targetWordCount: { min: number; max: number; ideal: number; label?: string }
+): string {
   const rubrics = FOUNDATION_RUBRICS;
-  const totalMaxScore = rubrics.criteria.reduce((sum, c) => sum + c.maxScore, 0); // 24
-
-  // Word count tolerance: +/-10 words beyond the target range is acceptable without penalty
   const toleranceBelow = targetWordCount.min - 10;
   const toleranceAbove = targetWordCount.max + 10;
-
-  const wordCountStatus = wordCount < toleranceBelow
-    ? `WARNING: Word count (${wordCount}) is SIGNIFICANTLY BELOW the required range of ${targetWordCount.min}-${targetWordCount.max} words (more than 10 words below minimum). This MUST lower the Task Response score.`
-    : wordCount < targetWordCount.min
-    ? `NOTE: Word count (${wordCount}) is slightly below the required range of ${targetWordCount.min}-${targetWordCount.max} words (within 10-word tolerance). Minor flexibility is acceptable — do NOT penalize.`
-    : wordCount > toleranceAbove
-    ? `NOTE: Word count (${wordCount}) significantly exceeds the target range of ${targetWordCount.min}-${targetWordCount.max} words (more than 10 words above maximum). Do NOT deduct marks for exceeding the word limit. However, you MUST mention this in your feedback.`
-    : wordCount > targetWordCount.max
-    ? `Word count (${wordCount}) is slightly above the target range of ${targetWordCount.min}-${targetWordCount.max} words (within 10-word tolerance). Do NOT deduct marks — just note it in the feedback if relevant.`
-    : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
-
   const examLabel = targetWordCount.label || 'Foundation Exam';
 
-  const criteriaDetails = rubrics.criteria.map(c => {
-    const rubricLevels = Object.entries(c.rubric)
-      .map(([score, desc]) => `  Score ${score}: ${desc}`)
-      .join('\n');
-    return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
-  }).join('\n\n');
+  const wordCountStatus = wordCount < toleranceBelow
+    ? `WARNING: Word count (${wordCount}) is SIGNIFICANTLY BELOW ${targetWordCount.min}-${targetWordCount.max}. This MUST lower the Task Response score.`
+    : wordCount < targetWordCount.min
+    ? `NOTE: Word count (${wordCount}) is slightly below ${targetWordCount.min}-${targetWordCount.max} (within 10-word tolerance). Do NOT penalize.`
+    : wordCount > toleranceAbove
+    ? `NOTE: Word count (${wordCount}) significantly exceeds ${targetWordCount.min}-${targetWordCount.max}. Do NOT deduct marks. Mention in feedback.`
+    : wordCount > targetWordCount.max
+    ? `Word count (${wordCount}) is slightly above ${targetWordCount.min}-${targetWordCount.max} (within tolerance). Do NOT deduct marks.`
+    : `Word count (${wordCount}) is within ${targetWordCount.min}-${targetWordCount.max}.`;
 
-  return `You are an expert, encouraging writing assessor evaluating a Foundation level student essay for Sultan Qaboos University's Center for Preparatory Studies.
-
-STUDENT LEVEL: CEFR A1-A2. Feedback must use simple, clear language that A1-A2 learners can understand. Be encouraging while maintaining appropriate standards. Avoid overly technical linguistic terminology.
+  return `You are an expert, encouraging writing assessor for Foundation level students at Sultan Qaboos University. CEFR A1-A2 level.
 
 EXAM TYPE: ${examLabel}
 ${topic ? `Essay Topic: ${topic}` : 'No specific topic provided.'}
@@ -551,13 +419,11 @@ Student Essay:
 ${text}
 """
 
-TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}). A tolerance of +/-10 words is acceptable (effective range: ${toleranceBelow}-${toleranceAbove}).
-
+TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} (ideal: ${targetWordCount.ideal}). Tolerance: +/-10 words.
 ${wordCountStatus}
 
-ASSESSMENT RUBRICS (Foundation Courses - FP0230 and FP0340):
-
-${criteriaDetails}
+ASSESSMENT RUBRICS (FP0230 and FP0340):
+${buildCriteriaText(rubrics)}
 
 BAND CALIBRATION FOR CEFR A1-A2 (what each band looks like at this level):
 - 5-6/6 (Excellent): Exceptional for A1-A2. Near-fluent grammar, rich vocabulary, perfect structure. Very rare at this level.
@@ -573,98 +439,25 @@ ERROR CLASSIFICATION (apply per criterion — this is critical):
 Rate each criterion based primarily on COMMUNICATION SUCCESS and IMPEDING errors, not total error count.
 
 SPECIAL RULES:
-${rubrics.specialRules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
 1. Deduct marks for Task Response ONLY IF the text is severely off-topic. Do not penalize minor tangents.
 2. Reward successful communication of ideas. Do not be overly harsh on minor A1/A2 grammatical/spelling errors if the overall meaning is clear.
 
 SCORING FLOW (follow in this order):
 Step 1 — Identify what the student communicated successfully (strengths first).
 Step 2 — Determine the overall CEFR demonstrated level from the essay.
-Step 3 — Score each criterion 0-6 (0.5 increments) relative to A1-A2 expectations, not B2+ academic standards. Use the FULL range — do NOT default to middle scores.
+Step 3 — Score each criterion 0-6 (0.5 increments) relative to A1-A2 expectations, not B2+ academic standards.
 Step 4 — Only deduct for errors that genuinely impede meaning or show a gap below A1 level.
-Step 5 — For EACH criterion, write a "Justification" paragraph that:
-  (a) Explicitly names the score band you chose (e.g. "Score 3.5" meaning between Satisfactory and Good)
-  (b) Quotes at least ONE specific phrase or sentence from the student's essay as evidence
-  (c) Explains why the essay fits that band descriptor — connect the evidence to the rubric
-Step 6 — List up to 3 specific errors per criterion in the "mistakes" array. Each mistake MUST have:
-  - "quote": the EXACT words from the student's text that contain the error
-  - "explanation": WHY it is wrong — do NOT provide corrections
-  Classify each as expected A1/A2, non-impeding, or impeding in your explanation.
-Step 7 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A1-A2 learner.
-Step 8 — overallFeedback must be a comprehensive summary (3-5 sentences) that:
-  - Highlights the student's strongest criterion and what they communicated well
-  - Identifies the weakest area needing the most attention
-  - Comments on whether the word count meets the ${examLabel} requirements
-  - Gives one prioritized action item to focus on next
-Step 9 — For Task Response: address topic adherence and essay structure. If the word count exceeds the target, mention it in the feedback but do NOT deduct marks.
-
-STEP 10 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Scores may include 0.5 increments (e.g., 3.5, 4.5). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
-
-============================================================
-CRITICAL OUTPUT RULES:
-- You MUST score ALL FOUR criteria: Task Response, Coherence and Cohesion, Lexical Resource, and Grammatical Range and Accuracy. Do NOT omit any criterion.
-- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points or numbered lists wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
-- Use straight double quotes, not smart/curly quotes.
-- All string values must have properly escaped quotes inside them.
-
-JSON OUTPUT FORMAT (you MUST include exactly 4 score entries — one for EACH criterion):
-============================================================
-{
-  "scores": [
-    {
-      "criterionName": "Task Response",
-      "score": 0,
-      "maxScore": 6,
-      "justification": "Score 4: Good for A1-A2. The essay addresses the task by [explanation]. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
-      "strengths": "The student clearly addresses the topic and provides relevant examples.",
-      "mistakes": [
-        { "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }
-      ],
-      "suggestions": "Try to add a clear concluding sentence that summarizes your main point."
-    },
-    {
-      "criterionName": "Coherence and Cohesion",
-      "score": 0,
-      "maxScore": 6,
-      "justification": "Score 3.5: [justification with quoted evidence relative to A1-A2 level]",
-      "strengths": "[specific strengths]",
-      "mistakes": [{ "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }],
-      "suggestions": "[1-2 improvement suggestions]"
-    },
-    {
-      "criterionName": "Lexical Resource",
-      "score": 0,
-      "maxScore": 6,
-      "justification": "Score 3: [justification with quoted evidence relative to A1-A2 level]",
-      "strengths": "[specific strengths]",
-      "mistakes": [{ "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }],
-      "suggestions": "[1-2 improvement suggestions]"
-    },
-    {
-      "criterionName": "Grammatical Range and Accuracy",
-      "score": 0,
-      "maxScore": 6,
-      "justification": "Score 3.5: [justification with quoted evidence relative to A1-A2 level]",
-      "strengths": "[specific strengths]",
-      "mistakes": [{ "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }],
-      "suggestions": "[1-2 improvement suggestions]"
-    }
-  ],
-  "totalScore": 0,
-  "maxScore": ${totalMaxScore},
-  "percentage": 0,
-  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. [Comment on word count if relevant]. Focus on [one prioritized action] to improve your next essay."
-}`;
+Step 5 — For each criterion: quote at least ONE exact phrase from the essay as evidence in your justification.
+Step 6 — List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Classify each as expected, non-impeding, or impeding. Do NOT provide corrections.
+Step 7 — Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
+Step 8 — overallFeedback (3-4 sentences): strongest/weakest criterion, what the student communicated well, one prioritized action item.
+Step 9 — For Task Response: address topic adherence and essay structure. If the word count exceeds the target, mention it but do NOT deduct marks.
+Step 10 — Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
-
-// Build prompt for Credit/Post-foundation courses
 function buildCreditPrompt(text: string, topic: string | null, wordCount: number): string {
   const criteria = CREDIT_CRITERIA;
-  const totalMaxScore = criteria.reduce((sum, c) => sum + c.maxScore, 0);
 
-  return `You are an expert writing assessor evaluating a Credit level student essay for Sultan Qaboos University's Center for Preparatory Studies.
-
-STUDENT LEVEL: CEFR A2-B1 (Elementary to Pre-Intermediate). Feedback must use simple, clear language that A2-B1 learners can understand. Be encouraging while maintaining appropriate academic standards. Avoid overly technical linguistic terminology.
+  return `You are an expert writing assessor for Credit level students at Sultan Qaboos University. CEFR A2-B1 level.
 
 ${topic ? `Essay Topic: ${topic}` : 'No specific topic provided.'}
 
@@ -678,65 +471,16 @@ WORD COUNT: ${wordCount} words
 ASSESSMENT CRITERIA (Credit Course - LANC2160):
 ${criteria.map(c => `- ${c.name} (0-${c.maxScore}): ${c.description}`).join('\n')}
 
-============================================================
-SCORING AND FEEDBACK INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
-============================================================
-
-STEP 1 — SCORE each criterion using WHOLE or HALF numbers (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, or 5). If the essay's quality falls between two adjacent score bands, award a half-point (e.g., 2.5). Use 0.5 increments only — never use 0.25 or 0.75.
-
-STEP 2 — For EACH criterion, write a "Justification" paragraph that:
-  (a) Explicitly names the score band you chose (e.g. "Score 2.5" meaning between Unsatisfactory and Satisfactory)
-  (b) Quotes at least ONE specific phrase or sentence from the student's essay as evidence
-  (c) Explains why the essay earned that score based on the criterion description
-  (d) If you awarded a half-point, explain which aspects place it in the lower band and which aspects place it in the higher band
-  (e) If the score is below 3, clearly state what is missing compared to a higher score
-  (f) If the score is 4 or 5, explain what the student did beyond basic expectations
-
-STEP 3 — List up to 3 specific errors per criterion in the "mistakes" array. Each mistake MUST have:
-  - "quote": the EXACT words from the student's text that contain the error
-  - "explanation": WHY it is wrong (grammar rule broken, wrong word choice, etc.) — do NOT provide corrections
-  If you genuinely cannot find any error for a criterion, you may set mistakes to [] — but this should be rare.
-
-STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 learner.
-
-STEP 5 — overallFeedback must be a comprehensive summary (3-5 sentences) that highlights the student's strongest criterion, identifies the weakest area, and gives one prioritized action item.
-
-STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
-
-============================================================
-CRITICAL OUTPUT RULES:
-- Respond with ONLY the raw JSON object. No markdown, no code fences, no commentary.
-- Do NOT wrap the JSON in triple-backtick code blocks.
-- Use straight double quotes, not smart/curly quotes.
-- Do NOT add trailing commas after the last item in arrays or objects.
-- All string values must have properly escaped quotes inside them.
-- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
-
-${ANTI_ANCHORING_WARNING}
-JSON OUTPUT FORMAT:
-============================================================
-{
-  "scores": [
-    {
-      "criterionName": "Task Achievement",
-      "score": 0,
-      "maxScore": 5,
-      "justification": "The essay achieves the task well by [explanation]. For example, \\"[exact quote]\\" shows [specific alignment with criterion].",
-      "strengths": "The student captures the main points effectively and demonstrates good comprehension of the source material.",
-      "mistakes": [
-        { "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }
-      ],
-      "suggestions": "Make sure every main point from the original text is represented in your summary. Use your own words rather than copying phrases."
-    }
-  ],
-  "totalScore": 0,
-  "maxScore": ${totalMaxScore},
-  "percentage": 0,
-  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Focus on [one prioritized action] to improve your next essay."
-}`;
+${CREDIT_HUMANIZATION}
+SCORING INSTRUCTIONS:
+1. Score each criterion 0-5 (0.5 increments). Use the FULL range — do NOT default to middle scores.
+2. For each criterion: quote at least ONE exact phrase from the essay as evidence in your justification.
+3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
+5. overallFeedback (3-4 sentences): strongest/weakest criterion, one prioritized action item.
+6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
 
-// Build prompt for Summary Writing (LANC2160)
 function buildSummaryPrompt(
   studentText: string,
   sourceText: string,
@@ -745,29 +489,20 @@ function buildSummaryPrompt(
   targetWordCount: { min: number; max: number; ideal: number }
 ): string {
   const rubrics = SUMMARY_RUBRICS;
-  const totalMaxScore = SUMMARY_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0); // 20
+  const sourceWordCount = sourceText.trim().split(/\s+/).filter(Boolean).length;
 
   const wordCountStatus = wordCount < 20
-    ? `WARNING: Word count (${wordCount}) is BELOW the minimum of 20 words. This MUST significantly lower the Task Achievement score.`
+    ? `WARNING: Word count (${wordCount}) is BELOW 20 words. This MUST significantly lower the Task Achievement score.`
     : wordCount < targetWordCount.min
-    ? `WARNING: Word count (${wordCount}) is BELOW the recommended range of ${targetWordCount.min}-${targetWordCount.max} words. The summary should be approximately one-third of the original text length. This should lower the Task Achievement score.`
+    ? `WARNING: Word count (${wordCount}) is BELOW ${targetWordCount.min}-${targetWordCount.max}. This should lower the Task Achievement score.`
     : wordCount > targetWordCount.max
-    ? `NOTE: Word count (${wordCount}) exceeds the recommended range of ${targetWordCount.min}-${targetWordCount.max} words. Do NOT deduct marks for exceeding the word limit. However, you MUST mention this in the feedback and note that the summary should be concise and approximately one-third of the original text length.`
-    : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
+    ? `NOTE: Word count (${wordCount}) exceeds ${targetWordCount.min}-${targetWordCount.max}. Do NOT deduct marks. Mention in feedback.`
+    : `Word count (${wordCount}) is within ${targetWordCount.min}-${targetWordCount.max}.`;
 
-  const criteriaDetails = rubrics.criteria.map(c => {
-    const rubricLevels = Object.entries(c.rubric)
-      .map(([score, desc]) => `  Score ${score}: ${desc}`)
-      .join('\n');
-    return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
-  }).join('\n\n');
-
-  return `You are an expert writing assessor for LANC2160 (Summary Writing & Synthesis) at Sultan Qaboos University. CEFR A2-B1 level. Use simple, clear language.
-
-TASK: The student read the source text and wrote a summary of approximately one-third of the original length.
+  return `You are an expert writing assessor for LANC2160 (Summary Writing) at Sultan Qaboos University. CEFR A2-B1 level.
 
 SOURCE TEXT:
-"${sourceTitle}" (${sourceText.trim().split(/\s+/).filter(Boolean).length} words)
+Title: "${sourceTitle}"
 """
 ${sourceText}
 """
@@ -778,134 +513,26 @@ ${studentText}
 """
 
 ${wordCountStatus}
-Target summary length: ${targetWordCount.min}-${targetWordCount.max} words.
+Target summary length: ${targetWordCount.min}-${targetWordCount.max} (approximately one-third of the ${sourceWordCount}-word source text).
 
-ASSESSMENT RUBRICS (LANC2160 — Summary Writing):
-${criteriaDetails}
+SUMMARY RUBRICS:
+${buildCriteriaText(rubrics)}
 
-SUMMARY-SPECIFIC RULES:
-1. Capture MAIN IDEAS only — no minor details.
-2. Use OWN WORDS (paraphrasing). Direct copying = poor summarising.
-3. NO personal opinions or new information not in the source.
-4. Target ~1/3 of source text length.
-5. Off-topic summary → Task Achievement = 0.
-6. Large copied portions → low Task Achievement and Lexical Resource.
+SUMMARY RULES:
+1. Capture MAIN IDEAS only. No personal opinions or new information.
+2. Student must use OWN WORDS (paraphrasing). Copied phrases lower TA and LR scores.
+3. Off-topic summary = Task Achievement 0. Large-scale copying = low TA and LR.
 
-============================================================
+${CREDIT_HUMANIZATION}
 SCORING INSTRUCTIONS:
-============================================================
-1. Score each criterion 0-5 (0.5 increments only).
-2. For each criterion provide:
-   - justification: Name the score band, quote evidence from summary, explain why it fits. If half-point, explain what places it between bands. For Task Achievement: address how many main ideas were captured and paraphrasing quality. Keep to 2-3 sentences.
-   - strengths: What the student did well (1 sentence).
-   - mistakes: List up to 3 specific errors. Each as { "quote": "[quoted text]", "explanation": "why wrong" }. Do NOT give corrections.
-   - suggestions: 1 actionable improvement tip for A2-B1 level.
-3. overallFeedback: 2-3 sentences covering main ideas captured/missed, strongest area, weakest area, paraphrasing quality, and one priority action.
-4. totalScore = sum of scores (max ${totalMaxScore}). percentage = round(totalScore/${totalMaxScore}*100).
-
-${ANTI_ANCHORING_WARNING}
-OUTPUT: Valid JSON only. No markdown, no code fences, no commentary. Use straight double quotes.
-{
-  "scores": [
-    {
-      "criterionName": "Task Achievement",
-      "score": 0,
-      "maxScore": 5,
-      "justification": "Score 3.5 — [Brief evidence quote and rubric alignment in 2-3 sentences].",
-      "strengths": "[1 sentence].",
-      "mistakes": [{ "quote": "[quoted text]", "explanation": "[why wrong]" }],
-      "suggestions": "[1 tip]."
-    }
-  ],
-  "totalScore": 0,
-  "maxScore": ${totalMaxScore},
-  "percentage": 0,
-  "overallFeedback": "[2-3 sentences: main ideas captured/missed, strongest area, weakest area, paraphrasing, one action item]."
-}`;
+1. Score each criterion 0-5 (0.5 increments). Use the FULL range — do NOT default to middle scores.
+2. For each criterion: quote at least ONE exact phrase from the summary as evidence.
+3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
+5. overallFeedback (3-4 sentences): which main ideas were captured/missed, strongest/weakest criterion, paraphrasing quality, one prioritized action item.
+6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
 
-// Synthesis assignments data (defined here to avoid import issues with @/lib/store in server-side route)
-// NOTE: Synthesis assignment data is imported dynamically from the store
-// to avoid duplicating data and causing ID mismatches between frontend and API.
-
-// ─── LANC2070 Article Review Assessment ──────────────────────────────────────
-
-// Article Review criteria for LANC2070 (A2-B1 level, 0-5 per criterion)
-const LANC2070_CRITERIA = [
-  {
-    name: 'Task Response',
-    maxScore: 5,
-    description: '4-paragraph article review (introduction, summary, critique of 2 points, conclusion); synthesis of minimum 2 excerpts; analysis and evaluation of 2 points; word count adherence.',
-  },
-  {
-    name: 'Coherence and Cohesion',
-    maxScore: 5,
-    description: 'Flow of ideas; focus and thesis statements; attributive and reporting phrases with APA referencing; cohesive devices.',
-  },
-  {
-    name: 'Lexical Resource',
-    maxScore: 5,
-    description: 'Paraphrasing quality (synonyms, word form changes, sentence restructuring); vocabulary range; word choice and form; spelling.',
-  },
-  {
-    name: 'Grammatical Range and Accuracy',
-    maxScore: 5,
-    description: 'Grammatical range (compound and complex sentences, relative clauses); grammatical accuracy (subject-verb agreement, verb tense, pronouns, articles); punctuation and capitalization.',
-  },
-];
-
-// Condensed rubric band descriptors for LANC2070 Article Review (A2-B1 level)
-// Optimised: shorter descriptors reduce prompt token count for faster free-tier response
-const LANC2070_RUBRICS = {
-  criteria: [
-    {
-      name: 'Task Response',
-      maxScore: 5,
-      rubric: {
-        '0-1.5': 'Fails task requirements. No use of excerpts. No analysis or evaluation. Below 300 words.',
-        '2': 'Incomplete structure, 0-1 excerpts, minimal analysis/evaluation. Below word count.',
-        '3': 'Adequate summary, attempts 2 excerpts with limited synthesis. Basic analysis, weak evaluation. Word count met.',
-        '4': 'Good summary of main ideas, 2 excerpts synthesised well. Logical analysis with some evaluation.',
-        '5': 'All main ideas captured, 2 excerpts fluently synthesised. Insightful analysis, clear evaluation.',
-      }
-    },
-    {
-      name: 'Coherence and Cohesion',
-      maxScore: 5,
-      rubric: {
-        '0-1': 'No organisation. No focus/thesis. No attribution. No cohesive devices.',
-        '2': 'Weak or missing intro/conclusion/thesis. Attribution missing. Cohesive devices inaccurate.',
-        '3': 'Adequate intro/conclusion. Thesis may be unclear. Attribution attempted but inconsistent. Cohesive devices repetitive.',
-        '4': 'Clear intro/conclusion with focus and thesis. Some attributive phrases. Cohesive devices mostly accurate.',
-        '5': 'Strong intro/conclusion with clear thesis. Varied attributive phrases and reporting verbs. Cohesive devices used accurately.',
-      }
-    },
-    {
-      name: 'Lexical Resource',
-      maxScore: 5,
-      rubric: {
-        '0-1': 'Largely copied. Very limited vocabulary. Poor word choice, form, spelling.',
-        '2': 'Minimal paraphrasing, frequent copied chunks (>4 words). Inadequate vocabulary range.',
-        '3': 'Generally paraphrased, minor copying (≤3 words). Adequate vocabulary. Some word choice/spelling errors.',
-        '4': 'Well paraphrased with variety of techniques. Good vocabulary. Spelling/word form mostly accurate.',
-        '5': 'Fully paraphrased with no copying. Wide, flexible vocabulary. Accurate spelling and word form.',
-      }
-    },
-    {
-      name: 'Grammatical Range and Accuracy',
-      maxScore: 5,
-      rubric: {
-        '0-1': 'Extremely limited structures. Core structures inaccurate. Punctuation/capitalisation consistently wrong.',
-        '2': 'Very limited structures. Core structures often inaccurate, impairing communication.',
-        '3': 'Limited but adequate structures with some inaccuracies. Punctuation sometimes inaccurate.',
-        '4': 'Good range of structures. Core structures mostly accurate. Punctuation mostly error-free.',
-        '5': 'Wide range exceeding expectations. Core structures accurate. Effective punctuation and capitalisation.',
-      }
-    },
-  ],
-};
-
-// Build prompt for LANC1070 Synthesis Essay (single source text)
 function buildLanc1070Prompt(
   studentText: string,
   sourceContent: string,
@@ -916,38 +543,24 @@ function buildLanc1070Prompt(
   targetWordCount: { min: number; max: number; ideal: number }
 ): string {
   const rubrics = SYNTHESIS_RUBRICS;
-  const totalMaxScore = SYNTHESIS_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0); // 20
-
   const tenPercentBelow = Math.round(targetWordCount.min * 0.9);
   const tenPercentAbove = Math.round(targetWordCount.max * 1.1);
 
   const wordCountStatus = wordCount < tenPercentBelow
-    ? `WARNING: Word count (${wordCount}) is MORE THAN 10% BELOW the required minimum of ${targetWordCount.min} words. This MUST lower the Task Achievement score per the rubric.`
+    ? `WARNING: Word count is MORE THAN 10% BELOW ${targetWordCount.min}. This MUST lower the Task Achievement score.`
     : wordCount < targetWordCount.min
-    ? `NOTE: Word count (${wordCount}) is below the required range of ${targetWordCount.min}-${targetWordCount.max} words. Up to 10% below is acceptable for the Satisfactory band.`
+    ? `NOTE: Word count is below ${targetWordCount.min}-${targetWordCount.max}. Up to 10% below is acceptable.`
     : wordCount > tenPercentAbove
-    ? `NOTE: Word count (${wordCount}) is MORE THAN 10% ABOVE the required maximum of ${targetWordCount.max} words. Do NOT deduct marks for exceeding the word limit. However, you MUST mention this in your feedback.`
+    ? `NOTE: Word count is MORE THAN 10% ABOVE ${targetWordCount.max}. Do NOT deduct marks. Mention in feedback.`
     : wordCount > targetWordCount.max
-    ? `NOTE: Word count (${wordCount}) exceeds the recommended range of ${targetWordCount.min}-${targetWordCount.max} words. Do NOT deduct marks — just note it in the feedback if relevant.`
-    : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
+    ? `NOTE: Word count exceeds ${targetWordCount.min}-${targetWordCount.max}. Do NOT deduct marks.`
+    : `Word count is within ${targetWordCount.min}-${targetWordCount.max}.`;
 
-  const criteriaDetails = rubrics.criteria.map(c => {
-    const rubricLevels = Object.entries(c.rubric)
-      .map(([score, desc]) => `  Score ${score}: ${desc}`)
-      .join('\n');
-    return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
-  }).join('\n\n');
-
-  return `You are an expert writing assessor evaluating a Credit level student's synthesis essay for Sultan Qaboos University's Center for Preparatory Studies, course LANC1070 (Academic English).
-
-STUDENT LEVEL: CEFR A2-B1 (Elementary to Pre-Intermediate). Feedback must use simple, clear language appropriate for A2-B1 learners. Be encouraging while maintaining appropriate academic standards. Avoid overly technical linguistic terminology.
+  return `You are an expert writing assessor for LANC1070 (Synthesis Essay) at Sultan Qaboos University. CEFR A2-B1 level.
 
 ASSIGNMENT: ${assignmentTitle}
-
 WRITING TASK: ${assignmentDescription}
-
-TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}). A tolerance of +/-10% is acceptable (effective range: ${tenPercentBelow}-${tenPercentAbove}).
-
+TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} (ideal: ${targetWordCount.ideal}). Tolerance: +/-10%.
 ${wordCountStatus}
 
 SOURCE TEXT:
@@ -961,237 +574,19 @@ STUDENT'S ESSAY:
 ${studentText}
 """
 
-ASSESSMENT RUBRICS (LANC1070 - Synthesis Essay based on a single source text):
+SYNTHESIS RUBRICS:
+${buildCriteriaText(rubrics)}
 
-${criteriaDetails}
-
-POINTS TO CONSIDER FOR EACH CRITERION:
-
-Task Achievement:
-- Does the essay address the required discussion points from the assignment?
-- Is information from the source text synthesized effectively?
-- Note the word count in your feedback if it exceeds the target, but do NOT deduct marks for exceeding the limit.
-
-Coherence and Cohesion:
-- Logical organization of information and ideas
-- Use of cohesive devices (conjunctions and linkers)
-- Paragraphing and essay structure
-
-Lexical Resource:
-- Vocabulary range and accuracy
-- Paraphrasing quality (student uses own words rather than copying)
-- Spelling and word formation
-
-Grammatical Range and Accuracy:
-- Range and accuracy of grammatical structures
-- Sentence variety
-- Punctuation
-
-============================================================
-SCORING AND FEEDBACK INSTRUCTIONS (CRITICAL — FOLLOW EXACTLY):
-============================================================
-
-STEP 1 — SCORE each criterion using WHOLE or HALF numbers (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, or 5). If the essay's quality falls between two adjacent score bands, award a half-point (e.g., 3.5). Use 0.5 increments only — never use 0.25 or 0.75.
-
-STEP 2 — For EACH criterion, write a "Justification" paragraph that:
-  (a) Explicitly names the score band you chose (e.g. "Score 3.5 — Satisfactory")
-  (b) Quotes at least ONE specific phrase or sentence from the student's essay as evidence
-  (c) Explains why the essay fits that band descriptor — connect the evidence to the rubric
-  (d) If you awarded a half-point, explain which aspects place it in the lower band and which in the higher band
-  (e) If the score is below 4, clearly state what is missing compared to the next higher band
-  (f) If the score is 5, explain what the student did beyond expectations
-
-STEP 3 — List up to 3 specific errors per criterion in the "mistakes" array. Each mistake MUST have:
-  - "quote": the EXACT words from the student's text that contain the error
-  - "explanation": WHY it is wrong (grammar rule broken, wrong word choice, etc.) — do NOT provide corrections
-  If you genuinely cannot find any error for a criterion, you may set mistakes to [] — but this should be rare.
-
-STEP 4 — For each criterion, provide 1-2 concrete, achievable suggestions for improvement appropriate for an A2-B1 level writer.
-
-STEP 5 — overallFeedback must be a comprehensive summary (4-6 sentences) that:
-  - Highlights the student's strongest criterion and what they did well
-  - Identifies the weakest area needing the most attention
-  - Evaluates how well the essay addresses the assigned discussion points
-  - Evaluates how effectively the student used the source text (paraphrasing vs copying)
-  - Gives one prioritized action item to focus on next
-
-STEP 6 — Calculate totalScore = sum of all criterion scores (max ${totalMaxScore}). Calculate percentage = round(totalScore / ${totalMaxScore} * 100).
-
-============================================================
-CRITICAL OUTPUT RULES:
-- Respond with ONLY the raw JSON object. No markdown, no code fences, no commentary.
-- Do NOT wrap the JSON in triple-backtick code blocks.
-- Use straight double quotes, not smart/curly quotes.
-- Do NOT add trailing commas after the last item in arrays or objects.
-- All string values must have properly escaped quotes inside them.
-- FORMAT: Write justification, strengths, suggestions, and overallFeedback using bullet points (•) or numbered lists (1. 2. 3.) wherever possible. Each bullet should be a separate, clear point. This makes the report easier to read for students.
-
-${ANTI_ANCHORING_WARNING}
-JSON OUTPUT FORMAT:
-============================================================
-{
-  "scores": [
-    {
-      "criterionName": "Task Achievement",
-      "score": 0,
-      "maxScore": 5,
-      "justification": "Score 4: Good. The essay addresses the task by [explanation]. For example, the student writes: \\"[exact quote]\\" which shows [specific rubric alignment].",
-      "strengths": "The student demonstrates solid understanding of the source material and addresses the main discussion points.",
-      "mistakes": [
-        { "quote": "[exact error from essay]", "explanation": "[why wrong, no correction]" }
-      ],
-      "suggestions": "Include more specific examples from the source text to support your discussion points. Use your own words more consistently when paraphrasing."
-    }
-  ],
-  "totalScore": 0,
-  "maxScore": ${totalMaxScore},
-  "percentage": 0,
-  "overallFeedback": "Your strongest area is [criterion] where you [specific strength]. The area that needs the most improvement is [criterion] because [reason]. Focus on [one prioritized action] to improve your next essay."
-}`;
-}
-
-// Build prompt for LANC2070 Article Review (main article + source excerpts)
-function buildLanc2070Prompt(
-  studentText: string,
-  mainArticleContent: string,
-  mainArticleTitle: string,
-  mainArticleAuthor: string,
-  mainArticleYear: number,
-  excerpts: { id: string; author: string; year: number; title: string; content: string }[],
-  assignmentTitle: string,
-  assignmentDescription: string,
-  writingPrompt: string,
-  wordCount: number,
-  targetWordCount: { min: number; max: number; ideal: number }
-): string {
-  const rubrics = LANC2070_RUBRICS;
-  const totalMaxScore = LANC2070_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0); // 20
-
-  const wordCountStatus = wordCount < 300
-    ? `WARNING: Word count (${wordCount}) is BELOW the minimum of 300 words. Per the rubric, this MUST result in a Poor (0-1.5) score for Task Response.`
-    : wordCount < targetWordCount.min
-    ? `NOTE: Word count (${wordCount}) is below the required range of ${targetWordCount.min}-${targetWordCount.max} words. This should be reflected in the Task Response score.`
-    : wordCount > targetWordCount.max
-    ? `NOTE: Word count (${wordCount}) exceeds the recommended maximum of ${targetWordCount.max} words. This should be reflected in the Task Response score.`
-    : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
-
-  const criteriaDetails = rubrics.criteria.map(c => {
-    const rubricLevels = Object.entries(c.rubric)
-      .map(([score, desc]) => `  Score ${score}: ${desc}`)
-      .join('\n');
-    return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
-  }).join('\n\n');
-
-  const hasExcerpts = excerpts && excerpts.length > 0;
-  const excerptsList = hasExcerpts
-    ? excerpts.map((e, i) => `${i + 1}. ${e.author} (${e.year}). ${e.title}\n   "${e.content}"`).join('\n\n')
-    : '';
-
-  // Build essay structure instructions based on whether excerpts are provided
-  const essayStructure = hasExcerpts
-    ? `- Paragraph 1 (Introduction): Introduce the article, write a focus statement, and present a clear thesis statement.
-- Paragraph 2 (Summary): Summarise the main ideas of the article concisely and accurately, without unnecessary detail.
-- Paragraph 3 (Critique): Analyse and evaluate two points from the article, synthesising a minimum of two excerpts from the provided source texts.
-- Paragraph 4 (Conclusion): Restate the thesis statement, summarise the critique, and end with a final thought.`
-    : `- Paragraph 1 (Introduction): Introduce the topic, write a focus statement, and present a clear thesis statement.
-- Paragraph 2 (Body Paragraph 1): Discuss the first way colleges can prepare students for future jobs, using evidence from the source text.
-- Paragraph 3 (Body Paragraph 2): Discuss the second way colleges can prepare students for future jobs, using evidence from the source text.
-- Paragraph 4 (Conclusion): Restate the thesis statement, summarise the main points, and end with a final thought.`;
-
-  const excerptsSection = hasExcerpts
-    ? `AVAILABLE SOURCE EXCERPTS (student must use at least 2):
-${excerptsList}
-
-NOTE: The student must cite all sources in-text using APA format (e.g., Author, year). All source material must be paraphrased — copying chunks of 3 or more words is not allowed.`
-    : `NOTE: The student must cite the source article in-text using APA format (e.g., Author, year). All source material must be paraphrased — copying chunks of 3 or more words is not allowed.`;
-
-  const taskResponsePoints = hasExcerpts
-    ? `- Does the review have exactly 4 paragraphs (Introduction, Summary, Critique, Conclusion)?
-- Does the summary capture the main ideas of the article without unnecessary detail?
-- Does the critique analyse and evaluate exactly 2 points from the article?
-- Are at least 2 excerpts from the provided sources used and synthesised effectively?
-- Is there evidence of analysis (original insights about how/why) and evaluation (critical judgment about value/validity)?
-- Is the word count within the required range?`
-    : `- Does the essay have exactly 4 paragraphs (Introduction, Body 1, Body 2, Conclusion)?
-- Does each body paragraph discuss one distinct way colleges can prepare students for future jobs?
-- Are ideas from the source text used effectively to support the discussion?
-- Is there evidence of analysis (original insights about how/why) and evaluation (critical judgment)?
-- Is the word count within the required range?`;
-
-  return `You are an expert writing assessor for LANC2070 (Academic English: Article Review) at Sultan Qaboos University. CEFR A2-B1 level. Use simple, clear language.
-
-ASSIGNMENT: ${assignmentTitle}
-WRITING TASK: ${assignmentDescription}
-WRITING PROMPT: ${writingPrompt}
-
-TARGET WORD COUNT: ${targetWordCount.min}-${targetWordCount.max} words (ideal: ${targetWordCount.ideal}). Below 300 words = Poor for Task Response.
-${wordCountStatus}
-
-REQUIRED STRUCTURE (4 paragraphs):
-${essayStructure}
-
-SOURCE TEXT:
-"${mainArticleTitle}" by ${mainArticleAuthor} (${mainArticleYear})
-"""
-${mainArticleContent}
-"""
-
-${excerptsSection}
-
-STUDENT'S ESSAY:
-"""
-${studentText}
-"""
-
-ASSESSMENT RUBRICS (LANC2070):
-${criteriaDetails}
-
-KEY CHECKS PER CRITERION:
-
-Task Response: ${hasExcerpts
-    ? '4-paragraph structure (Intro, Summary, Critique, Conclusion)? Summary captures main ideas? Critique analyses + evaluates 2 points? At least 2 excerpts synthesised? Word count met?'
-    : '4-paragraph structure (Intro, Body 1, Body 2, Conclusion)? Each body paragraph discusses one distinct point? Source text evidence used? Word count met?'}
-
-Coherence & Cohesion: Clear focus/thesis statement in intro? Intro and conclusion thorough? Attributive phrases + APA citations? Cohesive devices accurate?
-
-Lexical Resource: Source material paraphrased (not copied)? Any copied chunks of 3+ words? Vocabulary range and accuracy? Spelling?
-
-Grammar: Range of structures (compound/complex, relative clauses)? Core structures accurate (subject-verb, tense, articles)? Punctuation?
-
-============================================================
+${CREDIT_HUMANIZATION}
 SCORING INSTRUCTIONS:
-============================================================
-1. Score each criterion 0-5 (0.5 increments only).
-2. For each criterion provide:
-   - justification: Name the score band, quote evidence from essay, explain why it fits. If half-point, explain what places it between bands. Keep to 2-3 sentences.
-   - strengths: What the student did well (1 sentence).
-   - mistakes: List up to 3 specific errors. Each as { "quote": "[quoted text]", "explanation": "why wrong" }. Do NOT give corrections.
-   - suggestions: 1 actionable improvement tip for A2-B1 level.
-3. overallFeedback: 2-3 sentences covering strongest area, weakest area, paraphrasing quality, and one priority action.
-4. totalScore = sum of scores (max ${totalMaxScore}). percentage = round(totalScore/${totalMaxScore}*100).
-
-${ANTI_ANCHORING_WARNING}
-OUTPUT: Valid JSON only. No markdown, no code fences, no commentary. Use straight double quotes.
-{
-  "scores": [
-    {
-      "criterionName": "Task Response",
-      "score": 0,
-      "maxScore": 5,
-      "justification": "Score 4: Good. [Brief evidence quote and rubric alignment in 2-3 sentences].",
-      "strengths": "[1 sentence].",
-      "mistakes": [{ "quote": "[quoted text]", "explanation": "[why wrong]" }],
-      "suggestions": "[1 tip]."
-    }
-  ],
-  "totalScore": 0,
-  "maxScore": ${totalMaxScore},
-  "percentage": 0,
-  "overallFeedback": "[2-3 sentences: strongest area, weakest area, paraphrasing, one action item]."
-}`;
+1. Score each criterion 0-5 (0.5 increments). Use the FULL range — do NOT default to middle scores.
+2. For each criterion: quote at least ONE exact phrase from the essay as evidence.
+3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
+5. overallFeedback (3-4 sentences): strongest/weakest criterion, discussion points addressed, paraphrasing quality, one prioritized action item.
+6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
 
-// Build prompt for Synthesis Essay (LANC2160)
 function buildSynthesisPrompt(
   studentText: string,
   sources: { title: string; content: string }[],
@@ -1201,39 +596,27 @@ function buildSynthesisPrompt(
   targetWordCount: { min: number; max: number; ideal: number }
 ): string {
   const rubrics = SYNTHESIS_RUBRICS;
-  const totalMaxScore = SYNTHESIS_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0); // 20
-
   const tenPercentBelow = Math.round(targetWordCount.min * 0.9);
   const tenPercentAbove = Math.round(targetWordCount.max * 1.1);
 
   const wordCountStatus = wordCount < tenPercentBelow
-    ? `WARNING: Word count (${wordCount}) is MORE THAN 10% BELOW the required minimum of ${targetWordCount.min} words. This MUST lower the Task Achievement score per the rubric.`
+    ? `WARNING: Word count is MORE THAN 10% BELOW ${targetWordCount.min}. This MUST lower the Task Achievement score.`
     : wordCount < targetWordCount.min
-    ? `NOTE: Word count (${wordCount}) is below the required range of ${targetWordCount.min}-${targetWordCount.max} words. Up to 10% below is acceptable for the Satisfactory band.`
+    ? `NOTE: Word count is below ${targetWordCount.min}-${targetWordCount.max}. Up to 10% below is acceptable.`
     : wordCount > tenPercentAbove
-    ? `NOTE: Word count (${wordCount}) is MORE THAN 10% ABOVE the required maximum of ${targetWordCount.max} words. Do NOT deduct marks for exceeding the word limit. However, you MUST mention this in your feedback.`
+    ? `NOTE: Word count is MORE THAN 10% ABOVE ${targetWordCount.max}. Do NOT deduct marks. Mention in feedback.`
     : wordCount > targetWordCount.max
-    ? `NOTE: Word count (${wordCount}) exceeds the recommended range of ${targetWordCount.min}-${targetWordCount.max} words. Do NOT deduct marks — just note it in the feedback if relevant.`
-    : `Word count (${wordCount}) is within the acceptable range of ${targetWordCount.min}-${targetWordCount.max} words.`;
-
-  const criteriaDetails = rubrics.criteria.map(c => {
-    const rubricLevels = Object.entries(c.rubric)
-      .map(([score, desc]) => `  Score ${score}: ${desc}`)
-      .join('\n');
-    return `${c.name} (0-${c.maxScore}):\n${rubricLevels}`;
-  }).join('\n\n');
+    ? `NOTE: Word count exceeds ${targetWordCount.min}-${targetWordCount.max}. Do NOT deduct marks.`
+    : `Word count is within ${targetWordCount.min}-${targetWordCount.max}.`;
 
   const sourceTextsBlock = sources.map((s, i) => {
-    return `SOURCE ${i + 1}: "${s.title}"
-"""
-${s.content}
-"""`;
+    const wc = s.content.trim().split(/\s+/).filter(Boolean).length;
+    return `SOURCE TEXT ${i + 1}: "${s.title}" (${wc} words)\n"""\n${s.content}\n"""`;
   }).join('\n\n');
 
-  return `You are an expert writing assessor for LANC2160 (Summary Writing & Synthesis) at Sultan Qaboos University. CEFR A2-B1 level. Use simple, clear language.
+  return `You are an expert writing assessor for LANC2160 (Synthesis Essay) at Sultan Qaboos University. CEFR A2-B1 level.
 
 TASK: The student read ALL THREE source texts and wrote a 4-paragraph synthesis essay (${targetWordCount.min}-${targetWordCount.max} words).
-
 ASSIGNMENT: ${assignmentTitle}
 INSTRUCTIONS: ${assignmentDescription}
 
@@ -1246,241 +629,85 @@ ${studentText}
 
 ${wordCountStatus}
 
-SYNTHESIS ESSAY ASSESSMENT RUBRICS (LANC2160):
-${criteriaDetails}
+SYNTHESIS RUBRICS (LANC2160 — Two-Point Essay Writing Marking Criteria):
+${buildCriteriaText(rubrics)}
 
-SYNTHESIS-SPECIFIC RULES:
-1. Must combine information from ALL THREE sources — not just one or two.
-2. Must address the assignment prompt: "${assignmentTitle}".
-3. Must be exactly 4 paragraphs (intro, body 1, body 2, conclusion).
-4. Must use OWN WORDS (paraphrasing). Copying > 15% = low Task Achievement and Lexical Resource.
-5. NO personal opinions or new information not in the sources.
-6. Off-topic essay → Task Achievement = 0.
-7. Word count: do NOT deduct marks if the word count exceeds the target — mention it in feedback only. If 10%+ BELOW the target range, this MUST lower TA per rubric.
+SYNTHESIS RULES:
+1. Synthesize ALL THREE source texts. Address "${assignmentTitle}".
+2. Use OWN WORDS (paraphrasing). Copied phrases/sentences lower TA and LR.
+3. Structure: exactly 4 paragraphs (intro, body 1, body 2, conclusion). Note deviations in C&C.
+4. No personal opinions or new information. Off-topic = TA 0.
+5. Do NOT deduct marks if word count exceeds target. If 10%+ BELOW, lower TA per rubric.
 
-============================================================
+${CREDIT_HUMANIZATION}
 SCORING INSTRUCTIONS:
-============================================================
-1. Score each criterion 0-5 (0.5 increments only).
-2. For each criterion provide:
-   - justification: Name the score band, quote evidence from essay, explain why it fits. If half-point, explain what places it between bands. For Task Achievement: specifically address whether ALL THREE sources were synthesised, assignment prompt addressed, and paraphrasing used. If word count exceeds target, mention in feedback but do NOT deduct marks. Keep to 2-3 sentences.
-   - strengths: What the student did well (1 sentence).
-   - mistakes: List up to 3 specific errors. Each as { "quote": "[quoted text]", "explanation": "why wrong" }. Do NOT give corrections.
-   - suggestions: 1 actionable improvement tip for A2-B1 level.
-3. overallFeedback: 2-3 sentences covering which sources were used (all 3?), strongest area, weakest area, paraphrasing/copied text %, and one priority action.
-4. totalScore = sum of scores (max ${totalMaxScore}). percentage = round(totalScore/${totalMaxScore}*100).
+1. Score each criterion 0-5 (0.5 increments). Use the FULL range — do NOT default to middle scores.
+2. For each criterion: quote at least ONE exact phrase from the essay as evidence.
+3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
+5. overallFeedback (3-4 sentences): which sources were used (all 3?), strongest/weakest criterion, paraphrasing/copied text %, one prioritized action item.
+6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
+}
 
-${ANTI_ANCHORING_WARNING}
-OUTPUT: Valid JSON only. No markdown, no code fences, no commentary. Use straight double quotes.
-{
-  "scores": [
-    {
-      "criterionName": "Task Achievement",
-      "score": 0,
-      "maxScore": 5,
-      "justification": "Score 3.5 — [Brief evidence quote and rubric alignment in 2-3 sentences].",
-      "strengths": "[1 sentence].",
-      "mistakes": [{ "quote": "[quoted text]", "explanation": "[why wrong]" }],
-      "suggestions": "[1 tip]."
-    }
-  ],
-  "totalScore": 0,
-  "maxScore": ${totalMaxScore},
-  "percentage": 0,
-  "overallFeedback": "[2-3 sentences: sources used, strongest area, weakest area, paraphrasing %, one action item]."
-}`;
+// ─── Shared helpers ──────────────────────────────────────────────────────────
+
+const MODEL_TIERS = ['gemini-2.0-flash', 'gemini-2.5-flash'];
+
+const safetySettings = [
+  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+];
+
+const RATE_LIMIT_RETRIES = 3;
+const RATE_LIMIT_DELAYS = [5000, 15000, 30000];
+
+/**
+ * Strip markdown residue from Gemini-returned strings.
+ * Coerces non-string values (arrays, objects) to strings to prevent
+ * "e.replace is not a function" runtime errors.
+ */
+function clean(val: any): string {
+  if (val == null) return '';
+  let str: string;
+  if (typeof val === 'string') {
+    str = val;
+  } else if (Array.isArray(val)) {
+    str = val.map((item: any) => (typeof item === 'string' ? item : JSON.stringify(item))).join(' ');
+  } else {
+    str = JSON.stringify(val);
+  }
+  return str
+    .replace(/\*\*/g, '')
+    .replace(/\*(?!\*)/g, '')
+    .replace(/^#+\s+/gm, '')
+    .replace(/^---+$/gm, '')
+    .trim();
 }
 
 /**
- * Robustly extract a JSON object from LLM output that may be:
- *  - Wrapped in markdown code fences (```json ... ```)
- *  - Preceded or followed by conversational text
- *  - Containing control characters or BOM markers
- *  - Truncated (incomplete JSON due to token limit)
- *  - Using smart quotes instead of straight quotes
+ * Build a clean, professional feedback string from structured fields.
+ * These headers are required by parseFeedback() in scoring-utils.ts
+ * to reliably identify each section.
  */
-function extractJSON(raw: string): any {
-  let text = raw.trim();
+function buildFeedback(s: any): string {
+  const parts: string[] = [];
 
-  // Remove BOM if present
-  if (text.charCodeAt(0) === 0xFEFF) {
-    text = text.slice(1);
+  if (s.justification) parts.push(`Justification: ${s.justification}`);
+  if (s.strengths) parts.push(`Strengths: ${s.strengths}`);
+  if (Array.isArray(s.mistakes) && s.mistakes.length > 0) {
+    const lines = s.mistakes
+      .map((m: any) => m.quote ? `- "${m.quote}": ${m.explanation}` : `- ${m.explanation}`)
+      .join('\n');
+    parts.push(`Mistakes found:\n${lines}`);
   }
+  if (s.suggestions) parts.push(`Suggestions: ${s.suggestions}`);
 
-  // Remove markdown code fences
-  text = text.replace(/```json\s*/gi, '');
-  text = text.replace(/```\s*/g, '');
-
-  // Replace smart/curly quotes with straight quotes (LLMs often produce these)
-  text = text.replace(/[\u2018\u2019]/g, "'");   // ' → '
-  text = text.replace(/[\u201C\u201D]/g, '"');   // " → "
-
-  // Find the first '{' and last '}' to extract just the JSON object
-  const firstBrace = text.indexOf('{');
-  const lastBrace = text.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace > firstBrace) {
-    text = text.substring(firstBrace, lastBrace + 1);
-  }
-
-  // Remove control characters (except newline, tab, carriage return)
-  text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-
-  // Attempt 1: Direct parse
-  try {
-    return JSON.parse(text);
-  } catch (_e) {
-    // continue to cleanup
-  }
-
-  // Attempt 2: Remove trailing commas (common LLM artifact)
-  // Remove commas before } or ] (with optional whitespace)
-  let cleaned = text.replace(/,\s*([\]}])/g, '$1');
-
-  try {
-    return JSON.parse(cleaned);
-  } catch (_e) {
-    // continue
-  }
-
-  // Attempt 3: Fix unescaped quotes in string values
-  // This handles cases where the LLM puts unescaped double quotes inside strings
-  cleaned = attemptFixUnescapedQuotes(cleaned);
-
-  try {
-    return JSON.parse(cleaned);
-  } catch (_e) {
-    // continue
-  }
-
-  // Attempt 4: If all else fails, try to extract using a bracket-matching approach
-  const extracted = extractJsonObject(cleaned);
-  if (extracted) {
-    return JSON.parse(extracted);
-  }
-
-  throw new Error('Could not extract valid JSON from AI response');
+  return parts.length > 0 ? parts.join('\n\n') : 'No feedback provided.';
 }
 
-/**
- * Attempt to fix unescaped double quotes inside JSON string values.
- * This is a best-effort heuristic — not a full JSON parser.
- */
-function attemptFixUnescapedQuotes(json: string): string {
-  const result: string[] = [];
-  let i = 0;
-  let inString = false;
-  let escaped = false;
-
-  while (i < json.length) {
-    const ch = json[i];
-
-    if (escaped) {
-      result.push(ch);
-      escaped = false;
-      i++;
-      continue;
-    }
-
-    if (ch === '\\') {
-      result.push(ch);
-      escaped = true;
-      i++;
-      continue;
-    }
-
-    if (ch === '"') {
-      if (inString) {
-        // Check if the next non-whitespace char looks like it's outside a string
-        // (i.e., it's a JSON structural character)
-        const afterStr = json.substring(i + 1).trimStart();
-        const nextChar = afterStr[0];
-        if (nextChar === ':' || nextChar === ',' || nextChar === '}' || nextChar === ']' || nextChar === undefined) {
-          // This quote ends the string — normal JSON behavior
-          inString = false;
-        } else {
-          // This quote is likely an unescaped quote inside the string — escape it
-          result.push('\\"');
-          i++;
-          continue;
-        }
-      } else {
-        inString = true;
-      }
-      result.push(ch);
-      i++;
-      continue;
-    }
-
-    result.push(ch);
-    i++;
-  }
-
-  return result.join('');
-}
-
-/**
- * Extract a JSON object by finding balanced braces from the first '{'.
- * Returns the substring from first '{' to its matching '}'.
- */
-function extractJsonObject(text: string): string | null {
-  const start = text.indexOf('{');
-  if (start === -1) return null;
-
-  let depth = 0;
-  let inStr = false;
-  let escaped = false;
-
-  for (let i = start; i < text.length; i++) {
-    const ch = text[i];
-
-    if (escaped) {
-      escaped = false;
-      continue;
-    }
-
-    if (ch === '\\' && inStr) {
-      escaped = true;
-      continue;
-    }
-
-    if (ch === '"' && !escaped) {
-      inStr = !inStr;
-      continue;
-    }
-
-    if (!inStr) {
-      if (ch === '{') depth++;
-      if (ch === '}') {
-        depth--;
-        if (depth === 0) {
-          return text.substring(start, i + 1);
-        }
-      }
-    }
-  }
-
-  // If we got here, JSON is truncated — try to close it manually
-  if (depth > 0) {
-    let partial = text.substring(start);
-    // Remove any trailing incomplete key/value
-    partial = partial.replace(/,\s*"[^"]*"\s*:?\s*$/, '');
-    // Add closing braces
-    while (depth > 0) {
-      partial += '}';
-      depth--;
-    }
-    // Try to fix any trailing issues
-    partial = partial.replace(/,\s*([\]}])/g, '$1');
-    try {
-      JSON.parse(partial);
-      return partial;
-    } catch (_e) {
-      // still broken
-    }
-  }
-
-  return null;
-}
+// ─── POST Handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   try {
@@ -1493,7 +720,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { text, courseCode, topic, apiKey, examType, writingType, sourceTextId } = body;
+    const { text, courseCode, topic, examType, writingType, sourceTextId } = body;
 
     if (!text || !text.trim()) {
       return NextResponse.json(
@@ -1502,25 +729,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Gemini API key is required', details: 'No API key was provided in the request. Please add a Gemini API key in Settings.' },
-        { status: 400 }
+        { error: 'Server configuration error: GEMINI_API_KEY environment variable is not set.', details: 'The server-side GEMINI_API_KEY environment variable is missing or empty.' },
+        { status: 500 }
       );
     }
 
-    // Calculate word count
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
 
-    // Determine course type and build appropriate prompt
     const isFoundation = ['0230', '0340'].includes(courseCode);
     const isSummaryWriting = courseCode === 'LANC2160' && writingType === 'summary';
     const isSynthesisWriting = courseCode === 'LANC2160' && writingType === 'synthesis';
     const isLanc1070 = courseCode === 'LANC1070';
     const isLanc2146 = courseCode === 'LANC2146';
-    const isLanc2070 = courseCode === 'LANC2070';
 
-    // Validate that LANC2160 has a writingType selected
     if (courseCode === 'LANC2160' && !writingType) {
       return NextResponse.json(
         { error: 'Writing type is required for LANC2160. Please select either "Summary" or "Synthesis" before assessing.', details: 'Missing writingType parameter for LANC2160' },
@@ -1528,21 +752,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate that courses requiring a sourceTextId have one provided
-    if ((isLanc1070 || isLanc2146 || isLanc2070 || isSummaryWriting || isSynthesisWriting) && !sourceTextId) {
+    if ((isLanc1070 || isLanc2146 || isSummaryWriting || isSynthesisWriting) && !sourceTextId) {
       return NextResponse.json(
         { error: 'A source text or assignment must be selected before assessment. Please go back and select one.', details: `Missing sourceTextId for course ${courseCode}` },
         { status: 400 }
       );
     }
 
-    // Resolve target word count based on exam type (for FP0340) or summary target
     let activeTargetWordCount: { min: number; max: number; ideal: number; label?: string } | null = null;
     let prompt: string;
     let criteria: any[];
 
     if (isFoundation) {
-      // Foundation courses (FP0230, FP0340) — per-course word count targets
       const courseWordCounts = FOUNDATION_WORD_COUNTS[courseCode];
       const courseDefault = DEFAULT_FOUNDATION_WORD_COUNTS[courseCode];
       if (examType && courseWordCounts && courseWordCounts[examType]) {
@@ -1555,380 +776,183 @@ export async function POST(request: NextRequest) {
       prompt = buildFoundationPrompt(text, topic, wordCount, activeTargetWordCount);
       criteria = FOUNDATION_RUBRICS.criteria;
     } else if (isSummaryWriting) {
-      // Summary Writing for LANC2160 — look up source text
       const { SUMMARY_SOURCE_TEXTS } = await import('@/lib/store');
       const sourceTextData = SUMMARY_SOURCE_TEXTS.find(s => s.id === sourceTextId);
-      
       if (!sourceTextData) {
         return NextResponse.json(
           { error: 'Source text not found. Please select a valid source text for summary writing.', details: `No source text found for sourceTextId: ${sourceTextId}` },
           { status: 400 }
         );
       }
-      
-      activeTargetWordCount = {
-        min: sourceTextData.targetMin,
-        max: sourceTextData.targetMax,
-        ideal: sourceTextData.targetIdeal,
-        label: `Summary of "${sourceTextData.title}"`
-      };
+      activeTargetWordCount = { min: sourceTextData.targetMin, max: sourceTextData.targetMax, ideal: sourceTextData.targetIdeal, label: `Summary of "${sourceTextData.title}"` };
       prompt = buildSummaryPrompt(text, sourceTextData.originalText, sourceTextData.title, wordCount, activeTargetWordCount);
       criteria = SUMMARY_CRITERIA;
     } else if (isSynthesisWriting) {
-      // Synthesis Essay for LANC2160 — look up assignment by sourceTextId (import from store to stay in sync)
       const { SYNTHESIS_ASSIGNMENTS } = await import('@/lib/store');
       const assignmentData = SYNTHESIS_ASSIGNMENTS.find(a => a.id === sourceTextId);
-      
       if (!assignmentData) {
         return NextResponse.json(
-          { error: 'Synthesis assignment not found. Please select a valid assignment for synthesis essay writing.', details: `No synthesis assignment found for sourceTextId: ${sourceTextId}` },
+          { error: 'Synthesis assignment not found. Please select a valid assignment.', details: `No synthesis assignment found for sourceTextId: ${sourceTextId}` },
           { status: 400 }
         );
       }
-      
-      activeTargetWordCount = {
-        min: assignmentData.targetWordCount.min,
-        max: assignmentData.targetWordCount.max,
-        ideal: assignmentData.targetWordCount.ideal,
-        label: `Synthesis: "${assignmentData.title}"`
-      };
-      prompt = buildSynthesisPrompt(
-        text,
-        assignmentData.sources.map(s => ({ title: s.title, content: s.content })),
-        assignmentData.title,
-        assignmentData.description,
-        wordCount,
-        activeTargetWordCount
-      );
+      activeTargetWordCount = { min: assignmentData.targetWordCount.min, max: assignmentData.targetWordCount.max, ideal: assignmentData.targetWordCount.ideal, label: `Synthesis: "${assignmentData.title}"` };
+      prompt = buildSynthesisPrompt(text, assignmentData.sources.map(s => ({ title: s.title, content: s.content })), assignmentData.title, assignmentData.description, wordCount, activeTargetWordCount);
       criteria = SYNTHESIS_CRITERIA;
     } else if (isLanc2146) {
-      // LANC2146 Report Writing — Discussion & Conclusion
       const { LANC2146_PRACTICE_TESTS } = await import('@/lib/store');
       const practiceData = LANC2146_PRACTICE_TESTS.find(t => t.id === sourceTextId);
-
       if (!practiceData) {
         return NextResponse.json(
           { error: 'Report writing assignment not found. Please select a valid practice test.', details: `No LANC2146 practice test found for sourceTextId: ${sourceTextId}` },
           { status: 400 }
         );
       }
-
-      activeTargetWordCount = {
-        min: practiceData.targetWordCount.min,
-        max: practiceData.targetWordCount.max,
-        ideal: practiceData.targetWordCount.ideal,
-        label: `Report: "${practiceData.title}"`
-      };
-      prompt = buildLanc2146Prompt(
-        text,
-        practiceData.reportSections.map(s => ({ title: s.title, content: s.content })),
-        practiceData.resultsFigure?.caption || null,
-        practiceData.resultsFigure?.graphDescription || null,
-        practiceData.title,
-        wordCount,
-        activeTargetWordCount
-      );
+      activeTargetWordCount = { min: practiceData.targetWordCount.min, max: practiceData.targetWordCount.max, ideal: practiceData.targetWordCount.ideal, label: `Report: "${practiceData.title}"` };
+      prompt = buildLanc2146Prompt(text, practiceData.reportSections.map(s => ({ title: s.title, content: s.content })), practiceData.resultsFigure?.caption || null, practiceData.resultsFigure?.graphDescription || null, practiceData.title, wordCount, activeTargetWordCount);
       criteria = LANC2146_CRITERIA;
     } else if (isLanc1070) {
-      // LANC1070 Synthesis Essay — single source text practice tests
       const { LANC1070_PRACTICE_TESTS } = await import('@/lib/store');
       const practiceData = LANC1070_PRACTICE_TESTS.find(t => t.id === sourceTextId);
-
       if (!practiceData) {
         return NextResponse.json(
           { error: 'LANC1070 practice test not found. Please select a valid practice test.', details: `No LANC1070 practice test found for sourceTextId: ${sourceTextId}` },
           { status: 400 }
         );
       }
-
-      activeTargetWordCount = {
-        min: practiceData.targetWordCount.min,
-        max: practiceData.targetWordCount.max,
-        ideal: practiceData.targetWordCount.ideal,
-        label: `LANC1070: "${practiceData.title}"`
-      };
-      prompt = buildLanc1070Prompt(
-        text,
-        practiceData.sourceText.content,
-        practiceData.sourceText.title,
-        practiceData.title,
-        practiceData.description,
-        wordCount,
-        activeTargetWordCount
-      );
-      criteria = SYNTHESIS_CRITERIA; // Reuse synthesis criteria (A2-B1, 0-5 scale)
-    } else if (isLanc2070) {
-      // LANC2070 Article Review — main article + source excerpts
-      const { LANC2070_PRACTICE_TESTS } = await import('@/lib/store');
-      const practiceData = LANC2070_PRACTICE_TESTS.find(t => t.id === sourceTextId);
-
-      if (!practiceData) {
-        return NextResponse.json(
-          { error: 'LANC2070 practice test not found. Please select a valid practice test.', details: `No LANC2070 practice test found for sourceTextId: ${sourceTextId}` },
-          { status: 400 }
-        );
-      }
-
-      activeTargetWordCount = {
-        min: practiceData.targetWordCount.min,
-        max: practiceData.targetWordCount.max,
-        ideal: practiceData.targetWordCount.ideal,
-        label: `LANC2070: "${practiceData.title}"`
-      };
-      prompt = buildLanc2070Prompt(
-        text,
-        practiceData.mainArticle.content,
-        practiceData.mainArticle.title,
-        practiceData.mainArticle.author,
-        practiceData.mainArticle.year,
-        practiceData.excerpts,
-        practiceData.title,
-        practiceData.description,
-        practiceData.writingPrompt,
-        wordCount,
-        activeTargetWordCount
-      );
-      criteria = LANC2070_CRITERIA;
+      activeTargetWordCount = { min: practiceData.targetWordCount.min, max: practiceData.targetWordCount.max, ideal: practiceData.targetWordCount.ideal, label: `LANC1070: "${practiceData.title}"` };
+      prompt = buildLanc1070Prompt(text, practiceData.sourceText.content, practiceData.sourceText.title, practiceData.title, practiceData.description, wordCount, activeTargetWordCount);
+      criteria = SYNTHESIS_CRITERIA;
     } else {
-      // Credit/Post-foundation — general
       activeTargetWordCount = null;
       prompt = buildCreditPrompt(text, topic, wordCount);
       criteria = CREDIT_CRITERIA;
     }
 
-    // 1. Initialize Official Google Gemini SDK
+    // ── Initialize Gemini ──────────────────────────────────────────────────
     const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // 2. Initialize Model with Strict Instructions
+
     const systemInstruction = isSummaryWriting
-      ? 'You are an expert writing assessment AI for the Credit level course LANC2160 (Academic English: Summary Writing & Synthesis Essay) at Sultan Qaboos University. For summary writing tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student summary against the provided source text, (2) quote exact words from the student summary as evidence, (3) explicitly justify why the score matches the rubric band, (4) list specific errors with quoted text, (5) assess paraphrasing quality, and (6) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
+      ? 'You are an expert writing assessment AI for LANC2160 (Summary Writing) at Sultan Qaboos University. CEFR A2-B1 level. Quote exact words from the student summary as evidence. Justify every score against the rubric. List specific errors with quoted text.'
       : isSynthesisWriting
-      ? 'You are an expert writing assessment AI for the Credit level course LANC2160 (Academic English: Summary Writing & Synthesis Essay) at Sultan Qaboos University. For synthesis essay tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student essay against ALL THREE provided source texts, (2) check that information from all sources is synthesized, (3) quote exact words from the student essay as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) assess paraphrasing quality and estimate copying percentage, (7) check word count against the target range, and (8) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
+      ? 'You are an expert writing assessment AI for LANC2160 (Synthesis Essay) at Sultan Qaboos University. CEFR A2-B1 level. Compare the essay against ALL THREE source texts. Quote exact words as evidence. Justify every score against the rubric. List specific errors with quoted text.'
       : isLanc1070
-      ? 'You are an expert writing assessment AI for the Credit level course LANC1070 (Academic English) at Sultan Qaboos University. For synthesis essay tasks based on a single source text, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) compare the student essay against the provided source text, (2) check that the student addresses the required discussion points, (3) quote exact words from the student essay as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) assess paraphrasing quality and estimate copying percentage, (7) check word count against the target range, and (8) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
+      ? 'You are an expert writing assessment AI for LANC1070 (Synthesis Essay) at Sultan Qaboos University. CEFR A2-B1 level. Compare the essay against the provided source text. Quote exact words as evidence. Justify every score against the rubric. List specific errors with quoted text.'
       : isLanc2146
-      ? 'You are an expert writing assessment AI for the Credit level course LANC2146 (Report Writing) at Sultan Qaboos University. For lab report Discussion and Conclusion tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) evaluate the Discussion section for analysis and interpretation of data with details/examples/statistics, (2) evaluate the Conclusion for summary of results, reference to previous research, restatement of aim, and recommendations, (3) quote exact words from the student text as evidence, (4) explicitly justify why the score matches the rubric band, (5) list specific errors with quoted text, (6) check word count against the target range specified in the prompt, and (7) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
-      : isLanc2070
-      ? 'You are an expert writing assessment AI for the Credit level course LANC2070 (Academic English: Article Review) at Sultan Qaboos University. For article review tasks, students are at CEFR A2-B1 level. Your feedback must use simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) check that the review has exactly 4 paragraphs (Introduction, Summary, Critique, Conclusion), (2) evaluate the quality of analysis (original insights about how/why) and evaluation (critical judgment about value/validity) of 2 points from the main article, (3) verify that at least 2 excerpts from the provided source texts are used and synthesised, (4) check APA in-text citation format and attributive phrases, (5) assess paraphrasing quality — copied chunks of 3+ words must be penalised, (6) quote exact words from the student review as evidence, (7) explicitly justify why the score matches the rubric band, (8) list specific errors with quoted text, and (9) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.'
+      ? 'You are an expert writing assessment AI for LANC2146 (Report Writing) at Sultan Qaboos University. CEFR A2-B1 level. Evaluate Discussion (analysis/interpretation) and Conclusion (summary, recommendations). Quote exact words as evidence. Justify every score against the rubric. List specific errors with quoted text.'
       : isFoundation
-      ? 'You are an expert writing assessment AI for Foundation level courses (FP0230, FP0340) at Sultan Qaboos University. Foundation students are at CEFR A1 level (Beginner). Your feedback must use very simple, clear language appropriate for this proficiency level. CRITICAL: You MUST (1) actively scan for specific grammar, vocabulary, cohesion, and task-related errors in the essay, (2) quote exact words from the student essay as evidence for EVERY score and feedback point, (3) explicitly justify why the score matches the rubric band descriptor, (4) list specific errors with quoted text in the mistakes array for each criterion, (5) identify genuine strengths with evidence, and (6) give actionable suggestions. Use the FULL score range (0-6) — do NOT default to middle scores. You respond only with valid JSON. No markdown formatting or code blocks.'
-      : 'You are an expert writing assessment AI for university courses at Sultan Qaboos University. Students are at CEFR A2-B1 level (Elementary to Pre-Intermediate). Your feedback must use simple, clear language appropriate for this proficiency level. Focus on fundamental skills and provide encouraging, constructive guidance. CRITICAL: For each criterion you MUST (1) quote exact words from the student essay as evidence, (2) explicitly justify why the score matches the rubric band, (3) list specific errors with quoted text, and (4) give actionable suggestions. You respond only with valid JSON. No markdown formatting or code blocks.';
+      ? 'You are an expert, encouraging writing assessor for Foundation courses (FP0230, FP0340) at Sultan Qaboos University. CEFR A1-A2 level. Score relative to A1-A2 expectations — reward successful communication and only penalize impeding errors. Quote exact words as evidence for EVERY score.'
+      : 'You are an expert writing assessment AI at Sultan Qaboos University. CEFR A2-B1 level. Quote exact words from the student essay as evidence. Justify every score against the rubric. List specific errors with quoted text.';
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      systemInstruction,
-      generationConfig: {
-        responseMimeType: 'application/json',
-        responseSchema: assessmentResponseSchema,
-      },
-    });
-
-    // 3. Generate Content — gemini-2.5-flash is a "thinking" model by default.
-    //    We MUST disable thinking because:
-    //    (a) thinking tokens waste the maxOutputTokens budget, causing truncated JSON
-    //    (b) thinking text can bleed into the response, breaking JSON parsing
-    //    (c) we only need structured JSON output, not reasoning
-    //    We also use responseMimeType: 'application/json' to force valid JSON.
-    //
-    //    SAFETY: Lower safety thresholds to prevent student essay content
-    //    (e.g., essays about smoking, pollution, social issues) from being
-    //    blocked by Gemini's default safety filters.
-    const safetySettings = [
-      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-      { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-      { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
-    ];
-
-    // Retry configuration for rate-limit errors (429 / RESOURCE_EXHAUSTED)
-    const RATE_LIMIT_RETRIES = 3;
-    const RATE_LIMIT_DELAYS = [5000, 15000, 30000]; // 5s, 15s, 30s
-
-    // Try generation with increasing token limits on truncation
-    // NOTE: Gemini free tier caps maxOutputTokens at 8192. Start there to avoid
-    // API errors on free-tier keys. If response is truncated, retry at 16384
-    // (which works on paid tiers and will be silently capped on free tier).
-    let responseText = '';
+    // ── Generate with Structured Output + model fallback + rate-limit retry ──
+    let assessment: any = null;
     let parsedOk = false;
-    const tokenLimits = [8192, 16384];
 
-    for (const maxTokens of tokenLimits) {
-      // Inner retry loop for rate-limit (429) errors
+    modelTierLoop: for (let modelTierIndex = 0; modelTierIndex < MODEL_TIERS.length; modelTierIndex++) {
+      const modelName = MODEL_TIERS[modelTierIndex];
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction,
+        generationConfig: {
+          responseMimeType: 'application/json',
+          responseSchema: ASSESSMENT_SCHEMA,
+          // Disable thinking for gemini-2.5-flash to skip 3-8s reasoning overhead
+          ...(modelName.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+        },
+      });
+
       for (let rateLimitAttempt = 0; rateLimitAttempt < RATE_LIMIT_RETRIES; rateLimitAttempt++) {
         try {
           const result = await model.generateContent({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             generationConfig: {
               temperature: 0.1,
-              maxOutputTokens: maxTokens,
-              responseSchema: assessmentResponseSchema,
-              thinkingConfig: {
-                thinkingBudget: 0,  // Disable thinking — prevents thought tokens from consuming output budget or polluting JSON
-              },
+              maxOutputTokens: 8192,
+              responseMimeType: 'application/json',
+              responseSchema: ASSESSMENT_SCHEMA,
+              ...(modelName.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
             } as any,
             safetySettings,
           });
 
-          // ── Check for prompt-level blocking ──
+          // ── Check for blocking ──
           const promptFeedback = (result.response as any)?.promptFeedback;
           if (promptFeedback?.blockReason) {
-            const reason = promptFeedback.blockReason;
-            console.error(`Gemini prompt blocked: ${reason}`);
             return NextResponse.json(
-              { error: 'AI content filter blocked the submission. Please try rephrasing your essay or contact your instructor.', details: `Prompt blocked: ${reason}` },
+              { error: 'AI content filter blocked the submission. Please try rephrasing your essay.', details: `Prompt blocked: ${promptFeedback.blockReason}` },
               { status: 422 }
             );
           }
 
-          // ── Check for response-level blocking / truncation ──
           const candidate = (result.response as any)?.candidates?.[0];
           const finishReason = candidate?.finishReason;
 
-          // SAFETY / RECITATION / LANGUAGE — content is blocked entirely
           if (finishReason === 'SAFETY' || finishReason === 'RECITATION' || finishReason === 'LANGUAGE') {
-            console.error(`Gemini response blocked, finishReason: ${finishReason}`);
             return NextResponse.json(
-              { error: 'AI content filter blocked the assessment response. This may happen if the essay discusses sensitive topics. Please try rephrasing or contact your instructor.', details: `Response blocked: ${finishReason}` },
+              { error: 'AI content filter blocked the assessment response. Please try rephrasing.', details: `Response blocked: ${finishReason}` },
               { status: 422 }
             );
           }
 
-          // Extract text — manually filter out "thought" parts from thinking models
-          // Gemini 2.5 models may include thought parts in the response even with thinkingBudget: 0
-          // We only want the actual text (non-thought) parts for JSON parsing
+          // ── Extract text (filter out thought parts) ──
           let rawText = '';
           if (candidate?.content?.parts) {
-            // Filter out thought parts and concatenate only text parts
             for (const part of candidate.content.parts) {
-              if (part.text && !part.thought) {
-                rawText += part.text;
-              }
+              if (part.text && !part.thought) rawText += part.text;
             }
           }
-          // Fallback to the SDK's text() method if manual extraction failed
-          if (!rawText) {
-            rawText = result.response?.text?.() || '';
-          }
+          if (!rawText) rawText = result.response?.text?.() || '';
+
           if (!rawText || rawText.trim().length === 0) {
-            console.error('Gemini returned empty response. finishReason:', finishReason);
-            return NextResponse.json(
-              { error: 'AI returned an empty response. Please try again.', details: `Empty response, finishReason: ${finishReason || 'unknown'}` },
-              { status: 500 }
-            );
+            throw new Error('AI returned an empty response.');
           }
 
-          // MAX_TOKENS — response is truncated, may cause JSON parse failure
-          if (finishReason === 'MAX_TOKENS') {
-            console.warn(`Response truncated at ${maxTokens} tokens, attempting to parse anyway...`);
-          }
+          // Force clean markdown fences if Gemini stubbornly included them
+          const cleanJsonText = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
-          // Try to parse the JSON and validate structure
-          let assessment: any = null;
-          let parseFailed = false;
-          try {
-            assessment = extractJSON(rawText);
-          } catch (_e) {
-            parseFailed = true;
-            // JSON parse failed — if truncated, break to try next token limit
-            if (finishReason === 'MAX_TOKENS' && maxTokens !== tokenLimits[tokenLimits.length - 1]) {
-              console.warn(`JSON parse failed after truncation at ${maxTokens} tokens, retrying with higher limit...`);
-              break; // Break out of rate-limit loop to try next token limit
-            }
-            // Otherwise, fall through to error
-            console.error('Failed to parse assessment response. Raw text (first 500 chars):', rawText.substring(0, 500));
-            return NextResponse.json(
-              { error: 'Failed to parse AI assessment response. The AI returned an invalid format. Please try again.', details: 'The AI response could not be parsed. This is a temporary issue — retrying usually works.' },
-              { status: 500 }
-            );
-          }
+          // ── Structured Output guarantees valid JSON — direct parse ──
+          assessment = JSON.parse(cleanJsonText);
 
-          // Validate structure: must have a scores array
-          if (assessment && assessment.scores && Array.isArray(assessment.scores)) {
-            responseText = rawText;
+          // ── Validate structure ──
+          if (assessment?.scores && Array.isArray(assessment.scores)) {
             parsedOk = true;
-            break;
+            break modelTierLoop; // Success! Break completely out of the outer loop
           }
 
-          // JSON parsed but structure invalid (no scores array) — treat as parse failure
-          console.error('Assessment JSON parsed but has no valid scores array. Raw text (first 500 chars):', rawText.substring(0, 500));
-          if (finishReason === 'MAX_TOKENS' && maxTokens !== tokenLimits[tokenLimits.length - 1]) {
-            console.warn('Truncated response missing scores array, retrying with higher token limit...');
-            break; // Break to try next token limit
-          }
-          return NextResponse.json(
-            { error: 'AI returned an invalid assessment structure. Please try again.', details: 'No scores array in response.' },
-            { status: 500 }
-          );
+          console.error('Response parsed but missing scores array. Moving to next model...');
+          continue modelTierLoop; // Try the next model
 
         } catch (genError: any) {
           const errMsg = genError?.message || String(genError);
-          const isRateLimit =
-            errMsg.includes('429') ||
-            errMsg.includes('RESOURCE_EXHAUSTED') ||
-            errMsg.includes('quota') ||
-            errMsg.includes('rate') && errMsg.includes('limit');
+          const isRateLimit = errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || (errMsg.includes('rate') && errMsg.includes('limit'));
 
-          // If rate-limited and we have retries left, wait and retry
+          // If rate limited and we have retries left, wait and try again
           if (isRateLimit && rateLimitAttempt < RATE_LIMIT_RETRIES - 1) {
             const delay = RATE_LIMIT_DELAYS[rateLimitAttempt];
-            console.warn(`Rate limit hit (attempt ${rateLimitAttempt + 1}/${RATE_LIMIT_RETRIES}), retrying in ${delay / 1000}s...`);
+            console.warn(`Rate limit hit on ${modelName}, retrying in ${delay / 1000}s...`);
             await new Promise(resolve => setTimeout(resolve, delay));
-            continue; // retry inner loop
+            continue; // Continue inner loop
           }
 
-          // If rate-limited and out of retries, return a helpful error
-          if (isRateLimit) {
-            console.error('Rate limit exhausted after all retries.');
-            return NextResponse.json(
-              { error: 'Gemini API rate limit reached. Your free tier has a limited number of requests per minute. Please wait 1-2 minutes and try again. Tip: Add a second Gemini API key in Settings (one for OCR, one for assessment) to double your quota.', details: errMsg },
-              { status: 429 }
-            );
-          }
-
-          // Non-rate-limit error: if this is the last token limit attempt, throw
-          if (maxTokens === tokenLimits[tokenLimits.length - 1]) {
-            throw genError;
-          }
-          console.warn(`Generation error with ${maxTokens} tokens:`, errMsg);
-          break; // break inner loop, try next token limit
+          // If we are out of retries or it's a hard error, try the next model
+          console.warn(`${modelName} failed (${errMsg}). Falling back to next model...`);
+          continue modelTierLoop; // Continue outer loop
         }
       }
-
-      if (parsedOk) break;
     }
 
-    if (!parsedOk) {
+    if (!parsedOk || !assessment?.scores) {
       return NextResponse.json(
-        { error: 'Failed to get a valid assessment from the AI after multiple attempts. Please try again.', details: 'All token limit attempts and rate-limit retries exhausted without a valid response.' },
+        { error: 'Failed to get a valid assessment from the AI. Please try again.', details: 'All model tiers failed to return a valid response.' },
         { status: 500 }
       );
     }
 
-    // Parse the JSON response with aggressive cleanup
-    let assessment;
-    try {
-      assessment = extractJSON(responseText);
-    } catch (parseError) {
-      console.error('Failed to parse assessment response. Raw text:', responseText.substring(0, 500));
-      console.error('Parse error:', parseError);
-      return NextResponse.json(
-        { error: 'Failed to parse AI assessment response', details: 'The AI returned an invalid response. Please try again.' },
-        { status: 500 }
-      );
-    }
+    // ── Process and normalize scores (deterministic TypeScript math) ──────────
 
-    // Validate the assessment structure
-    if (!assessment.scores || !Array.isArray(assessment.scores)) {
-      return NextResponse.json(
-        { error: 'Invalid assessment structure', details: 'The parsed assessment JSON does not contain a valid scores array.' },
-        { status: 500 }
-      );
-    }
-
-    // Ensure all criteria are assessed
-    const assessedCriteria = assessment.scores.map((s: any) => s.criterionName);
-    const missingCriteria = criteria.filter(c => !assessedCriteria.includes(c.name));
-    
+    // Ensure all criteria are assessed (pad missing ones with zeros)
+    const assessedNames = assessment.scores.map((s: any) => s.criterionName);
+    const missingCriteria = criteria.filter(c => !assessedNames.includes(c.name));
     if (missingCriteria.length > 0) {
       missingCriteria.forEach(c => {
         assessment.scores.push({
@@ -1936,155 +960,89 @@ export async function POST(request: NextRequest) {
           score: 0,
           maxScore: c.maxScore,
           justification: 'Unable to assess this criterion from the provided text.',
-          strengths: '',
+          strengths: 'No specific strengths identified.',
           mistakes: [],
           suggestions: 'Unable to provide suggestions.',
-          feedback: 'Unable to assess this criterion from the provided text.'
         });
       });
     }
 
-    // Normalize scores: allow 0.5 increments, round to nearest 0.5, clamp to [0, maxScore]
+    // Normalize each score
     assessment.scores.forEach((s: any) => {
+      // Clamp score to [0, maxScore] rounded to nearest 0.5
       const rawScore = Number(s.score) || 0;
-      s.maxScore = Math.round(Number(s.maxScore) || 0);
-      // Round to nearest 0.5 and clamp between 0 and maxScore
-      s.score = Math.max(0, Math.min(Math.round(rawScore * 2) / 2, s.maxScore));
+      const maxScore = Math.round(Number(s.maxScore) || 0);
+      s.score = Math.max(0, Math.min(Math.round(rawScore * 2) / 2, maxScore));
+      s.maxScore = maxScore;
 
-      // Strip markdown from Gemini-returned fields before building feedback
-      const clean = (str: string) => {
-        if (!str) return '';
-        return str
-          .replace(/\*\*/g, '')           // Remove bold markers
-          .replace(/\*(?!\*)/g, '')        // Remove italic markers
-          .replace(/^#+\s+/gm, '')         // Remove heading markers
-          .replace(/^---+$/gm, '')         // Remove horizontal rules
-          .trim();
-      };
-
-      s.strengths = clean(s.strengths);
+      // Clean text fields (strip markdown, handle arrays/objects)
       s.justification = clean(s.justification);
+      s.strengths = clean(s.strengths);
       s.suggestions = clean(s.suggestions);
 
-      // Ensure strengths, mistakes, and suggestions are never empty
-      // This prevents the UI from silently hiding these sections
-      if (!s.strengths) {
-        s.strengths = 'No specific strengths identified for this criterion.';
-      }
-      if (!s.suggestions) {
-        s.suggestions = 'No specific suggestions for this criterion.';
-      }
+      // Ensure strengths and suggestions are never empty
+      if (!s.strengths) s.strengths = 'No specific strengths identified for this criterion.';
+      if (!s.suggestions) s.suggestions = 'No specific suggestions for this criterion.';
+
+      // Clean mistakes array
       if (!Array.isArray(s.mistakes) || s.mistakes.length === 0) {
         s.mistakes = [{ quote: '', explanation: 'No specific mistakes identified for this criterion.' }];
-      }
-
-      // Clean mistakes array items
-      if (Array.isArray(s.mistakes)) {
+      } else {
         s.mistakes = s.mistakes.map((m: any) => {
           if (typeof m === 'string') {
-            // Strip leading "- " or "* " list markers
-            let cleaned = m.replace(/^[\-\*]\s+/, '').trim();
-            // Remove surrounding quotes
-            cleaned = cleaned.replace(/^["\u201C\u201D]/, '').replace(/["\u201C\u201D]$/, '');
-            // Remove em-dash and replace with colon separator
-            cleaned = cleaned.replace(/\s*[—\-]\s*/, ': ').trim();
-            return cleaned;
-          } else {
-            // Object format: { quote, explanation, text, reason }
-            const quote = clean(typeof m.quote === 'string' ? m.quote : (m.text || ''));
-            const explanation = clean(typeof m.explanation === 'string' ? m.explanation : (m.reason || ''));
-            return { quote, explanation };
+            const cleaned = m.replace(/^[\-\*]\s+/, '').trim().replace(/\s*[—\-]\s*/, ': ').trim();
+            return { quote: cleaned, explanation: '' };
           }
-        }).filter((m: any) => {
-          if (typeof m === 'string') return m.length > 0;
-          return m.quote || m.explanation;
-        });
+          return {
+            quote: clean(typeof m.quote === 'string' ? m.quote : (m.text || '')),
+            explanation: clean(typeof m.explanation === 'string' ? m.explanation : (m.reason || '')),
+          };
+        }).filter((m: any) => m.quote || m.explanation);
       }
 
-      // Build a clean, professional feedback string with section headers
-      // These headers are required by parseFeedback() in scoring-utils.ts
-      // to reliably identify each section (avoids fragile heuristic parsing)
-      const parts: string[] = [];
-
-      if (s.justification) {
-        parts.push(`Justification: ${s.justification}`);
-      }
-      if (s.strengths) {
-        parts.push(`Strengths: ${s.strengths}`);
-      }
-      if (Array.isArray(s.mistakes) && s.mistakes.length > 0) {
-        const mistakeLines = s.mistakes
-          .map((m: any) => {
-            if (typeof m === 'string') return `- "${m}"`;
-            return m.quote ? `- "${m.quote}": ${m.explanation}` : `- ${m.explanation}`;
-          })
-          .join('\n');
-        parts.push(`Mistakes found:\n${mistakeLines}`);
-      }
-      if (s.suggestions) {
-        parts.push(`Suggestions: ${s.suggestions}`);
-      }
-
-      // Use the clean structured string, fallback to raw feedback
-      if (parts.length > 0) {
-        s.feedback = parts.join('\n\n');
-      } else if (s.feedback) {
-        // If no structured fields, clean the raw feedback
-        s.feedback = clean(s.feedback);
-      } else {
-        s.feedback = 'No feedback provided.';
-      }
+      // Build feedback string locally from clean fields
+      s.feedback = buildFeedback(s);
     });
 
-    // Recalculate total score to ensure accuracy
-    // Use integer math to avoid floating-point precision issues with 0.5 increments
-    // e.g., 3.5 + 2.5 + 4.0 + 3.0 = 13.0 (not 12.999999...)
-    assessment.totalScore = Math.round(
+    // ── Deterministic math: compute totals in TypeScript ────────────────────
+    const totalScore = Math.round(
       assessment.scores.reduce((sum: number, s: any) => sum + s.score, 0) * 2
     ) / 2;
-    assessment.maxScore = assessment.scores.reduce((sum: number, s: any) => sum + s.maxScore, 0);
-    assessment.percentage = assessment.maxScore > 0 ? Math.round((assessment.totalScore / assessment.maxScore) * 100) : 0;
+    const maxScore = assessment.scores.reduce((sum: number, s: any) => sum + s.maxScore, 0);
+    const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
 
-    // Clean overallFeedback from any markdown residue
-    if (typeof assessment.overallFeedback === 'string') {
-      assessment.overallFeedback = assessment.overallFeedback
-        .replace(/\*\*/g, '')
-        .replace(/\*(?!\*)/g, '')
-        .replace(/^#+\s+/gm, '')
-        .replace(/^---+$/gm, '')
-        .trim();
-    }
-
-    // Add word count info
-    assessment.wordCount = wordCount;
-    assessment.targetWordCount = (isFoundation || isSummaryWriting || isSynthesisWriting || isLanc1070 || isLanc2146 || isLanc2070) ? activeTargetWordCount : null;
+    // Clean overallFeedback
+    let overallFeedback = clean(assessment.overallFeedback);
+    if (!overallFeedback) overallFeedback = 'No overall feedback provided.';
 
     return NextResponse.json({
       success: true,
       assessment: {
-        ...assessment,
+        scores: assessment.scores,
+        totalScore,
+        maxScore,
+        percentage,
+        overallFeedback,
+        wordCount,
+        targetWordCount: (isFoundation || isSummaryWriting || isSynthesisWriting || isLanc1070 || isLanc2146) ? activeTargetWordCount : null,
         createdAt: new Date().toISOString(),
       }
     });
   } catch (error) {
     console.error('Assessment error:', error);
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    // Provide more specific error messages for common Gemini API failures
     let userError = 'Failed to assess essay';
     if (msg.includes('API key not valid') || msg.includes('API_KEY_INVALID') || msg.includes('invalid API key')) {
-      userError = 'Gemini API key is invalid. Please update your API key in Settings.';
+      userError = 'Gemini API key is invalid. Please check the GEMINI_API_KEY environment variable on the server.';
     } else if (msg.includes('model not found') || msg.includes('does not exist') || msg.includes('MODEL_NOT_FOUND')) {
       userError = 'The AI model is currently unavailable. Please try again later.';
     } else if (msg.includes('quota') || msg.includes('RESOURCE_EXHAUSTED')) {
       userError = 'Gemini API quota exceeded. Please wait a few minutes and try again.';
     } else if (msg.includes('PERMISSION_DENIED') || msg.includes('forbidden')) {
       userError = 'Gemini API access denied. The API key may not have permission to use this model.';
-    } else if (msg.includes('timeout') || msg.includes('TIMEOUT') || msg.includes('Function exceeded time limits') || msg.includes('504')) {
-      userError = 'Assessment timed out. The AI took too long to respond. This can happen on the free plan for complex assignments. Please try again.';
+    } else if (msg.includes('timeout') || msg.includes('TIMEOUT') || msg.includes('Function exceeded time limits') || msg.includes('504') || msg.includes('ECONNRESET') || msg.includes('socket hang up')) {
+      userError = 'Assessment timed out. The AI took too long to respond. Please try again.';
     }
-    return NextResponse.json(
-      { error: userError, details: msg },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: userError, details: msg }, { status: 500 });
   }
 }

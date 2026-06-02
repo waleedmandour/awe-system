@@ -53,6 +53,23 @@ const PageTransition = ({ children, direction = 'right' }: { children: React.Rea
   </motion.div>
 );
 
+// Arabic translations for criterion names — student-facing with bilingual labels
+const CRITERION_LABELS: Record<string, string> = {
+  'Task Response': 'الاستجابة للمطلوب (Task Response)',
+  'Task Achievement': 'تحقيق المطلوب (Task Achievement)',
+  'Coherence and Cohesion': 'الترابط والتماسك (Coherence & Cohesion)',
+  'Coherence & Cohesion': 'الترابط والتماسك (Coherence & Cohesion)',
+  'Lexical Resource': 'المفردات (Lexical Resource)',
+  'Grammatical Range and Accuracy': 'القواعد والدقة (Grammar & Accuracy)',
+  'Grammatical Range & Accuracy': 'القواعد والدقة (Grammar & Accuracy)',
+  'Grammar & Accuracy': 'القواعد والدقة (Grammar & Accuracy)',
+};
+
+/** Return the bilingual label for a criterion, or the original name if not found. */
+function getCriterionLabel(name: string): string {
+  return CRITERION_LABELS[name] || name;
+}
+
 // Results Screen Component
 const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: Assessment | null; onNewAssessment: () => void; onBack: () => void }) => {
   // Always recalculate totals from individual criterion scores
@@ -75,13 +92,13 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
             <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-6">
               <AlertCircle className="w-10 h-10 text-amber-500" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">No Assessment Found</h2>
-            <p className="text-muted-foreground text-sm mb-6">Please submit an essay for assessment first.</p>
+            <h2 className="text-xl font-semibold mb-2">لا يوجد تقييم (No Assessment Found)</h2>
+            <p className="text-muted-foreground text-sm mb-6">يرجى تقديم مقالك للتقييم أولاً (Please submit your essay first.)</p>
             <Button
               onClick={onNewAssessment}
               className="bg-[#1a5f2a] hover:bg-[#1a5f2a]/90"
             >
-              Start New Assessment
+              ابدأ تقييم جديد (New Assessment)
             </Button>
           </motion.div>
         </div>
@@ -233,7 +250,7 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                 >
                   {safeAssessment.percentage}%
                 </motion.span>
-                <span className="text-sm opacity-80">Score</span>
+                <span className="text-sm opacity-80">الدرجة (Score)</span>
               </div>
             </motion.div>
 
@@ -247,7 +264,7 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
               <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mb-2">
                 <span className="text-2xl font-bold">{safeAssessment.totalScore}/{safeAssessment.maxScore}</span>
               </div>
-              <p className="text-sm opacity-80">Total Score</p>
+              <p className="text-sm opacity-80">المجموع (Total)</p>
               <Badge className="mt-2 bg-[#c9a227] text-white border-0">
                 {safeAssessment.percentage! >= 80 ? 'Excellent' : safeAssessment.percentage! >= 60 ? 'Good' : 'Needs Work'}
               </Badge>
@@ -260,13 +277,13 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full h-11 p-1 bg-muted rounded-xl">
               <TabsTrigger value="overview" className="flex-1 h-9 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                Overview
+                نظرة عامة
               </TabsTrigger>
               <TabsTrigger value="criteria" className="flex-1 h-9 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                Detailed Feedback
+                ملاحظات مفصلة
               </TabsTrigger>
               <TabsTrigger value="feedback" className="flex-1 h-9 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                Overall Feedback
+                ملاحظات عامة
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -287,14 +304,14 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                     <CardContent className="p-4 text-center">
                       <Award className="w-8 h-8 mx-auto mb-2 text-[#c9a227]" />
                       <p className="text-2xl font-bold">{safeAssessment.totalScore}/{safeAssessment.maxScore}</p>
-                      <p className="text-xs text-muted-foreground">Total Points</p>
+                      <p className="text-xs text-muted-foreground">المجموع (Total)</p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="p-4 text-center">
                       <TrendingUp className="w-8 h-8 mx-auto mb-2 text-[#1a5f2a]" />
                       <p className="text-2xl font-bold">{Math.round(safeAssessment.percentage)}%</p>
-                      <p className="text-xs text-muted-foreground">Percentage</p>
+                      <p className="text-xs text-muted-foreground">النسبة (Percentage)</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -302,7 +319,7 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                 {/* Criteria Preview */}
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Score Breakdown</CardTitle>
+                    <CardTitle className="text-base">تفصيل الدرجات (Score Breakdown)</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {safeAssessment.scores.map((score, index) => (
@@ -313,7 +330,7 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                         transition={{ delay: index * 0.1 }}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium">{score.criterionName}</span>
+                          <span className="text-sm font-medium">{getCriterionLabel(score.criterionName)}</span>
                           <span className={`text-sm font-bold ${getScoreColor(score.score, score.maxScore)}`}>
                             {score.score}/{score.maxScore}
                           </span>
@@ -361,8 +378,8 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                                 {score.score}
                               </div>
                               <div>
-                                <h4 className="font-semibold">{score.criterionName}</h4>
-                                <p className="text-xs text-muted-foreground">out of {score.maxScore}</p>
+                                <h4 className="font-semibold">{getCriterionLabel(score.criterionName)}</h4>
+                                <p className="text-xs text-muted-foreground">من {score.maxScore}</p>
                               </div>
                             </div>
                             <Badge variant="secondary">
@@ -373,21 +390,21 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                           {/* Structured Feedback */}
                           {parsedFeedback.justification && (
                             <div className="mb-3 bg-muted/40 p-3 rounded-lg">
-                              <p className="text-xs font-medium text-[#1a5f2a] mb-1">Score Justification:</p>
+                              <p className="text-xs font-medium text-[#1a5f2a] mb-1">سبب درجتك (Why you got this score):</p>
                               <p className="text-sm text-muted-foreground leading-relaxed">{parsedFeedback.justification}</p>
                             </div>
                           )}
 
                           {parsedFeedback.strengths && (
                             <div className="mb-3">
-                              <p className="text-xs font-medium text-[#1a5f2a] mb-1">Strengths:</p>
+                              <p className="text-xs font-medium text-[#1a5f2a] mb-1">نقاط قوتك (Your strengths):</p>
                               <p className="text-sm text-muted-foreground">{parsedFeedback.strengths}</p>
                             </div>
                           )}
                           
                           {parsedFeedback.mistakes.length > 0 && (
                             <div className="mb-3">
-                              <p className="text-xs font-medium text-red-600 mb-1">Mistakes Found:</p>
+                              <p className="text-xs font-medium text-red-600 mb-1">أخطاؤك (Your mistakes):</p>
                               <div className="space-y-2">
                                 {parsedFeedback.mistakes.map((mistake, i) => (
                                   <div key={i} className="bg-red-50 dark:bg-red-950/20 p-2 rounded-lg">
@@ -401,7 +418,7 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                           
                           {parsedFeedback.suggestions && (
                             <div>
-                              <p className="text-xs font-medium text-[#c9a227] mb-1">Suggestions:</p>
+                              <p className="text-xs font-medium text-[#c9a227] mb-1">نصائح للتحسين (Tips to improve):</p>
                               <p className="text-sm text-muted-foreground">{parsedFeedback.suggestions}</p>
                             </div>
                           )}
@@ -428,7 +445,7 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-2">
                       <MessageSquare className="w-5 h-5 text-[#1a5f2a]" />
-                      <CardTitle className="text-base">Overall Feedback</CardTitle>
+                      <CardTitle className="text-base">ملاحظات عامة (Overall Feedback)</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -442,7 +459,7 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
                     <CardHeader className="pb-3">
                       <div className="flex items-center gap-2">
                         <FileText className="w-5 h-5 text-[#c9a227]" />
-                        <CardTitle className="text-base">Word Count</CardTitle>
+                        <CardTitle className="text-base">عدد الكلمات (Word Count)</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -478,14 +495,14 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
               ) : (
                 <Download className="w-4 h-4 mr-2" />
               )}
-              {isDownloading ? 'Generating...' : 'Download PDF'}
+              {isDownloading ? 'جاري التحميل...' : 'تحميل PDF'}
             </Button>
             <Button
               onClick={onNewAssessment}
               className="flex-1 h-12 bg-[#1a5f2a] hover:bg-[#1a5f2a]/90 rounded-xl ios-press"
             >
               <Plus className="w-4 h-4 mr-2" />
-              New Essay
+              مقال جديد
             </Button>
           </div>
           <Button
@@ -494,7 +511,7 @@ const ResultsScreen = ({ assessment, onNewAssessment, onBack }: { assessment: As
             className="w-full h-10 text-muted-foreground rounded-xl ios-press"
           >
             <History className="w-4 h-4 mr-2" />
-            View Assessment Records
+            سجلات التقييم (Records)
           </Button>
         </div>
       </div>

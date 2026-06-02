@@ -42,6 +42,23 @@ const fadeInUp = {
   exit: { opacity: 0, y: -20 },
 };
 
+// Arabic translations for criterion names — student-facing with bilingual labels
+const CRITERION_LABELS: Record<string, string> = {
+  'Task Response': 'الاستجابة للمطلوب (Task Response)',
+  'Task Achievement': 'تحقيق المطلوب (Task Achievement)',
+  'Coherence and Cohesion': 'الترابط والتماسك (Coherence & Cohesion)',
+  'Coherence & Cohesion': 'الترابط والتماسك (Coherence & Cohesion)',
+  'Lexical Resource': 'المفردات (Lexical Resource)',
+  'Grammatical Range and Accuracy': 'القواعد والدقة (Grammar & Accuracy)',
+  'Grammatical Range & Accuracy': 'القواعد والدقة (Grammar & Accuracy)',
+  'Grammar & Accuracy': 'القواعد والدقة (Grammar & Accuracy)',
+};
+
+/** Return the bilingual label for a criterion, or the original name if not found. */
+function getCriterionLabel(name: string): string {
+  return CRITERION_LABELS[name] || name;
+}
+
 // Page transition wrapper
 const PageTransition = ({ children, direction = 'right' }: { children: React.ReactNode; direction?: 'left' | 'right' }) => (
   <motion.div
@@ -221,8 +238,8 @@ const RecordsScreen = ({ onBack, onNewAssessment }: { onBack: () => void; onNewA
                               {score.score}
                             </div>
                             <div>
-                              <h4 className="font-semibold text-sm">{score.criterionName}</h4>
-                              <p className="text-xs text-muted-foreground">out of {score.maxScore}</p>
+                              <h4 className="font-semibold text-sm">{getCriterionLabel(score.criterionName)}</h4>
+                              <p className="text-xs text-muted-foreground">من {score.maxScore}</p>
                             </div>
                           </div>
                           <Badge variant="secondary">
@@ -241,21 +258,21 @@ const RecordsScreen = ({ onBack, onNewAssessment }: { onBack: () => void; onNewA
 
                         {parsed.justification && (
                           <div className="mb-3 bg-muted/40 p-3 rounded-lg">
-                            <p className="text-xs font-medium text-[#1a5f2a] mb-1">Score Justification:</p>
+                            <p className="text-xs font-medium text-[#1a5f2a] mb-1">سبب درجتك (Why you got this score):</p>
                             <p className="text-sm text-muted-foreground leading-relaxed">{parsed.justification}</p>
                           </div>
                         )}
 
                         {parsed.strengths && (
                           <div className="mb-3">
-                            <p className="text-xs font-medium text-[#1a5f2a] mb-1">Strengths:</p>
+                            <p className="text-xs font-medium text-[#1a5f2a] mb-1">نقاط قوتك (Your strengths):</p>
                             <p className="text-sm text-muted-foreground">{parsed.strengths}</p>
                           </div>
                         )}
 
                         {parsed.mistakes.length > 0 && (
                           <div className="mb-3">
-                            <p className="text-xs font-medium text-red-600 mb-1">Mistakes Found:</p>
+                            <p className="text-xs font-medium text-red-600 mb-1">أخطاؤك (Your mistakes):</p>
                             <div className="space-y-2">
                               {parsed.mistakes.map((m, i) => (
                                 <div key={i} className="bg-red-50 dark:bg-red-950/20 p-2 rounded-lg">
@@ -269,7 +286,7 @@ const RecordsScreen = ({ onBack, onNewAssessment }: { onBack: () => void; onNewA
 
                         {parsed.suggestions && (
                           <div>
-                            <p className="text-xs font-medium text-[#c9a227] mb-1">Suggestions:</p>
+                            <p className="text-xs font-medium text-[#c9a227] mb-1">نصائح للتحسين (Tips to improve):</p>
                             <p className="text-sm text-muted-foreground">{parsed.suggestions}</p>
                           </div>
                         )}
@@ -289,7 +306,7 @@ const RecordsScreen = ({ onBack, onNewAssessment }: { onBack: () => void; onNewA
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-2">
                       <MessageSquare className="w-5 h-5 text-[#1a5f2a]" />
-                      <CardTitle className="text-base">Overall Feedback</CardTitle>
+                      <CardTitle className="text-base">ملاحظات عامة (Overall Feedback)</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -300,7 +317,7 @@ const RecordsScreen = ({ onBack, onNewAssessment }: { onBack: () => void; onNewA
 
               {record.assessment.wordCount && (
                 <div className="text-center py-2">
-                  <p className="text-sm text-muted-foreground">Word Count: <span className="font-semibold">{record.assessment.wordCount}</span></p>
+                  <p className="text-sm text-muted-foreground">عدد الكلمات (Word Count): <span className="font-semibold">{record.assessment.wordCount}</span></p>
                 </div>
               )}
             </div>
@@ -469,14 +486,14 @@ const RecordsScreen = ({ onBack, onNewAssessment }: { onBack: () => void; onNewA
                                   <div className="mt-4 pt-4 border-t space-y-4" onClick={(e) => e.stopPropagation()}>
                                     {/* Score Breakdown */}
                                     <div>
-                                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Score Breakdown</p>
+                                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">تفصيل الدرجات (Score Breakdown)</p>
                                       <div className="space-y-2">
                                         {record.assessment.scores.map((score) => {
                                           const pct = (score.score / score.maxScore) * 100;
                                           return (
                                             <div key={score.criterionId}>
                                               <div className="flex items-center justify-between mb-0.5">
-                                                <span className="text-xs font-medium">{score.criterionName}</span>
+                                                <span className="text-xs font-medium">{getCriterionLabel(score.criterionName)}</span>
                                                 <span className="text-xs font-bold">{score.score}/{score.maxScore}</span>
                                               </div>
                                               <Progress value={pct} className="h-1.5" />
@@ -489,7 +506,7 @@ const RecordsScreen = ({ onBack, onNewAssessment }: { onBack: () => void; onNewA
                                     {/* Overall Feedback */}
                                     {record.assessment.overallFeedback && (
                                       <div>
-                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Overall Feedback</p>
+                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">ملاحظات عامة (Overall Feedback)</p>
                                         <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">
                                           {record.assessment.overallFeedback}
                                         </p>

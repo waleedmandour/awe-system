@@ -48,8 +48,8 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
         : LANC1070_PRACTICE_TESTS.filter(t => t.practiceType === selectedPracticeType)
     : [];
 
-  // Whether Foundation Final Exam needs a writing prompt input
-  const needsWritingPrompt = (selectedCourse?.code === '0230' || selectedCourse?.code === '0340') && selectedExamType === 'final';
+  // Whether Foundation Exam needs a writing prompt input (both mid-semester and final)
+  const needsWritingPrompt = (selectedCourse?.code === '0230' || selectedCourse?.code === '0340') && !!selectedExamType;
 
   // Whether the Continue button should be enabled
   const canContinue = selectedCourse
@@ -157,7 +157,7 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
               const showPracticeType = showChildren && (course.code === 'LANC1070' || course.code === 'LANC2146' || course.code === 'LANC2070');
               const showSourceText = showWritingType && selectedWritingType === 'summary';
               const showSynthesisAssignment = showWritingType && selectedWritingType === 'synthesis';
-              const showWritingPrompt = showChildren && (course.code === '0230' || course.code === '0340') && selectedExamType === 'final';
+              const showWritingPrompt = showChildren && (course.code === '0230' || course.code === '0340') && !!selectedExamType;
               const showPracticeTest = showPracticeType && !!selectedPracticeType;
               const coursePracticeTests = showPracticeType && selectedPracticeType
                 ? course.code === 'LANC2146'
@@ -266,7 +266,7 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
                             </div>
                           )}
 
-                          {/* Writing Prompt Input for FP0340 Final Exam */}
+                          {/* Writing Prompt Input for Foundation Exams (mid-semester & final) */}
                           {showWritingPrompt && (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-muted-foreground px-1">

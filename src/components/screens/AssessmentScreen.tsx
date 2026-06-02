@@ -181,7 +181,7 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
         abortRef.current.abort();
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Countdown timer — ticks every second when retryCountdown > 0
   useEffect(() => {

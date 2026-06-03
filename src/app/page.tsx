@@ -248,6 +248,7 @@ export default function AWEApp() {
       <footer className="text-center py-3 text-xs text-muted-foreground border-t bg-white/80 backdrop-blur-sm">
         <p>Developed by: <span className="font-medium text-[#1a5f2a]">Dr. Waleed Mandour</span></p>
         <p>AI Co-Marker Assistance Project, 2026</p>
+        <p className="mt-1 text-[10px] text-amber-600">AI may make mistakes. Verify results with a qualified instructor.</p>
       </footer>
     </div>
   );

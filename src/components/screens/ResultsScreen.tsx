@@ -55,7 +55,7 @@ const PageTransition = ({ children, direction = 'right' }: { children: React.Rea
 
 // Arabic translations for criterion names — student-facing with bilingual labels
 const CRITERION_LABELS: Record<string, string> = {
-  'Task Response': 'الاستجابة للمطلوب (Task Response)',
+  'Task Response': 'الإجابة المطلوبة (Task Response)',
   'Task Achievement': 'تحقيق المطلوب (Task Achievement)',
   'Coherence and Cohesion': 'الترابط والتماسك (Coherence & Cohesion)',
   'Coherence & Cohesion': 'الترابط والتماسك (Coherence & Cohesion)',

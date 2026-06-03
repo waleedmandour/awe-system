@@ -720,7 +720,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { text, courseCode, topic, examType, writingType, sourceTextId } = body;
+    const { text, courseCode, topic, examType, writingType, sourceTextId, apiKey: clientApiKey } = body;
 
     if (!text || !text.trim()) {
       return NextResponse.json(
@@ -729,10 +729,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    // Accept API key from the client request body (student app) or fall back to
+    // the server-side environment variable (teacher app).  The client-side key
+    // takes precedence when provided, matching how the OCR route works.
+    const apiKey = clientApiKey || process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Server configuration error: GEMINI_API_KEY environment variable is not set.', details: 'The server-side GEMINI_API_KEY environment variable is missing or empty.' },
+        { error: 'API key required. Please enter your Gemini API key in Settings to continue.', details: 'No API key provided via request body or GEMINI_API_KEY environment variable.' },
         { status: 500 }
       );
     }

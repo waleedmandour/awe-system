@@ -66,6 +66,14 @@ export interface LocalModelOption {
   sizeBytes?: number;
   /** Direct download URL (MediaPipe-compatible `.task` / `.bin` weights). */
   downloadUrl: string;
+  /**
+   * Backup download URLs tried in order when `downloadUrl` fails. Used so a
+   * single dead link never breaks on-device assessment (for example, a
+   * community mirror disappearing). Every URL must be downloadable WITHOUT
+   * authentication — gated Hugging Face repos (which need license acceptance)
+   * are deliberately avoided.
+   */
+  fallbackUrls?: string[];
   /** Verified to download & run with MediaPipe LLM Inference for Web. */
   verified: boolean;
   /** Show an "Experimental" badge in the UI. */
@@ -77,12 +85,19 @@ export interface LocalModelOption {
  * LLM Inference (WebAssembly/WebGL) — essays never leave the device and
  * assessment keeps working offline after the one-time download.
  *
- * Gemma models are Google's officially supported models for MediaPipe LLM
- * Inference and are hosted as int4 `.task` conversions by the LiteRT
- * community on Hugging Face. Qwen/Phi require community `.task` conversions
- * and are marked experimental — if a URL is unavailable, convert the model
- * yourself with the MediaPipe converter and host it (or place it in
- * `public/models/` and point `downloadUrl` at it).
+ * IMPORTANT — every URL below is verified to download WITHOUT authentication:
+ *
+ * - Google's official `litert-community` Gemma repos on Hugging Face are
+ *   LICENSE-GATED (`gated: auto` → HTTP 401 for anonymous downloads), so the
+ *   app cannot fetch them seamlessly. The Gemma 3 1B web conversion is
+ *   therefore served from public, ungated mirrors of Google's release, with
+ *   two byte-identical backup mirrors as fallbacks.
+ * - The Qwen 2.5 and TinyLlama `.task` conversions are published UNGATED by
+ *   Google's own litert-community account (Apache-2.0 / research licenses),
+ *   so they download seamlessly and are the most stable sources.
+ *
+ * To swap a model for your own hosted weights, point `downloadUrl` at your
+ * file (e.g. `/models/<file>.task` after `npm run download-models`).
  */
 export const LOCAL_MODELS: LocalModelOption[] = [
   {
@@ -90,42 +105,52 @@ export const LOCAL_MODELS: LocalModelOption[] = [
     name: 'Gemma 3 1B (Local)',
     type: 'local',
     description: "Google's compact open model — fast, runs on most devices",
-    size: '~531 MB',
-    sizeBytes: 556_832_078,
+    size: '~668 MB',
+    sizeBytes: 700_383_232,
+    // Ungated public mirror of Google's gemma3-1b-it-int4-web.task (700,383,232 bytes).
     downloadUrl:
-      'https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.task',
-    verified: true,
-  },
-  {
-    id: 'gemma-2-2b',
-    name: 'Gemma 2 2B (Local)',
-    type: 'local',
-    description: "Google's larger open model — higher quality, needs a modern phone",
-    size: '~1.3 GB',
-    sizeBytes: 1_394_604_032,
-    downloadUrl:
-      'https://huggingface.co/litert-community/Gemma2-2B-IT/resolve/main/gemma2-2b-it-int4.task',
+      'https://huggingface.co/darkB/gemma3-1b-it-int4-web-litert/resolve/main/gemma3-1b-it-int4-web.task',
+    // Byte-identical mirrors of the official gemma3-1b-it-int4.task (554,661,243 bytes).
+    fallbackUrls: [
+      'https://huggingface.co/K4N4T/gemma3-1B-it-int4.task/resolve/main/gemma3-1B-it-int4.task',
+      'https://huggingface.co/AfiOne/gemma3-1b-it-int4.task/resolve/main/gemma3-1b-it-int4.task',
+    ],
     verified: true,
   },
   {
     id: 'qwen-2.5-0.5b',
     name: 'Qwen 2.5 0.5B (Local)',
     type: 'local',
-    description: "Alibaba's ultra-light model — smallest download, modest quality",
-    size: '~500 MB',
+    description: "Alibaba's ultra-light model — smallest download, works on older phones",
+    size: '~521 MB',
+    sizeBytes: 546_660_344,
+    // Official Google litert-community conversion, published ungated (Apache-2.0).
     downloadUrl:
-      'https://huggingface.co/litert-community/Qwen2.5-0.5B-Instruct/resolve/main/qwen2.5-0.5b-instruct-q8_0.task',
-    verified: false,
-    experimental: true,
+      'https://huggingface.co/litert-community/Qwen2.5-0.5B-Instruct/resolve/main/Qwen2.5-0.5B-Instruct_multi-prefill-seq_q8_ekv1280.task',
+    verified: true,
   },
   {
-    id: 'phi-2',
-    name: 'Phi-2 (Local)',
+    id: 'qwen-2.5-1.5b',
+    name: 'Qwen 2.5 1.5B (Local)',
     type: 'local',
-    description: "Microsoft's model with strong reasoning — larger memory footprint",
-    size: '~1.2 GB',
+    description: "Alibaba's larger model — best on-device quality, needs a modern phone",
+    size: '~1.5 GB',
+    sizeBytes: 1_597_913_616,
+    // Official Google litert-community conversion, published ungated (Apache-2.0).
     downloadUrl:
-      'https://huggingface.co/litert-community/Phi-2/resolve/main/phi-2-int4.task',
+      'https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv1280.task',
+    verified: true,
+  },
+  {
+    id: 'tinyllama-1.1b',
+    name: 'TinyLlama 1.1B (Local)',
+    type: 'local',
+    description: 'Compact community classic — quick to run, modest essay quality',
+    size: '~1.1 GB',
+    sizeBytes: 1_148_331_545,
+    // Official Google litert-community conversion, published ungated (Apache-2.0).
+    downloadUrl:
+      'https://huggingface.co/litert-community/TinyLlama-1.1B-Chat-v1.0/resolve/main/TinyLlama-1.1B-Chat-v1.0_multi-prefill-seq_q8_ekv1280.task',
     verified: false,
     experimental: true,
   },

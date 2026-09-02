@@ -8,6 +8,7 @@ import {
 } from '@/lib/local-llm-service';
 import {
   MODEL_CONFIG,
+  CONFIG,
   CLOUD_ASSESSMENT_TIERS,
   CLOUD_OCR_TIERS,
   ALLOWED_CLOUD_MODELS,
@@ -63,14 +64,42 @@ describe('LOCAL_MODELS (on-device)', () => {
 
   it('resolves catalog entries by id', () => {
     expect(getLocalModel('gemma-3-1b')?.name).toContain('Gemma 3 1B');
+    expect(getLocalModel('qwen-2.5-0.5b')?.name).toContain('Qwen 2.5 0.5B');
     expect(getLocalModel('does-not-exist')).toBeUndefined();
   });
 
   it('provides download URLs and sizes for every model', () => {
     for (const model of LOCAL_MODELS) {
-      expect(model.downloadUrl).toMatch(/^https?:\/\//);
+      expect(model.downloadUrl).toMatch(/^https:\/\//);
       expect(model.size).toBeTruthy();
+      expect(model.sizeBytes).toBeGreaterThan(0);
     }
+  });
+
+  it('never points at gated Hugging Face repos (they return 401 without login)', () => {
+    // Google's official litert-community Gemma repos are license-gated
+    // (gated: auto) and cannot be downloaded anonymously, so the catalog
+    // must use ungated mirrors instead.
+    const gatedRepos = ['litert-community/Gemma3-1B-IT', 'litert-community/Gemma2-2B-IT'];
+    for (const model of LOCAL_MODELS) {
+      const urls = [model.downloadUrl, ...(model.fallbackUrls ?? [])];
+      for (const url of urls) {
+        for (const repo of gatedRepos) {
+          expect(url).not.toContain(`huggingface.co/${repo}/`);
+        }
+      }
+    }
+  });
+
+  it('gives every model at least one download source and Gemma multiple mirrors', () => {
+    for (const model of LOCAL_MODELS) {
+      expect(model.downloadUrl.length).toBeGreaterThan(0);
+    }
+    expect(getLocalModel('gemma-3-1b')?.fallbackUrls?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('keeps the default local model inside the catalog', () => {
+    expect(getLocalModel(CONFIG.local.defaultModel)).toBeDefined();
   });
 });
 

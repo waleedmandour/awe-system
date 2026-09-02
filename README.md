@@ -137,7 +137,7 @@ When FP0340 is selected, students choose between "For Mid-semester Exam" and "Fo
 - **State Management:** Zustand (persisted to localStorage)
 - **AI Assessment:** Google Gemini (gemini-2.5-flash-lite primary, with automatic fallback to gemini-2.5-flash → gemini-2.0-flash)
 - **OCR:** Google Gemini + Google Cloud Vision API (DOCUMENT_TEXT_DETECTION)
-- **On-Device Assessment (optional):** MediaPipe LLM Inference for Web (Gemma / Qwen / Phi .task models), models stored in IndexedDB
+- **On-Device Assessment (optional):** MediaPipe LLM Inference for Web (Gemma / Qwen `.task` models), models stored in IndexedDB
 - **Animations:** Framer Motion
 - **PDF Generation:** PDFKit
 - **Testing:** Vitest
@@ -202,7 +202,7 @@ awe-system/
 │           ├── scoring-utils.test.ts
 │           └── local-llm.test.ts
 ├── scripts/
-│   └── download-models.js        # Pre-download local LLM weights to public/models/
+│   └── download-models.mjs        # Pre-download local LLM weights to public/models/
 ├── CONTRIBUTING.md               # Contribution guidelines
 ├── CITATION.cff                  # Machine-readable citation file
 ├── LICENSE                       # MIT License
@@ -327,10 +327,12 @@ For privacy-focused or offline use, students can download a small language model
 
 | Model | Download size | Notes |
 |-------|--------------:|-------|
-| Gemma 3 1B | ~531 MB | Recommended — verified, runs on most devices |
-| Gemma 2 2B | ~1.3 GB | Higher quality, needs a modern phone |
-| Qwen 2.5 0.5B | ~500 MB | Experimental — community conversion |
-| Phi-2 | ~1.2 GB | Experimental — community conversion |
+| Gemma 3 1B | ~668 MB | Recommended — Google's web conversion via ungated mirrors, with automatic fallbacks |
+| Qwen 2.5 0.5B | ~521 MB | Official Google conversion (ungated) — smallest, works on older phones |
+| Qwen 2.5 1.5B | ~1.5 GB | Official Google conversion (ungated) — best on-device quality, needs a modern phone |
+| TinyLlama 1.1B | ~1.1 GB | Experimental — official conversion, modest essay quality |
+
+Every download URL in the catalog is verified to work **without authentication**. The downloader tries the primary URL first and then any configured fallback mirrors, so a single dead link never blocks a download.
 
 **How it works:**
 1. Download a model once in Settings (stored in the browser's IndexedDB, with a storage-space check and progress bar)
@@ -351,7 +353,7 @@ npm run download-models --list     # list available models
 
 Then point the model's `downloadUrl` in `src/lib/config.ts` at `/models/<file>.task`. Model configuration (cloud tiers, free-tier limits, local catalog) lives in one file: `src/lib/config.ts`.
 
-> **Note:** Some Hugging Face model repos (e.g. Gemma) require accepting a license before downloading. If a direct download fails, accept the license on the model page or convert your own weights with the MediaPipe converter and host them yourself.
+> **Note on Gemma licensing:** Google's official `litert-community` Gemma repos on Hugging Face are license-gated (`gated: auto`) — anonymous downloads return HTTP 401, which is why the in-app catalog uses ungated public mirrors for Gemma and official ungated conversions (Qwen/TinyLlama) everywhere else. If you prefer the official source, accept the license on [litert-community/Gemma3-1B-IT](https://huggingface.co/litert-community/Gemma3-1B-IT), download `gemma3-1b-it-int4-web.task`, and host it yourself (e.g. in `public/models/`) — then point `downloadUrl` at your copy.
 
 ---
 

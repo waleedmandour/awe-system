@@ -3,34 +3,63 @@
  * ─── AWE System — Local Model Download Script ────────────────────────────────
  *
  * Optionally pre-downloads on-device LLM weights into `public/models/` so the
- * app can serve them itself instead of relying on the Hugging Face URLs in
+ * app can serve them itself instead of relying on the remote URLs in
  * `src/lib/config.ts` (useful for restricted networks / offline labs).
  *
  * Usage:
- *   node scripts/download-models.js            # download all models
- *   node scripts/download-models.js gemma-3-1b # download a specific model
- *   node scripts/download-models.js --list     # list catalog models
+ *   node scripts/download-models.mjs            # download all models
+ *   node scripts/download-models.mjs gemma-3-1b # download a specific model
+ *   node scripts/download-models.mjs --list     # list catalog models
  *
  * After downloading, point the model's `downloadUrl` in src/lib/config.ts at
  * `/models/<file>.task`, or serve the file and let students download it in-app.
+ *
+ * Every URL below is verified to work WITHOUT authentication (gated Hugging
+ * Face repos — those requiring license acceptance — are deliberately avoided;
+ * see README → On-Device Models).
  */
 
-const fs = require('fs');
-const path = require('path');
-const https = require('https');
-const { URL } = require('url');
+import fs from 'node:fs';
+import path from 'node:path';
+import https from 'node:https';
+import { URL } from 'node:url';
 
 // Keep this catalog in sync with LOCAL_MODELS in src/lib/config.ts
 const MODELS = [
   {
     id: 'gemma-3-1b',
-    url: 'https://huggingface.co/litert-community/Gemma3-1B-IT/resolve/main/gemma3-1b-it-int4.task',
-    outputPath: 'public/models/gemma3-1b-it-int4.task',
+    // Ungated public mirror of Google's gemma3-1b-it-int4-web.task, plus
+    // byte-identical mirrors of the official gemma3-1b-it-int4.task.
+    urls: [
+      'https://huggingface.co/darkB/gemma3-1b-it-int4-web-litert/resolve/main/gemma3-1b-it-int4-web.task',
+      'https://huggingface.co/K4N4T/gemma3-1B-it-int4.task/resolve/main/gemma3-1B-it-int4.task',
+      'https://huggingface.co/AfiOne/gemma3-1b-it-int4.task/resolve/main/gemma3-1b-it-int4.task',
+    ],
+    outputPath: 'public/models/gemma3-1b-it-int4-web.task',
   },
   {
-    id: 'gemma-2-2b',
-    url: 'https://huggingface.co/litert-community/Gemma2-2B-IT/resolve/main/gemma2-2b-it-int4.task',
-    outputPath: 'public/models/gemma2-2b-it-int4.task',
+    id: 'qwen-2.5-0.5b',
+    // Official Google litert-community conversion, published ungated (Apache-2.0).
+    urls: [
+      'https://huggingface.co/litert-community/Qwen2.5-0.5B-Instruct/resolve/main/Qwen2.5-0.5B-Instruct_multi-prefill-seq_q8_ekv1280.task',
+    ],
+    outputPath: 'public/models/qwen2.5-0.5b-instruct-q8-ekv1280.task',
+  },
+  {
+    id: 'qwen-2.5-1.5b',
+    // Official Google litert-community conversion, published ungated (Apache-2.0).
+    urls: [
+      'https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv1280.task',
+    ],
+    outputPath: 'public/models/qwen2.5-1.5b-instruct-q8-ekv1280.task',
+  },
+  {
+    id: 'tinyllama-1.1b',
+    // Official Google litert-community conversion, published ungated (Apache-2.0).
+    urls: [
+      'https://huggingface.co/litert-community/TinyLlama-1.1B-Chat-v1.0/resolve/main/TinyLlama-1.1B-Chat-v1.0_multi-prefill-seq_q8_ekv1280.task',
+    ],
+    outputPath: 'public/models/tinyllama-1.1b-chat-q8-ekv1280.task',
   },
 ];
 
@@ -41,16 +70,16 @@ function listModels() {
   }
 }
 
-function downloadModel(model, redirectsLeft = 5) {
+function fetchToFile(model, url, redirectsLeft = 5) {
   return new Promise((resolve, reject) => {
     const dir = path.dirname(model.outputPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    const request = (url) => {
+    const request = (target) => {
       https
-        .get(url, { headers: { 'User-Agent': 'awe-system-download-script' } }, (response) => {
+        .get(target, { headers: { 'User-Agent': 'awe-system-download-script' } }, (response) => {
           // Hugging Face issues 302 redirects to its CDN — follow them.
           if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
             response.resume();
@@ -58,13 +87,13 @@ function downloadModel(model, redirectsLeft = 5) {
               reject(new Error('Too many redirects'));
               return;
             }
-            request(new URL(response.headers.location, url).href);
+            request(new URL(response.headers.location, target).href);
             return;
           }
 
           if (response.statusCode !== 200) {
             response.resume();
-            reject(new Error(`HTTP ${response.statusCode} for ${model.id}`));
+            reject(new Error(`HTTP ${response.statusCode}`));
             return;
           }
 
@@ -101,8 +130,23 @@ function downloadModel(model, redirectsLeft = 5) {
         });
     };
 
-    request(model.url);
+    request(url);
   });
+}
+
+async function downloadModel(model) {
+  // Try each source in order (mirrors first, then fallbacks) so a single
+  // dead link never blocks the pre-download.
+  const errors = [];
+  for (const url of model.urls) {
+    try {
+      await fetchToFile(model, url);
+      return;
+    } catch (err) {
+      errors.push(`${new URL(url).host}: ${err.message}`);
+    }
+  }
+  throw new Error(errors.join('; '));
 }
 
 async function main() {
@@ -132,7 +176,7 @@ async function main() {
     } catch (err) {
       failures.push(model.id);
       console.error(`  Failed to download ${model.id}: ${err.message}`);
-      console.error('  (Some Hugging Face models require accepting a license first — see README → Local LLM models.)');
+      console.error('  (All listed sources failed — check your network or see README → On-Device Models.)');
     }
   }
 

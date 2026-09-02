@@ -61,6 +61,9 @@ export class ModelDownloader {
    * Download a model with streaming progress reporting and persist it in
    * IndexedDB. The download is streamed so progress can be shown on slow
    * mobile connections, and the response is validated before storage.
+   *
+   * Tries `downloadUrl` first, then every entry in `fallbackUrls`, so a
+   * single dead or gated mirror never blocks on-device assessment.
    */
   async downloadModel(
     modelId: string,
@@ -68,17 +71,47 @@ export class ModelDownloader {
     signal?: AbortSignal
   ): Promise<StoredModelMeta> {
     const catalogModel = getLocalModel(modelId);
-    const url = catalogModel?.downloadUrl;
-    if (!url) {
+    const candidateUrls = [catalogModel?.downloadUrl, ...(catalogModel?.fallbackUrls ?? [])].filter(
+      (url): url is string => typeof url === 'string' && url.length > 0
+    );
+    if (candidateUrls.length === 0) {
       throw new Error(`Unknown model: ${modelId}`);
     }
 
+    const attempted: string[] = [];
+    for (const url of candidateUrls) {
+      try {
+        return await this.downloadAndStore(url, modelId, catalogModel, onProgress, signal);
+      } catch (err) {
+        // User cancellation must never fall through to the next mirror.
+        if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) {
+          throw err;
+        }
+        attempted.push(`${new URL(url).host}: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    throw new Error(
+      `Failed to download ${catalogModel?.name ?? modelId}. All sources failed — ${attempted.join('; ')}. ` +
+        'You can download the file manually and host it yourself (see README → Local LLM models).'
+    );
+  }
+
+  /** Fetch one URL, stream it with progress, and persist it in IndexedDB. */
+  private async downloadAndStore(
+    url: string,
+    modelId: string,
+    catalogModel: LocalModelOption | undefined,
+    onProgress?: (progress: DownloadProgress) => void,
+    signal?: AbortSignal
+  ): Promise<StoredModelMeta> {
     const response = await fetch(url, { signal });
     if (!response.ok) {
-      throw new Error(
-        `Failed to download ${catalogModel.name}: HTTP ${response.status}. ` +
-          'If this model requires accepting a license on Hugging Face, download the file manually and host it yourself (see README → Local LLM models).'
-      );
+      const hint =
+        response.status === 401 || response.status === 403
+          ? ' (source requires license acceptance on Hugging Face)'
+          : '';
+      throw new Error(`HTTP ${response.status}${hint}`);
     }
 
     const totalBytes = Number(response.headers.get('content-length')) || catalogModel?.sizeBytes || 0;

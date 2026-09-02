@@ -261,20 +261,22 @@ export class LocalLLMService {
 
   /**
    * Initialize a model that has already been downloaded to IndexedDB.
+   * The weights are assembled as a disk-backed Blob (never a giant
+   * ArrayBuffer), which keeps mobile memory usage safe.
    * Throws with a helpful message when the model is missing.
    */
   async initializeModel(modelId: string): Promise<boolean> {
     if (this.isReady && this.modelId === modelId) return true;
 
     const downloader = new ModelDownloader();
-    const data = await downloader.getModel(modelId);
-    if (!data) {
+    const blob = await downloader.getModelBlob(modelId);
+    if (!blob) {
       const known = getLocalModel(modelId);
       throw new Error(
         `Model "${known?.name ?? modelId}" is not downloaded. Open Settings → AI Model and download it first.`
       );
     }
-    await this.initializeFromBuffer(modelId, data);
+    await this.initializeFromBlob(modelId, blob);
     return true;
   }
 
@@ -283,11 +285,15 @@ export class LocalLLMService {
    * wrapped in a Blob URL because `LlmInference` fetches its `modelAssetPath`.
    */
   async initializeFromBuffer(modelId: string, data: ArrayBuffer): Promise<void> {
+    return this.initializeFromBlob(modelId, new Blob([data], { type: 'application/octet-stream' }));
+  }
+
+  /** Shared runtime setup for an already-built model Blob. */
+  private async initializeFromBlob(modelId: string, blob: Blob): Promise<void> {
     // Serialize concurrent initializations — the last call wins.
     const run = async () => {
       this.disposeRuntime();
 
-      const blob = new Blob([data], { type: 'application/octet-stream' });
       this.modelBlobUrl = URL.createObjectURL(blob);
 
       const genai = await import('@mediapipe/tasks-genai');
@@ -441,13 +447,14 @@ let sharedServiceModelId: string | null = null;
 
 /**
  * Return a warmed-up LocalLLMService for the given model. The first call
- * loads the weights into memory; subsequent calls with the same model reuse
- * the runtime instead of re-parsing hundreds of megabytes per retry.
+ * loads the weights from IndexedDB as a disk-backed Blob; subsequent calls
+ * with the same model reuse the runtime instead of re-parsing hundreds of
+ * megabytes per retry.
  */
-export async function getSharedLocalLLM(modelId: string, data: ArrayBuffer): Promise<LocalLLMService> {
+export async function getSharedLocalLLM(modelId: string): Promise<LocalLLMService> {
   if (!sharedService || sharedServiceModelId !== modelId || !sharedService.isReady) {
     sharedService = new LocalLLMService();
-    await sharedService.initializeFromBuffer(modelId, data);
+    await sharedService.initializeModel(modelId);
     sharedServiceModelId = modelId;
   }
   return sharedService;

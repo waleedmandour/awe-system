@@ -98,8 +98,8 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
       // the cloud path below, so the existing cloud behavior is preserved.
       if (useLocalAssessment && preferredLocalModelId) {
         try {
-          const modelData = await new ModelDownloader().getModel(preferredLocalModelId);
-          if (!modelData) {
+          const downloader = new ModelDownloader();
+          if (!(await downloader.hasModel(preferredLocalModelId))) {
             throw new Error('Local model is not downloaded. Falling back to cloud.');
           }
 
@@ -110,7 +110,7 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
             topic: writingPrompt || null,
           });
 
-          const localLLM = await getSharedLocalLLM(preferredLocalModelId, modelData);
+          const localLLM = await getSharedLocalLLM(preferredLocalModelId);
           const localAssessment = await localLLM.assessEssay(extractedText, criteria, options);
 
           // Guard against aborts/duplicates before committing the result.

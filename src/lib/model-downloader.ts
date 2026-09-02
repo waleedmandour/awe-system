@@ -9,14 +9,29 @@
  * Everything here runs in the BROWSER (IndexedDB is a browser API). Models
  * never touch a server, which keeps the on-device assessment flow fully
  * private and offline-capable.
+ *
+ * ── Memory safety (critical for mobile) ─────────────────────────────────────
+ * Models are 0.5–1.6 GB. The downloader therefore NEVER assembles the whole
+ * file in JavaScript memory:
+ *
+ * 1. Download: the response stream is flushed to IndexedDB in fixed 8 MB
+ *    chunk records. Peak JS-heap usage during download is one chunk, so the
+ *    browser tab cannot be OOM-killed when the progress bar reaches 100%.
+ * 2. Read: chunks are appended to a disk-backed `Blob` one record at a time
+ *    (Blob concatenation does not copy existing bytes), and the runtime is
+ *    given a Blob URL instead of a giant ArrayBuffer.
  */
 
 import { openDB, type IDBPDatabase } from 'idb';
 import { getLocalModel, type LocalModelOption } from '@/lib/config';
 
 const DB_NAME = 'awe-models';
-const DB_VERSION = 1;
-const STORE_NAME = 'models';
+const DB_VERSION = 2;
+const META_STORE = 'models';
+const CHUNK_STORE = 'chunks';
+
+/** Bytes per IndexedDB chunk record. Small enough for cheap writes/reads, large enough to keep transaction overhead low. */
+export const CHUNK_SIZE = 8 * 1024 * 1024;
 
 export interface StoredModelMeta {
   id: string;
@@ -33,12 +48,34 @@ export interface DownloadProgress {
   totalBytes: number;
 }
 
-interface StoredModelRecord {
+/** Metadata record in the `models` store. */
+interface StoredModelMetaRecord {
   id: string;
   name: string;
-  data: ArrayBuffer;
   sizeBytes: number;
   downloadedAt: number;
+  /** True for the chunked layout (DB v2+). Absent on legacy v1 records. */
+  chunked?: boolean;
+  /** Legacy v1 layout: the whole file in one record. Only read, never written. */
+  data?: ArrayBuffer;
+}
+
+/** One 8 MB piece of a model in the `chunks` store. */
+interface StoredModelChunkRecord {
+  id: string;
+  modelId: string;
+  index: number;
+  data: Uint8Array<ArrayBuffer>;
+}
+
+/** Stable, lexicographically sortable key for a model chunk. */
+export function chunkKeyFor(modelId: string, index: number): string {
+  return `${modelId}#${String(index).padStart(6, '0')}`;
+}
+
+/** Key range covering every chunk of one model. */
+function chunkRange(modelId: string): IDBKeyRange {
+  return IDBKeyRange.bound(`${modelId}#`, `${modelId}#\uffff`);
 }
 
 export class ModelDownloader {
@@ -48,8 +85,11 @@ export class ModelDownloader {
     if (!this.dbPromise) {
       this.dbPromise = openDB(DB_NAME, DB_VERSION, {
         upgrade(db) {
-          if (!db.objectStoreNames.contains(STORE_NAME)) {
-            db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          if (!db.objectStoreNames.contains(META_STORE)) {
+            db.createObjectStore(META_STORE, { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains(CHUNK_STORE)) {
+            db.createObjectStore(CHUNK_STORE, { keyPath: 'id' });
           }
         },
       });
@@ -59,8 +99,7 @@ export class ModelDownloader {
 
   /**
    * Download a model with streaming progress reporting and persist it in
-   * IndexedDB. The download is streamed so progress can be shown on slow
-   * mobile connections, and the response is validated before storage.
+   * IndexedDB chunk-by-chunk (constant memory footprint).
    *
    * Tries `downloadUrl` first, then every entry in `fallbackUrls`, so a
    * single dead or gated mirror never blocks on-device assessment.
@@ -97,7 +136,11 @@ export class ModelDownloader {
     );
   }
 
-  /** Fetch one URL, stream it with progress, and persist it in IndexedDB. */
+  /**
+   * Fetch one URL and persist it as 8 MB IndexedDB chunks while streaming.
+   * Only one chunk is ever held in JS memory, which keeps peak usage at
+   * ~16 MB regardless of the model size (0.5 GB or 1.6 GB — same cost).
+   */
   private async downloadAndStore(
     url: string,
     modelId: string,
@@ -115,87 +158,169 @@ export class ModelDownloader {
     }
 
     const totalBytes = Number(response.headers.get('content-length')) || catalogModel?.sizeBytes || 0;
+    const db = await this.initDB();
     const reader = response.body?.getReader();
 
-    let data: ArrayBuffer;
-    if (reader) {
-      const chunks: Uint8Array[] = [];
+    try {
+      if (!reader) {
+        // No streaming support (very old browsers) — single-buffer fallback.
+        const data = new Uint8Array(await response.arrayBuffer());
+        await db.put(CHUNK_STORE, {
+          id: chunkKeyFor(modelId, 0),
+          modelId,
+          index: 0,
+          data,
+        } satisfies StoredModelChunkRecord);
+        onProgress?.({ modelId, percent: 100, receivedBytes: data.byteLength, totalBytes: data.byteLength });
+        return await this.writeMeta(db, modelId, catalogModel, data.byteLength, false);
+      }
+
+      // Streaming path — flush into IndexedDB every CHUNK_SIZE bytes.
+      const staging: Uint8Array[] = [];
+      let stagingBytes = 0;
       let receivedBytes = 0;
+      let chunkIndex = 0;
       let lastReportedPercent = -1;
+
+      const flush = async () => {
+        if (stagingBytes === 0) return;
+        const merged = new Uint8Array(stagingBytes);
+        let offset = 0;
+        for (const part of staging) {
+          merged.set(part, offset);
+          offset += part.byteLength;
+        }
+        staging.length = 0;
+        stagingBytes = 0;
+        await db.put(CHUNK_STORE, {
+          id: chunkKeyFor(modelId, chunkIndex),
+          modelId,
+          index: chunkIndex,
+          data: merged,
+        } satisfies StoredModelChunkRecord);
+        chunkIndex += 1;
+      };
 
       for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
-        if (value) {
-          chunks.push(value);
-          receivedBytes += value.byteLength;
-          if (onProgress) {
-            const percent = totalBytes > 0 ? Math.min(100, Math.round((receivedBytes / totalBytes) * 100)) : -1;
-            // Report only on integer percent changes to keep the UI cheap.
-            if (percent !== lastReportedPercent) {
-              lastReportedPercent = percent;
-              onProgress({ modelId, percent, receivedBytes, totalBytes });
-            }
+        if (!value) continue;
+        // Flush BEFORE crossing the boundary so a stored chunk never exceeds
+        // CHUNK_SIZE (real fetch streams deliver values far smaller than 8 MB).
+        if (stagingBytes > 0 && stagingBytes + value.byteLength > CHUNK_SIZE) {
+          await flush();
+        }
+        staging.push(value);
+        stagingBytes += value.byteLength;
+        receivedBytes += value.byteLength;
+        if (onProgress) {
+          const percent = totalBytes > 0 ? Math.min(100, Math.round((receivedBytes / totalBytes) * 100)) : -1;
+          // Report only on integer percent changes to keep the UI cheap.
+          if (percent !== lastReportedPercent) {
+            lastReportedPercent = percent;
+            onProgress({ modelId, percent, receivedBytes, totalBytes });
           }
         }
       }
+      await flush();
 
-      const merged = new Uint8Array(receivedBytes);
-      let offset = 0;
-      for (const chunk of chunks) {
-        merged.set(chunk, offset);
-        offset += chunk.byteLength;
-      }
-      data = merged.buffer;
-    } else {
-      // No streaming support — fall back to a single buffered read.
-      data = await response.arrayBuffer();
-      onProgress?.({ modelId, percent: 100, receivedBytes: data.byteLength, totalBytes: data.byteLength });
+      return await this.writeMeta(db, modelId, catalogModel, receivedBytes, true);
+    } catch (err) {
+      // A failed/partial download must not leave orphan chunk records behind
+      // (they would silently eat the device's storage quota).
+      await this.purgeChunks(db, modelId).catch(() => {
+        /* best-effort cleanup */
+      });
+      throw err;
     }
-
-    const record: StoredModelRecord = {
-      id: modelId,
-      name: catalogModel?.name || modelId,
-      data,
-      sizeBytes: data.byteLength,
-      downloadedAt: Date.now(),
-    };
-
-    const db = await this.initDB();
-    await db.put(STORE_NAME, record);
-
-    return {
-      id: record.id,
-      name: record.name,
-      sizeBytes: record.sizeBytes,
-      downloadedAt: record.downloadedAt,
-    };
   }
 
-  /** Fetch a stored model as an ArrayBuffer, or null if not downloaded yet. */
-  async getModel(modelId: string): Promise<ArrayBuffer | null> {
+  private async writeMeta(
+    db: IDBPDatabase,
+    modelId: string,
+    catalogModel: LocalModelOption | undefined,
+    sizeBytes: number,
+    chunked: boolean
+  ): Promise<StoredModelMeta> {
+    const meta: StoredModelMetaRecord = {
+      id: modelId,
+      name: catalogModel?.name || modelId,
+      sizeBytes,
+      downloadedAt: Date.now(),
+      chunked,
+    };
+    await db.put(META_STORE, meta);
+    return { id: meta.id, name: meta.name, sizeBytes: meta.sizeBytes, downloadedAt: meta.downloadedAt };
+  }
+
+  /** Delete every chunk record belonging to one model. */
+  private async purgeChunks(db: IDBPDatabase, modelId: string): Promise<void> {
+    const tx = db.transaction(CHUNK_STORE, 'readwrite');
+    const store = tx.objectStore(CHUNK_STORE);
+    let cursor = await store.openCursor(chunkRange(modelId));
+    while (cursor) {
+      await cursor.delete();
+      cursor = await cursor.continue();
+    }
+    await tx.done;
+  }
+
+  /**
+   * Memory-safe read: assemble the model as a disk-backed Blob by appending
+   * one chunk record at a time. Blob concatenation does not copy the bytes
+   * already accumulated, so JS-heap usage stays at roughly one chunk.
+   * Returns null when the model is not downloaded.
+   */
+  async getModelBlob(modelId: string): Promise<Blob | null> {
     const db = await this.initDB();
-    const record = (await db.get(STORE_NAME, modelId)) as StoredModelRecord | undefined;
-    return record?.data ?? null;
+    const meta = (await db.get(META_STORE, modelId)) as StoredModelMetaRecord | undefined;
+    if (!meta) return null;
+
+    if (!meta.chunked) {
+      // Legacy v1 record holding the whole file.
+      return new Blob([meta.data ?? new ArrayBuffer(0)], { type: 'application/octet-stream' });
+    }
+
+    let blob = new Blob([], { type: 'application/octet-stream' });
+    const tx = db.transaction(CHUNK_STORE);
+    const store = tx.objectStore(CHUNK_STORE);
+    let cursor = await store.openCursor(chunkRange(modelId));
+    while (cursor) {
+      const record = cursor.value as StoredModelChunkRecord;
+      blob = new Blob([blob, record.data], { type: 'application/octet-stream' });
+      cursor = await cursor.continue();
+    }
+    return blob;
+  }
+
+  /**
+   * Full-buffer read (legacy convenience API). Prefer `getModelBlob` — this
+   * materializes the entire model in JS memory and can exceed tab memory
+   * limits on mobile devices.
+   */
+  async getModel(modelId: string): Promise<ArrayBuffer | null> {
+    const blob = await this.getModelBlob(modelId);
+    return blob ? blob.arrayBuffer() : null;
   }
 
   /** True when the model has been downloaded and stored on-device. */
   async hasModel(modelId: string): Promise<boolean> {
     const db = await this.initDB();
-    const key = await db.getKey(STORE_NAME, modelId);
+    const key = await db.getKey(META_STORE, modelId);
     return key !== undefined;
   }
 
-  /** Delete a stored model to free up space. */
+  /** Delete a stored model (metadata + all chunk records) to free up space. */
   async deleteModel(modelId: string): Promise<void> {
     const db = await this.initDB();
-    await db.delete(STORE_NAME, modelId);
+    await this.purgeChunks(db, modelId);
+    await db.delete(META_STORE, modelId);
   }
 
   /** List metadata for every model stored on this device. */
   async listStoredModels(): Promise<StoredModelMeta[]> {
     const db = await this.initDB();
-    const records = (await db.getAll(STORE_NAME)) as StoredModelRecord[];
+    const records = (await db.getAll(META_STORE)) as StoredModelMetaRecord[];
     return records.map((r) => ({
       id: r.id,
       name: r.name,

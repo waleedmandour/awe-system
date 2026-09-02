@@ -210,7 +210,7 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
               <Settings className="w-5 h-5 text-[#1a5f2a]" />
             </div>
             <div>
-              <h2 className="font-semibold text-lg">API Configuration</h2>
+              <h2 className="font-semibold text-lg">API &amp; Model Configuration</h2>
               <p className="text-sm text-muted-foreground">Set up your AI services</p>
             </div>
           </div>

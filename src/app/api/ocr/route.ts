@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import { CLOUD_OCR_TIERS } from '@/lib/config';
 
 // IMPORTANT: This prevents Vercel from timing out the OCR process
 export const maxDuration = 60;
@@ -266,16 +267,31 @@ async function performVisionOCR(images: { base64: string; mimeType: string }[], 
   }
 }
 
-// Perform OCR using Google Gemini — processes multiple images in a single call
+// Perform OCR using Google Gemini — tries the primary model first (see
+// MODEL_CONFIG in src/lib/config.ts), then falls back to the next tier on
+// transient (5xx) failures such as quota exhaustion or model unavailability.
+// Success, content-policy blocks (422) and validation errors are terminal.
+async function performGeminiOCR(images: { base64: string; mimeType: string }[], geminiApiKey: string) {
+  let lastResult: NextResponse | null = null;
+  for (const modelName of CLOUD_OCR_TIERS) {
+    const result = await runGeminiOCRWithModel(images, geminiApiKey, modelName);
+    if (result.status < 500) return result;
+    lastResult = result;
+    console.warn(`Gemini OCR with ${modelName} failed (${result.status}); trying fallback model...`);
+  }
+  return lastResult!;
+}
+
+// Run Gemini OCR with a specific model — processes multiple images in a single call
 // This is the optimal approach: Gemini receives ALL images at once with a
 // clear ordering instruction, so it naturally concatenates the text in the
 // correct page order without duplication or reordering issues.
-async function performGeminiOCR(images: { base64: string; mimeType: string }[], geminiApiKey: string) {
+async function runGeminiOCRWithModel(images: { base64: string; mimeType: string }[], geminiApiKey: string, modelName: string) {
   try {
     const genAI = new GoogleGenerativeAI(geminiApiKey);
 
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: modelName,
       systemInstruction: 'You are an expert OCR system specialized in reading handwritten and printed text. Extract ALL text from images with the highest accuracy. When multiple images are provided, they are pages of the SAME document in order (page 1, page 2, etc.). You MUST combine the text from all pages in exact page order, preserving the logical flow — do NOT duplicate the overlapping text at page boundaries. Output ONLY the full combined extracted text with no additional commentary, no page markers, and no explanations.'
     });
 

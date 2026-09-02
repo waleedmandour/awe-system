@@ -15,6 +15,7 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 - Upload photos of handwritten essays (up to 2 pages) or type directly
 - Extract text using Google Gemini OCR or Google Cloud Vision API
 - Receive AI-powered assessment based on course-specific rubrics aligned with CEFR levels
+- Choose between cloud (Gemini) and on-device (local LLM) assessment in Settings — on-device assessment works fully offline and keeps essays 100% private
 - Get detailed feedback with justifications, error identification, and improvement suggestions
 - Select exam type (Mid-semester or Final) for FP0230 and FP0340 with appropriate word count targets
 - Enter an optional writing prompt for Foundation Final Exam to guide assessment
@@ -134,8 +135,9 @@ When FP0340 is selected, students choose between "For Mid-semester Exam" and "Fo
 - **Frontend:** Next.js 16, React 19, TypeScript
 - **Styling:** Tailwind CSS 4, shadcn/ui
 - **State Management:** Zustand (persisted to localStorage)
-- **AI Assessment:** Google Gemini (gemini-2.5-flash)
+- **AI Assessment:** Google Gemini (gemini-2.5-flash-lite primary, with automatic fallback to gemini-2.5-flash → gemini-2.0-flash)
 - **OCR:** Google Gemini + Google Cloud Vision API (DOCUMENT_TEXT_DETECTION)
+- **On-Device Assessment (optional):** MediaPipe LLM Inference for Web (Gemma / Qwen / Phi .task models), models stored in IndexedDB
 - **Animations:** Framer Motion
 - **PDF Generation:** PDFKit
 - **Testing:** Vitest
@@ -153,6 +155,7 @@ awe-system/
 ├── public/
 │   ├── squ_logo.png           # SQU logo
 │   ├── manifest.json          # PWA manifest
+│   ├── models/                # (optional) pre-downloaded local LLM weights
 │   └── sw.js                  # Service worker
 ├── prisma/
 │   └── schema.prisma          # Database schema (optional)
@@ -169,6 +172,7 @@ awe-system/
 │   │   └── page.tsx               # Main application (SPA router)
 │   ├── components/
 │   │   ├── ui/                    # shadcn/ui components
+│   │   ├── ModelSelectionCard.tsx # Cloud/local model picker card
 │   │   ├── screens/               # Modular screen components
 │   │   │   ├── WelcomeScreen.tsx
 │   │   │   ├── SetupScreen.tsx
@@ -187,12 +191,18 @@ awe-system/
 │   ├── hooks/                    # Custom React hooks
 │   └── lib/
 │       ├── store.ts              # Zustand store (courses, assignments, state)
+│       ├── config.ts             # AI model configuration (cloud tiers + local catalog)
+│       ├── local-llm-service.ts  # On-device assessment (MediaPipe LLM Inference)
+│       ├── model-downloader.ts   # Model downloads + IndexedDB storage
 │       ├── scoring-utils.ts      # Score recalculation utilities
 │       ├── display-utils.ts      # Display formatting helpers
 │       ├── image-utils.ts        # Image processing utilities
 │       ├── animations.ts         # Framer Motion animation configs
 │       └── __tests__/            # Unit tests
-│           └── scoring-utils.test.ts
+│           ├── scoring-utils.test.ts
+│           └── local-llm.test.ts
+├── scripts/
+│   └── download-models.js        # Pre-download local LLM weights to public/models/
 ├── CONTRIBUTING.md               # Contribution guidelines
 ├── CITATION.cff                  # Machine-readable citation file
 ├── LICENSE                       # MIT License
@@ -284,7 +294,7 @@ API keys are entered by each user inside the app and stored locally in their bro
 
 1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 2. Click "Get API Key"
-3. Free tier: 15 requests/minute
+3. Free tier: 15 requests/minute (1,000 requests/day on gemini-2.5-flash-lite)
 
 ### Google Vision OCR Key (Optional)
 
@@ -295,12 +305,63 @@ API keys are entered by each user inside the app and stored locally in their bro
 
 ---
 
+## AI Model Selection
+
+Students choose how their essays are assessed in **Settings → Assessment Model**. Both paths use the same course rubrics, and the cloud path remains the default behavior — nothing changes for students who never open Settings.
+
+### Cloud Models (default — requires internet)
+
+The assessment endpoint tries models in order and automatically falls back when one is rate-limited or unavailable:
+
+| Model | Free tier (per key) | Role |
+|-------|--------------------|------|
+| gemini-2.5-flash-lite | 15 req/min, 1,000 req/day | Primary — best quota, lowest latency |
+| gemini-2.5-flash | 10 req/min, 250 req/day | Automatic fallback |
+| gemini-2.0-flash | 15 req/min, 200 req/day | Last-resort fallback |
+
+Students can also pin a preferred cloud model (it is tried first, then the remaining tiers act as fallbacks). All tiers use structured JSON output with thinking disabled, and existing API keys continue to work unchanged.
+
+### On-Device Models (optional — works offline)
+
+For privacy-focused or offline use, students can download a small language model that runs **entirely in the browser** via MediaPipe LLM Inference (WebAssembly/WebGL). After the one-time download, on-device assessment needs no internet connection and essays never leave the phone.
+
+| Model | Download size | Notes |
+|-------|--------------:|-------|
+| Gemma 3 1B | ~531 MB | Recommended — verified, runs on most devices |
+| Gemma 2 2B | ~1.3 GB | Higher quality, needs a modern phone |
+| Qwen 2.5 0.5B | ~500 MB | Experimental — community conversion |
+| Phi-2 | ~1.2 GB | Experimental — community conversion |
+
+**How it works:**
+1. Download a model once in Settings (stored in the browser's IndexedDB, with a storage-space check and progress bar)
+2. Enable "Assess on-device first"
+3. Assessment runs locally; if the local model fails for any reason, the app automatically falls back to the cloud path
+
+**Model behavior on-device:**
+- Output is parsed into the same rubric-aligned assessment shape as the cloud route, with scores recomputed deterministically from per-criterion results
+- Rubric criteria, source texts, and word-count targets are resolved from client-side catalogs, so no server call is needed
+- The WASM runtime is warmed once and reused across retries
+
+**Pre-downloading models (optional, for restricted networks):**
+
+```bash
+npm run download-models            # downloads all catalog models to public/models/
+npm run download-models --list     # list available models
+```
+
+Then point the model's `downloadUrl` in `src/lib/config.ts` at `/models/<file>.task`. Model configuration (cloud tiers, free-tier limits, local catalog) lives in one file: `src/lib/config.ts`.
+
+> **Note:** Some Hugging Face model repos (e.g. Gemma) require accepting a license before downloading. If a direct download fails, accept the license on the model page or convert your own weights with the MediaPipe converter and host them yourself.
+
+---
+
 ## Privacy & Security
 
 - No data is shared with third parties beyond Google APIs (OCR and assessment)
 - API keys are stored locally in each user's browser (localStorage)
 - Essays and assessment records are stored in the browser, not on any server
 - Server-side API routes only proxy requests to Google APIs
+- **On-device assessment goes further: with a downloaded local model, essays never leave the device at all — no network request is made for assessment**
 - Safety filters are configured to minimize false-positive blocking of academic content
 
 ---

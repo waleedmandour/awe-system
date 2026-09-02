@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, SchemaType, Schema } from '@google/generative-ai';
+import { CLOUD_ASSESSMENT_TIERS, ALLOWED_CLOUD_MODELS, type ModelId } from '@/lib/config';
 
 // IMPORTANT: Vercel Hobby plan ($20/mo) allows maxDuration = 60.
 // On the FREE tier, Vercel caps serverless functions at 10 seconds regardless of this setting.
@@ -651,7 +652,23 @@ SCORING INSTRUCTIONS:
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
-const MODEL_TIERS = ['gemini-2.0-flash', 'gemini-2.5-flash'];
+/**
+ * Resolve the ordered cloud model tiers for this request.
+ *
+ * Default order comes from MODEL_CONFIG in `src/lib/config.ts`
+ * (gemini-2.5-flash-lite → gemini-2.5-flash → gemini-2.0-flash). If the client
+ * explicitly requests a model via `modelId` (chosen in Settings), that model is
+ * moved to the front of the queue and the remaining tiers act as fallbacks.
+ */
+function resolveModelTiers(preferredModelId?: string | null): ModelId[] {
+  const tiers = [...CLOUD_ASSESSMENT_TIERS];
+  if (preferredModelId && ALLOWED_CLOUD_MODELS.includes(preferredModelId)) {
+    const idx = tiers.indexOf(preferredModelId);
+    if (idx > 0) tiers.splice(idx, 1);
+    if (idx !== 0) tiers.unshift(preferredModelId);
+  }
+  return tiers;
+}
 
 const safetySettings = [
   { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
@@ -720,7 +737,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { text, courseCode, topic, examType, writingType, sourceTextId, apiKey: clientApiKey } = body;
+    const { text, courseCode, topic, examType, writingType, sourceTextId, modelId, apiKey: clientApiKey } = body;
 
     if (!text || !text.trim()) {
       return NextResponse.json(
@@ -851,6 +868,8 @@ export async function POST(request: NextRequest) {
     let assessment: any = null;
     let parsedOk = false;
 
+    const MODEL_TIERS = resolveModelTiers(modelId);
+
     modelTierLoop: for (let modelTierIndex = 0; modelTierIndex < MODEL_TIERS.length; modelTierIndex++) {
       const modelName = MODEL_TIERS[modelTierIndex];
       const model = genAI.getGenerativeModel({
@@ -859,7 +878,7 @@ export async function POST(request: NextRequest) {
         generationConfig: {
           responseMimeType: 'application/json',
           responseSchema: ASSESSMENT_SCHEMA,
-          // Disable thinking for gemini-2.5-flash to skip 3-8s reasoning overhead
+          // Disable thinking for gemini-2.5* models to skip 3-8s reasoning overhead
           ...(modelName.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
         },
       });

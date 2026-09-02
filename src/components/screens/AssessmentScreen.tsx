@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { recalculateScores } from '@/lib/scoring-utils';
+import { getSharedLocalLLM, resolveLocalAssessmentContext } from '@/lib/local-llm-service';
+import { ModelDownloader } from '@/lib/model-downloader';
 import {
   FileText,
   CheckCircle,
@@ -51,7 +53,7 @@ const PageTransition = ({ children, direction = 'right' }: { children: React.Rea
 
 // Assessment Screen (Processing)
 const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment) => void }) => {
-  const { selectedCourse, extractedText, geminiApiKey, assessmentApiKey, selectedExamType, selectedWritingType, selectedSourceTextId, writingPrompt } = useAppStore();
+  const { selectedCourse, extractedText, geminiApiKey, assessmentApiKey, selectedExamType, selectedWritingType, selectedSourceTextId, writingPrompt, useLocalAssessment, preferredLocalModelId, preferredCloudModelId } = useAppStore();
   const [progress, setProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +92,46 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
     setCurrentPhase(0);
 
     try {
+      // ── Local-first assessment (on-device, works offline, fully private) ──
+      // When enabled in Settings, the essay is scored on-device with the
+      // downloaded local model. Any failure automatically falls through to
+      // the cloud path below, so the existing cloud behavior is preserved.
+      if (useLocalAssessment && preferredLocalModelId) {
+        try {
+          const modelData = await new ModelDownloader().getModel(preferredLocalModelId);
+          if (!modelData) {
+            throw new Error('Local model is not downloaded. Falling back to cloud.');
+          }
+
+          const { criteria, options } = await resolveLocalAssessmentContext({
+            courseCode: selectedCourse?.code,
+            writingType: selectedWritingType || undefined,
+            sourceTextId: selectedSourceTextId || undefined,
+            topic: writingPrompt || null,
+          });
+
+          const localLLM = await getSharedLocalLLM(preferredLocalModelId, modelData);
+          const localAssessment = await localLLM.assessEssay(extractedText, criteria, options);
+
+          // Guard against aborts/duplicates before committing the result.
+          if (controller.signal.aborted) return;
+          if (completedRef.current) return;
+          completedRef.current = true;
+
+          setProgress(100);
+          setTimeout(() => onCompleteRef.current(recalculateScores(localAssessment)), 500);
+          return;
+        } catch (localErr) {
+          if (localErr instanceof DOMException && localErr.name === 'AbortError') return;
+          if (controller.signal.aborted) return;
+          console.warn('Local assessment failed — falling back to cloud.', localErr);
+          toast({
+            title: 'On-device model failed',
+            description: 'Falling back to cloud assessment…',
+          });
+        }
+      }
+
       const response = await fetch('/api/assess', {
         method: 'POST',
         headers: {
@@ -100,6 +142,7 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
           courseCode: selectedCourse?.code,
           topic: writingPrompt || null,
           apiKey: assessmentApiKey || geminiApiKey,
+          modelId: preferredCloudModelId || undefined,
           examType: selectedExamType || undefined,
           writingType: selectedWritingType || undefined,
           sourceTextId: selectedSourceTextId || undefined,
@@ -168,7 +211,7 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
         variant: 'destructive',
       });
     }
-  }, [extractedText, selectedCourse, geminiApiKey, assessmentApiKey, selectedExamType, writingPrompt, selectedSourceTextId, toast]);
+  }, [extractedText, selectedCourse, geminiApiKey, assessmentApiKey, selectedExamType, writingPrompt, selectedSourceTextId, useLocalAssessment, preferredLocalModelId, preferredCloudModelId, toast]);
 
   // Initial mount — start first assessment
   useEffect(() => {

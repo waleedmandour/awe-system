@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { ModelSelectionCard } from '@/components/ModelSelectionCard';
+import { LOCAL_MODELS, MODEL_CONFIG, ALLOWED_CLOUD_MODELS } from '@/lib/config';
+import { ModelDownloader, type DownloadProgress } from '@/lib/model-downloader';
 import {
   Settings,
   ClipboardCheck,
@@ -19,18 +22,49 @@ import {
   ChevronRight,
   Loader2,
   Info,
+  Cpu,
+  Cloud,
 } from 'lucide-react';
 import { PageTransition } from '@/lib/animations';
 
 // Setup Screen Component
 const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
-  const { geminiApiKey, assessmentApiKey, setGeminiApiKey, setAssessmentApiKey } = useAppStore();
+  const {
+    geminiApiKey,
+    assessmentApiKey,
+    setGeminiApiKey,
+    setAssessmentApiKey,
+    preferredCloudModelId,
+    setPreferredCloudModelId,
+    useLocalAssessment,
+    setUseLocalAssessment,
+    preferredLocalModelId,
+    setPreferredLocalModelId,
+  } = useAppStore();
   const [localGeminiKey, setLocalGeminiKey] = useState(geminiApiKey);
   const [localAssessmentKey, setLocalAssessmentKey] = useState(assessmentApiKey);
   const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [showAssessmentKey, setShowAssessmentKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [downloadedModels, setDownloadedModels] = useState<Record<string, boolean>>({});
+  const downloader = useMemo(() => new ModelDownloader(), []);
   const { toast } = useToast();
+
+  // Load which local models are already stored on this device.
+  useEffect(() => {
+    let cancelled = false;
+    downloader.listStoredModels().then((models) => {
+      if (cancelled) return;
+      const map: Record<string, boolean> = {};
+      for (const m of models) map[m.id] = true;
+      setDownloadedModels(map);
+    }).catch(() => {
+      // IndexedDB unavailable (private mode) — local models simply stay hidden.
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [downloader]);
 
   const handleSave = async () => {
     if (!localGeminiKey.trim()) {
@@ -68,6 +102,65 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
         variant: 'destructive',
       });
     }
+  };
+
+  // ── Model selection handlers ──────────────────────────────────────────
+
+  const refreshDownloadedModels = async () => {
+    try {
+      const models = await downloader.listStoredModels();
+      const map: Record<string, boolean> = {};
+      for (const m of models) map[m.id] = true;
+      setDownloadedModels(map);
+    } catch {
+      // ignore — refresh is best-effort
+    }
+  };
+
+  const handleCloudModelSelect = (modelId: string) => {
+    setPreferredCloudModelId(modelId);
+    const model = MODEL_CONFIG.freeTierLimits[modelId];
+    toast({
+      title: 'Cloud model updated',
+      description: model
+        ? `Free tier: ${model.requestsPerMinute} requests/min, ${model.requestsPerDay}/day.`
+        : 'The assessment will try this model first.',
+    });
+  };
+
+  const handleLocalModelDownload = async (modelId: string, onProgress: (p: DownloadProgress) => void) => {
+    const storage = await downloader.hasEnoughStorage(modelId);
+    if (!storage.ok) {
+      const freeGb = storage.freeBytes != null ? (storage.freeBytes / (1024 * 1024 * 1024)).toFixed(1) : '?';
+      toast({
+        title: 'Not enough storage',
+        description: `This model needs more space than the ${freeGb} GB currently free on your device.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+    await downloader.downloadModel(modelId, onProgress);
+    await refreshDownloadedModels();
+    toast({ title: 'Model downloaded', description: 'On-device assessment is now available — even offline.' });
+  };
+
+  const handleLocalModelDelete = async (modelId: string) => {
+    await downloader.deleteModel(modelId);
+    if (preferredLocalModelId === modelId) {
+      setPreferredLocalModelId(null);
+      setUseLocalAssessment(false);
+    }
+    await refreshDownloadedModels();
+    toast({ title: 'Model deleted', description: 'Storage space has been freed.' });
+  };
+
+  const handleLocalModelSelect = (modelId: string) => {
+    setPreferredLocalModelId(modelId);
+    setUseLocalAssessment(true);
+    toast({
+      title: 'On-device model selected',
+      description: 'Assessment will run privately on your phone. Cloud remains available as a fallback.',
+    });
   };
 
   return (
@@ -186,6 +279,108 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
                     Google AI Studio
                   </a>
                 </p>
+              </CardContent>
+            </Card>
+
+            {/* AI Model Selection */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                    <Cpu className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Assessment Model</CardTitle>
+                    <CardDescription className="text-xs">Choose cloud or on-device AI for essay assessment</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Cloud models */}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <Cloud className="w-3.5 h-3.5" /> CLOUD (REQUIRES INTERNET)
+                  </p>
+                  <div className="space-y-2">
+                    {ALLOWED_CLOUD_MODELS.map((modelId) => (
+                      <ModelSelectionCard
+                        key={modelId}
+                        kind="cloud"
+                        model={{
+                          id: modelId,
+                          name: modelId,
+                          description:
+                            modelId === MODEL_CONFIG.current
+                              ? 'Recommended — highest free-tier quota, lowest latency'
+                              : modelId === MODEL_CONFIG.fallback
+                              ? 'Automatic fallback when the primary model is rate-limited'
+                              : 'Legacy fallback model (extra resilience)',
+                          freeTier: MODEL_CONFIG.freeTierLimits[modelId],
+                        }}
+                        isSelected={(preferredCloudModelId ?? MODEL_CONFIG.current) === modelId}
+                        isDownloaded={false}
+                        onSelect={handleCloudModelSelect}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Local models */}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <Cpu className="w-3.5 h-3.5" /> ON-DEVICE (WORKS OFFLINE, 100% PRIVATE)
+                  </p>
+                  <div className="space-y-2">
+                    {LOCAL_MODELS.map((model) => (
+                      <ModelSelectionCard
+                        key={model.id}
+                        kind="local"
+                        model={model}
+                        isSelected={preferredLocalModelId === model.id}
+                        isDownloaded={!!downloadedModels[model.id]}
+                        onDownload={handleLocalModelDownload}
+                        onDelete={handleLocalModelDelete}
+                        onSelect={handleLocalModelSelect}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Local-first toggle */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!useLocalAssessment && !preferredLocalModelId) {
+                      toast({
+                        title: 'Download a model first',
+                        description: 'Choose an on-device model above and download it to enable offline assessment.',
+                      });
+                      return;
+                    }
+                    setUseLocalAssessment(!useLocalAssessment);
+                  }}
+                  className={`w-full flex items-center justify-between gap-3 p-3 rounded-xl border text-left transition-colors ${
+                    useLocalAssessment ? 'border-[#1a5f2a] bg-[#1a5f2a]/5' : 'border-border'
+                  }`}
+                >
+                  <span>
+                    <span className="block text-sm font-medium">Assess on-device first</span>
+                    <span className="block text-xs text-muted-foreground mt-0.5">
+                      Runs privately on your phone, even offline. Falls back to cloud automatically if it fails.
+                    </span>
+                  </span>
+                  <span
+                    className={`w-11 h-6 rounded-full p-0.5 shrink-0 transition-colors ${
+                      useLocalAssessment ? 'bg-[#1a5f2a]' : 'bg-muted-foreground/30'
+                    }`}
+                  >
+                    <span
+                      className={`block w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                        useLocalAssessment ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </span>
+                </button>
               </CardContent>
             </Card>
 

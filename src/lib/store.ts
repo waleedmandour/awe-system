@@ -554,6 +554,17 @@ interface AppState {
   setAssessmentApiKey: (key: string) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
 
+  // AI model selection
+  /** Preferred cloud model id (from MODEL_CONFIG), or null for the default tier order. */
+  preferredCloudModelId: string | null;
+  /** When true, assessment runs on-device with the selected local model first. */
+  useLocalAssessment: boolean;
+  /** The downloaded local model chosen for on-device assessment. */
+  preferredLocalModelId: string | null;
+  setPreferredCloudModelId: (modelId: string | null) => void;
+  setUseLocalAssessment: (useLocal: boolean) => void;
+  setPreferredLocalModelId: (modelId: string | null) => void;
+
   // OCR completion tracking (for cooldown timer)
   ocrCompletedAt: number | null;
   setOcrCompletedAt: (ts: number | null) => void;
@@ -670,6 +681,14 @@ export const useAppStore = create<AppState>()(
       setAssessmentApiKey: (key) => set({ assessmentApiKey: key }),
       setTheme: (theme) => set({ theme }),
 
+      // AI model selection
+      preferredCloudModelId: null as string | null,
+      useLocalAssessment: false,
+      preferredLocalModelId: null as string | null,
+      setPreferredCloudModelId: (modelId) => set({ preferredCloudModelId: modelId }),
+      setUseLocalAssessment: (useLocal) => set({ useLocalAssessment: useLocal }),
+      setPreferredLocalModelId: (modelId) => set({ preferredLocalModelId: modelId }),
+
       // OCR completion tracking
       ocrCompletedAt: null,
       setOcrCompletedAt: (ts) => set({ ocrCompletedAt: ts }),
@@ -747,6 +766,9 @@ export const useAppStore = create<AppState>()(
         geminiApiKey: state.geminiApiKey,
         assessmentApiKey: state.assessmentApiKey,
         theme: state.theme,
+        preferredCloudModelId: state.preferredCloudModelId,
+        useLocalAssessment: state.useLocalAssessment,
+        preferredLocalModelId: state.preferredLocalModelId,
         selectedCourse: state.selectedCourse,
         selectedExamType: state.selectedExamType,
         selectedWritingType: state.selectedWritingType,

@@ -15,6 +15,7 @@ import {
   LOCAL_MODELS,
   getLocalModel,
 } from '@/lib/config';
+import { computeDeviceWarnings } from '@/lib/device-check';
 
 const FOUNDATION_CRITERIA = getLocalCriteria('0340');
 const CREDIT_CRITERIA = getLocalCriteria('LANC2165');
@@ -277,5 +278,80 @@ describe('parseLocalAssessmentResponse', () => {
     expect(() => parseLocalAssessmentResponse(noScores, FOUNDATION_CRITERIA, {})).toThrow(/scores array/);
     const emptyScores = JSON.stringify({ scores: [], overallFeedback: 'x' });
     expect(() => parseLocalAssessmentResponse(emptyScores, FOUNDATION_CRITERIA, {})).toThrow(/scores array/);
+  });
+});
+
+describe('local prompt strictness', () => {
+  it('pins the rubric to strict examiner behavior with explicit caps', () => {
+    const prompt = buildLocalAssessmentPrompt('Test essay.', FOUNDATION_CRITERIA);
+    expect(prompt).toContain('GRADING STRICTNESS');
+    expect(prompt).toMatch(/strict, experienced examiner/);
+    expect(prompt).toMatch(/cap the grammar and vocabulary criteria at half/);
+    expect(prompt).toMatch(/without evidence the score is 0/i);
+    expect(prompt).toMatch(/do NOT default to middle scores/i);
+  });
+
+  it('forbids text outside the JSON contract', () => {
+    const prompt = buildLocalAssessmentPrompt('Test essay.', CREDIT_CRITERIA);
+    expect(prompt).toMatch(/no thinking aloud/);
+    expect(prompt).toMatch(/no text outside the JSON/);
+    expect(prompt).toMatch(/Start your response with \{/);
+  });
+});
+
+describe('computeDeviceWarnings (battery / slow-device readiness)', () => {
+  const GB = 1024 * 1024 * 1024;
+
+  it('warns when the battery is low and not charging', () => {
+    const warnings = computeDeviceWarnings({
+      batterySupported: true,
+      batteryLevel: 0.15,
+      batteryCharging: false,
+      modelBytes: 500 * 1024 * 1024,
+    });
+    expect(warnings.some((w) => w.includes('Battery is low'))).toBe(true);
+  });
+
+  it('does not warn when the battery is low but charging', () => {
+    const warnings = computeDeviceWarnings({
+      batterySupported: true,
+      batteryLevel: 0.15,
+      batteryCharging: true,
+      modelBytes: 500 * 1024 * 1024,
+    });
+    expect(warnings.some((w) => w.includes('Battery is low'))).toBe(false);
+  });
+
+  it('skips the battery check when the Battery API is unavailable (iOS Safari)', () => {
+    const warnings = computeDeviceWarnings({
+      batterySupported: false,
+      batteryLevel: null,
+      batteryCharging: null,
+      modelBytes: 500 * 1024 * 1024,
+    });
+    expect(warnings).toEqual([]);
+  });
+
+  it('warns when a large model meets entry-level hardware', () => {
+    const warnings = computeDeviceWarnings({
+      batterySupported: false,
+      cores: 4,
+      memoryGB: 2,
+      modelBytes: 1.5 * GB,
+    });
+    expect(warnings.some((w) => w.includes('1.5 GB') && w.includes('4 processing cores'))).toBe(true);
+    expect(warnings.some((w) => w.includes('2 GB RAM'))).toBe(true);
+  });
+
+  it('returns no warnings for a capable device with a small model', () => {
+    const warnings = computeDeviceWarnings({
+      batterySupported: true,
+      batteryLevel: 0.9,
+      batteryCharging: false,
+      cores: 8,
+      memoryGB: 6,
+      modelBytes: 500 * 1024 * 1024,
+    });
+    expect(warnings).toEqual([]);
   });
 });

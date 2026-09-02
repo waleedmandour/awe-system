@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ModelSelectionCard } from '@/components/ModelSelectionCard';
 import { LOCAL_MODELS, MODEL_CONFIG, ALLOWED_CLOUD_MODELS } from '@/lib/config';
 import { ModelDownloader, type DownloadProgress } from '@/lib/model-downloader';
+import { checkDeviceReadiness } from '@/lib/device-check';
 import {
   Settings,
   ClipboardCheck,
@@ -24,6 +25,7 @@ import {
   Info,
   Cpu,
   Cloud,
+  AlertTriangle,
 } from 'lucide-react';
 import { PageTransition } from '@/lib/animations';
 
@@ -47,6 +49,7 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [showAssessmentKey, setShowAssessmentKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [downloadedModels, setDownloadedModels] = useState<Record<string, boolean>>({});
+  const [deviceWarnings, setDeviceWarnings] = useState<string[]>([]);
   const downloader = useMemo(() => new ModelDownloader(), []);
   const { toast } = useToast();
 
@@ -65,6 +68,26 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
       cancelled = true;
     };
   }, [downloader]);
+
+  // Battery / slow-device readiness check for the selected local model.
+  // Runs when a local model becomes selected (or the screen opens with one
+  // already selected). Warning-only — never blocks the user's choice.
+  useEffect(() => {
+    let cancelled = false;
+    const activeModel = LOCAL_MODELS.find((m) => m.id === preferredLocalModelId);
+    if (!activeModel || !useLocalAssessment) {
+      setDeviceWarnings([]);
+      return;
+    }
+    checkDeviceReadiness(activeModel.sizeBytes ?? null).then((readiness) => {
+      if (!cancelled) setDeviceWarnings(readiness.warnings);
+    }).catch(() => {
+      // Readiness info unavailable — silently skip the warning.
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [preferredLocalModelId, useLocalAssessment]);
 
   const handleSave = async () => {
     if (!localGeminiKey.trim()) {
@@ -157,9 +180,23 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
   const handleLocalModelSelect = (modelId: string) => {
     setPreferredLocalModelId(modelId);
     setUseLocalAssessment(true);
+    // Surface battery / performance guidance immediately for this model.
+    const model = LOCAL_MODELS.find((m) => m.id === modelId);
+    checkDeviceReadiness(model?.sizeBytes ?? null)
+      .then((readiness) => {
+        setDeviceWarnings(readiness.warnings);
+        if (readiness.warnings.length > 0) {
+          toast({
+            title: 'Device check',
+            description: readiness.warnings[0],
+            variant: 'destructive',
+          });
+        }
+      })
+      .catch(() => {});
     toast({
       title: 'On-device model selected',
-      description: 'Assessment will run privately on your phone. Cloud remains available as a fallback.',
+      description: 'Assessment will run privately on your phone. OCR still uses cloud Gemini, and cloud remains a fallback for grading.',
     });
   };
 
@@ -330,6 +367,22 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
                   <p className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
                     <Cpu className="w-3.5 h-3.5" /> ON-DEVICE (WORKS OFFLINE, 100% PRIVATE)
                   </p>
+                  <p className="text-[11px] text-muted-foreground mb-2">
+                    Applies to essay <span className="font-medium">assessment only</span> — OCR (photo → text extraction) always uses cloud Gemini for high-quality character recognition.
+                  </p>
+                  {deviceWarnings.length > 0 && (
+                    <Alert className="mb-2 bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                      <AlertDescription className="text-xs text-amber-700 dark:text-amber-300">
+                        <span className="font-medium block mb-0.5">Heads-up about this device</span>
+                        <ul className="list-disc list-inside space-y-0.5">
+                          {deviceWarnings.map((w) => (
+                            <li key={w}>{w}</li>
+                          ))}
+                        </ul>
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <div className="space-y-2">
                     {LOCAL_MODELS.map((model) => (
                       <ModelSelectionCard
@@ -366,7 +419,7 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
                   <span>
                     <span className="block text-sm font-medium">Assess on-device first</span>
                     <span className="block text-xs text-muted-foreground mt-0.5">
-                      Runs privately on your phone, even offline. Falls back to cloud automatically if it fails.
+                      Runs privately on your phone, even offline — grading only; OCR always uses the cloud. Falls back to cloud automatically if it fails.
                     </span>
                   </span>
                   <span

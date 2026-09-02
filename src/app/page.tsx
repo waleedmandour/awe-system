@@ -27,7 +27,6 @@ export default function AWEApp() {
   const {
     currentStep,
     setStep,
-    geminiApiKey,
     selectedCourse,
     extractedText,
     setExtractedText,
@@ -40,13 +39,6 @@ export default function AWEApp() {
   const { toast } = useToast();
 
   const [direction, setDirection] = useState<'left' | 'right'>('right');
-
-  // Determine initial step based on state
-  useEffect(() => {
-    if (!geminiApiKey && currentStep === 'welcome') {
-      // Show setup after welcome if no API key — handled in navigateTo
-    }
-  }, [geminiApiKey, currentStep]);
 
   const navigateTo = (step: string) => {
     setDirection('right');
@@ -165,7 +157,10 @@ export default function AWEApp() {
       case 'welcome':
         return (
           <WelcomeScreen
-            onGetStarted={() => navigateTo(geminiApiKey ? 'course' : 'setup')}
+            // Always route through Settings after the splash screen so the
+            // user can review API keys and the assessment model (cloud vs
+            // on-device) before choosing a program, course, and task.
+            onGetStarted={() => navigateTo('setup')}
           />
         );
       case 'setup':

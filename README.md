@@ -309,6 +309,10 @@ API keys are entered by each user inside the app and stored locally in their bro
 
 Students choose how their essays are assessed in **Settings → Assessment Model**. Both paths use the same course rubrics, and the cloud path remains the default behavior — nothing changes for students who never open Settings.
 
+**Every user passes through Settings after the splash screen**, so API keys and the assessment model are reviewed before a program, course, and task are selected.
+
+**OCR is always cloud-based.** Photo → text extraction runs exclusively on Gemini (via the `/api/ocr` route) because small on-device models cannot match its handwriting/character-recognition quality. The on-device option affects the essay **assessment (grading) step only**.
+
 ### Cloud Models (default — requires internet)
 
 The assessment endpoint tries models in order and automatically falls back when one is rate-limited or unavailable:
@@ -339,8 +343,11 @@ Every download URL in the catalog is verified to work **without authentication**
 2. Enable "Assess on-device first"
 3. Assessment runs locally; if the local model fails for any reason, the app automatically falls back to the cloud path
 
+**Device readiness checks:** when an on-device model is selected, Settings shows a warning banner when the Battery Status API reports a low battery (< 20% and not charging) or when the device's cores/RAM look entry-level for the chosen model size. Warnings are advisory only — the user's choice is never blocked, and the cloud fallback always remains available (iOS Safari exposes no Battery API, so the check is simply skipped there).
+
 **Model behavior on-device:**
 - Output is parsed into the same rubric-aligned assessment shape as the cloud route, with scores recomputed deterministically from per-criterion results
+- The local prompt pins the rubric to strict examiner behavior (evidence-quoted scoring, explicit caps for error-heavy essays, full score range) and decoding uses a low temperature so small models stay deterministic and JSON-faithful
 - Rubric criteria, source texts, and word-count targets are resolved from client-side catalogs, so no server call is needed
 - The WASM runtime is warmed once and reused across retries
 

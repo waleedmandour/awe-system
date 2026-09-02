@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { CLOUD_OCR_TIERS } from '@/lib/config';
 
+// ─── OCR is intentionally CLOUD-ONLY ─────────────────────────────────────────
+// Text extraction from photos (handwriting/print) needs Gemini-grade vision
+// accuracy, which the small on-device models cannot provide. On-device LLMs
+// are used for the ASSESSMENT step only (see src/lib/local-llm-service.ts);
+// every OCR request flows through this server route via the cloud tiers.
+
 // IMPORTANT: This prevents Vercel from timing out the OCR process
 export const maxDuration = 60;
 

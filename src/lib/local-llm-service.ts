@@ -100,6 +100,10 @@ export function formatCriteriaForPrompt(criteria: LocalRubricCriterion[]): strin
  * Build the assessment prompt for a small on-device model. Small models need
  * an extremely explicit output contract, so the exact JSON shape is spelled
  * out and markdown/extra prose is forbidden.
+ *
+ * The GRADING STRICTNESS block is essential for small models: without it they
+ * regress to generous middle-of-the-road scores and vague praise. It pins the
+ * rubric to hard evidence and gives explicit caps for common failure modes.
  */
 export function buildLocalAssessmentPrompt(essayText: string, criteria: LocalRubricCriterion[], options: LocalAssessmentOptions = {}): string {
   const criteriaBlock = formatCriteriaForPrompt(criteria);
@@ -128,13 +132,20 @@ STUDENT ESSAY:
 ${essayText}
 """
 
+GRADING STRICTNESS (apply before scoring):
+- Act as a strict, experienced examiner. Award high scores ONLY for ability clearly demonstrated in the essay text.
+- If the essay is mostly off-topic, incoherent, or far too short, score 1 or below on every criterion.
+- Frequent grammar, spelling, or vocabulary errors MUST cap the grammar and vocabulary criteria at half of maximum or lower.
+- Never invent strengths. Every claim must be backed by a quote from the essay; without evidence the score is 0.
+- Use the full score range including 0 — do NOT default to middle scores.
+
 SCORING RULES:
 - Score each criterion from 0 to its maximum, in 0.5 steps. Use the full range; do not default to middle scores.
 - For each criterion quote at least ONE exact phrase from the essay.
 - List up to 3 specific errors as { "quote", "explanation" }. Do NOT provide corrections.
 - overallFeedback must be 3-4 sentences.
 
-Respond with ONLY valid JSON in EXACTLY this format — no markdown, no code fences, no extra text:
+Respond with ONLY valid JSON in EXACTLY this format. Start your response with { and end with } — no markdown, no code fences, no thinking aloud, no text outside the JSON:
 {"scores":[{"criterionName":"<exact criterion name>","score":<number>,"justification":"<2-3 sentences with quoted evidence>","strengths":"<1-2 specific strengths>","mistakes":[{"quote":"<exact text>","explanation":"<why it is wrong>"}],"suggestions":"<1-2 actionable suggestions>"}],"overallFeedback":"<3-4 sentences>"}`;
 }
 
@@ -285,7 +296,9 @@ export class LocalLLMService {
         baseOptions: { modelAssetPath: this.modelBlobUrl },
         maxTokens: 2048,
         topK: 40,
-        temperature: 0.3,
+        // Low temperature keeps small models deterministic and rubric-focused;
+        // higher values make them drift into chatty, non-JSON output.
+        temperature: 0.2,
       });
       this.modelId = modelId;
     };

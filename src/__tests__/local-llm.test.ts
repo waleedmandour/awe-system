@@ -114,9 +114,27 @@ describe('getLocalCriteria', () => {
       'Grammatical Range and Accuracy',
     ]);
     // Every foundation exam course shares the same rubric
-    for (const code of ['0230', '0340', '0450', '0560', '0603']) {
+    for (const code of ['0230', '0340', '0450', '0603']) {
       expect(getLocalCriteria(code)).toEqual(FOUNDATION_CRITERIA);
     }
+  });
+
+  it('routes FP0560 to the writing-task flow and keeps the foundation rubric as legacy fallback', () => {
+    // Synthesis essay uses the official FP0560 rubric (6-point scale)
+    const synthesis = getLocalCriteria('0560', 'synthesis');
+    expect(synthesis.map((c) => c.maxScore)).toEqual([6, 6, 6, 6]);
+    expect(synthesis.map((c) => c.name)).toEqual([
+      'Task Response',
+      'Coherence and Cohesion',
+      'Lexical Resource',
+      'Grammatical Range and Accuracy',
+    ]);
+    expect(synthesis[0].description).toMatch(/cause OR effect/i);
+    expect(synthesis[0].description).toMatch(/TWO source texts/i);
+    // Summary writing copies the LANC2160 summary details
+    expect(getLocalCriteria('0560', 'summary')).toEqual(getLocalCriteria('LANC2160', 'summary'));
+    // Stale clients without a writingType keep the legacy foundation rubric
+    expect(getLocalCriteria('0560')).toEqual(FOUNDATION_CRITERIA);
   });
 
   it('uses the summary rubric for LANC2160 summary writing', () => {

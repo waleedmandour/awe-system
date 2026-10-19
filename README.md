@@ -17,9 +17,10 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 - Receive AI-powered assessment based on course-specific rubrics aligned with CEFR levels
 - Choose between cloud (Gemini) and on-device (local LLM) assessment in Settings — on-device assessment works fully offline and keeps essays 100% private
 - Get detailed feedback with justifications, error identification, and improvement suggestions
-- Select exam type (Mid-semester or Final) for Foundation courses (FP0230, FP0340, FP0450, FP0560, FP0603) with appropriate word count targets
+- Select exam type (Mid-semester or Final) for Foundation courses (FP0230, FP0340, FP0450, FP0603) with appropriate word count targets
 - Enter an optional writing prompt for Foundation Final Exam to guide assessment
 - Practice summary writing and synthesis essay writing for LANC2160 with source texts
+- FP0560 follows the LANC2160 writing-task flow: Synthesis Essay (cause OR effect essay from TWO texts, official FP0560 rubric, 300 words expected / 250-350 accepted) first, then Summary Writing
 - Practice 4-paragraph essay writing for LANC1070 with mid-semester and final tests
 - Download assessment reports as PDF
 - Install the app on mobile devices for quick offline-capable access
@@ -30,19 +31,24 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 
 ### Foundation Program
 
-| Course Code | Course Name | Rubric Scale | Exam Types |
-|-------------|-------------|:------------:|------------|
+| Course Code | Course Name | Rubric Scale | Writing Tasks / Exam Types |
+|-------------|-------------|:------------:|----------------------------|
 | FP0230 | English Language Foundation I | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
 | FP0340 | English Language Foundation II | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
 | FP0450 | English Language Foundation | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
-| FP0560 | English Language Foundation | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
+| FP0560 | English Language Foundation | 0-6 per criterion (450S/560S/603S rubric) | Synthesis Essay (250-350 words) / Summary Writing |
 | FP0603 | English Language Foundation | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
 
-**Foundation Special Features (all courses above):**
+**Foundation Special Features (exam-type courses):**
 - Exam-type selection (Mid-semester or Final) with dynamic word count targets
 - Optional writing prompt input for Final Exam — if provided by the instructor, it is appended to the assessment criteria sent to Gemini, enabling more focused and context-aware feedback
 
-> **Note:** FP0450, FP0560 and FP0603 currently reuse the FP0340 course details (rubrics, word-count targets, exam flow) and will be updated separately.
+> **Note:** FP0450 and FP0603 currently reuse the FP0340 course details (rubrics, word-count targets, exam flow) and will be updated separately.
+
+**FP0560 — Writing-Task Flow (copied from LANC2160):**
+- Students choose the writing task after selecting the course: **Synthesis Essay** first, then **Summary Writing**
+- **Synthesis Essay:** a Cause OR Effect essay that synthesizes information from TWO source texts, expected ~300 words (250-350 accepted), assessed with the official "Writing Assessment Criteria — Levels 450S, 560S & 603S" rubric. Task texts are uploaded by the instructor one by one (`FP0560_SYNTHESIS_TASKS` in `src/lib/store.ts`); until then the essay is assessed against the rubric directly
+- **Summary Writing:** same details as LANC2160 (source text + 0-5 summary rubric)
 
 ### Post-Foundation Program
 
@@ -56,7 +62,7 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 
 ## Assessment Criteria
 
-### Foundation Courses (FP0230, FP0340, FP0450, FP0560, FP0603)
+### Foundation Courses (FP0230, FP0340, FP0450, FP0603)
 
 | Criterion | Scale | Description |
 |-----------|:-----:|-------------|
@@ -66,6 +72,23 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 | Grammatical Range and Accuracy | 0-6 | Range and accuracy of grammatical structures and punctuation |
 
 **Total:** 24 marks | **Special Rules:** Off-topic penalties apply to Task Response and Lexical Resource. Half-point scoring (0.5 increments) supported.
+
+### FP0560 — Synthesis Essay (Levels 450S/560S/603S Rubric)
+
+Cause OR Effect essay synthesizing information from TWO source texts. Expected length: 300 words (acceptable range: 250-350 words).
+
+| Criterion | Scale | Bands |
+|-----------|:-----:|-------|
+| Task Response | 0-6 | Very Poor 0-2 · Unsatisfactory 3 · Satisfactory 3.5-4 · Good 4.5-5 · Excellent 5.5-6 |
+| Coherence and Cohesion | 0-6 | Very Poor 0-2 · Unsatisfactory 3 · Satisfactory 3.5-4 · Good 4.5-5 · Excellent 5.5-6 |
+| Lexical Resource | 0-6 | Very Poor 0-2 · Unsatisfactory 3 · Satisfactory 3.5-4 · Good 4.5-5 · Excellent 5.5-6 |
+| Grammatical Range and Accuracy | 0-6 | Very Poor 0-2 · Unsatisfactory 3 · Satisfactory 3.5-4 · Good 4.5-5 · Excellent 5.5-6 |
+
+**Total:** 24 marks | **Special Rules (official rubric):** Somewhat off-topic → Task Response 0 and deduct 50% of Lexical Resource marks. Completely off-topic → zero (with the consent of the PC). Half-mark scoring from 3.
+
+### FP0560 — Summary Writing
+
+Identical to the LANC2160 summary writing details (0-5 criteria, source-text practice). See the LANC2160 summary section below.
 
 ### LANC1070 — 4-Paragraph Essay Rubric
 
@@ -124,7 +147,7 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 
 ## Foundation Exam-Type Selection
 
-All Foundation courses (FP0230, FP0340, FP0450, FP0560, FP0603) support two exam types with different word count targets:
+Foundation exam courses (FP0230, FP0340, FP0450, FP0603) support two exam types with different word count targets:
 
 | Exam Type | Target Word Count | Acceptable Range |
 |-----------|:-----------------:|:----------------:|

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAppStore, type Course, SUMMARY_SOURCE_TEXTS, SYNTHESIS_ASSIGNMENTS, LANC1070_PRACTICE_TESTS, LANC2146_PRACTICE_TESTS, LANC2070_PRACTICE_TESTS } from '@/lib/store';
+import { useAppStore, type Course, SUMMARY_SOURCE_TEXTS, SYNTHESIS_ASSIGNMENTS, FP0560_SYNTHESIS_TASKS, LANC1070_PRACTICE_TESTS, LANC2146_PRACTICE_TESTS, LANC2070_PRACTICE_TESTS } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,9 +25,21 @@ import { PageTransition } from '@/lib/animations';
 /**
  * Foundation courses that follow the FP0230/FP0340 exam flow: exam-type
  * selection (Mid-semester / Final) plus an optional writing prompt.
- * FP0450, FP0560 and FP0603 currently reuse the FP0340 details.
+ * FP0450 and FP0603 currently reuse the FP0340 details.
  */
-const FOUNDATION_EXAM_COURSES = ['0230', '0340', '0450', '0560', '0603'];
+const FOUNDATION_EXAM_COURSES = ['0230', '0340', '0450', '0603'];
+
+/**
+ * Courses that follow the LANC2160 writing-task flow: writing-type selection
+ * (Summary Writing / Synthesis Essay) with source text or task selection.
+ * FP0560 copies the LANC2160 details, with two differences: the Synthesis
+ * Essay option is listed first, and its synthesis tasks come from
+ * FP0560_SYNTHESIS_TASKS (cause OR effect essay from TWO texts — task texts
+ * are uploaded by the instructor one by one).
+ */
+const WRITING_TYPE_COURSES = ['LANC2160', '0560'];
+/** Courses whose writing-type buttons start with Synthesis Essay. */
+const SYNTHESIS_FIRST_COURSES = ['0560'];
 
 // Course Selection Screen
 const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onBack: () => void }) => {
@@ -38,9 +50,14 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
   const needsExamType = !!selectedCourse && FOUNDATION_EXAM_COURSES.includes(selectedCourse.code);
 
   // Whether the currently selected course requires a writing-type choice
-  const needsWritingType = selectedCourse?.code === 'LANC2160';
+  const needsWritingType = !!selectedCourse && WRITING_TYPE_COURSES.includes(selectedCourse.code);
   const needsSourceText = needsWritingType && selectedWritingType === 'summary';
-  const needsSynthesisAssignment = needsWritingType && selectedWritingType === 'synthesis';
+  // Synthesis task pool for the selected course (0560 uses its own catalog)
+  const synthesisPool = selectedCourse?.code === '0560' ? FP0560_SYNTHESIS_TASKS : SYNTHESIS_ASSIGNMENTS;
+  // A synthesis task must be chosen when the pool has entries. FP0560's
+  // catalog is empty until the instructor uploads the task texts, so the
+  // essay can be submitted without one and is assessed against the rubric.
+  const needsSynthesisAssignment = needsWritingType && selectedWritingType === 'synthesis' && synthesisPool.length > 0;
 
   // Whether the currently selected course requires a practice-type choice (LANC1070 or LANC2146)
   const needsPracticeType = selectedCourse?.code === 'LANC1070' || selectedCourse?.code === 'LANC2146' || selectedCourse?.code === 'LANC2070';
@@ -83,7 +100,7 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
         return `Summary: ${src?.title.split('—')[0].trim() || ''}`;
       }
       if (selectedWritingType === 'synthesis' && needsSynthesisAssignment && selectedSourceTextId) {
-        const asn = SYNTHESIS_ASSIGNMENTS.find(a => a.id === selectedSourceTextId);
+        const asn = synthesisPool.find(a => a.id === selectedSourceTextId);
         return `Synthesis: ${asn?.title || ''}`;
       }
       return selectedWritingType === 'summary' ? 'Summary Writing' : 'Synthesis Essay';
@@ -160,7 +177,7 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
 
               // Check which children to show for this specific course
               const showExamType = showChildren && FOUNDATION_EXAM_COURSES.includes(course.code);
-              const showWritingType = showChildren && course.code === 'LANC2160';
+              const showWritingType = showChildren && WRITING_TYPE_COURSES.includes(course.code);
               const showPracticeType = showChildren && (course.code === 'LANC1070' || course.code === 'LANC2146' || course.code === 'LANC2070');
               const showSourceText = showWritingType && selectedWritingType === 'summary';
               const showSynthesisAssignment = showWritingType && selectedWritingType === 'synthesis';
@@ -289,35 +306,66 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
                             </div>
                           )}
 
-                          {/* Writing-Type Selection for LANC2160 */}
+                          {/* Writing-Type Selection for LANC2160 / FP0560 */}
                           {showWritingType && (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-muted-foreground px-1">
                                 Select writing task:
                               </p>
                               <div className="flex gap-2">
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setSelectedWritingType('summary'); }}
-                                  className={`flex-1 flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-4 py-4 text-sm font-medium transition-all duration-200 ios-press ${
-                                    selectedWritingType === 'summary'
-                                      ? 'border-[#c9a227] bg-[#c9a227]/10 text-[#c9a227]'
-                                      : 'border-muted-foreground/20 bg-white hover:border-muted-foreground/40 text-muted-foreground'
-                                  }`}
-                                >
-                                  <FileText className="w-5 h-5" />
-                                  <span>Summary Writing</span>
-                                </button>
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setSelectedWritingType('synthesis'); }}
-                                  className={`flex-1 flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-4 py-4 text-sm font-medium transition-all duration-200 ios-press ${
-                                    selectedWritingType === 'synthesis'
-                                      ? 'border-[#c9a227] bg-[#c9a227]/10 text-[#c9a227]'
-                                      : 'border-muted-foreground/20 bg-white hover:border-muted-foreground/40 text-muted-foreground'
-                                  }`}
-                                >
-                                  <ClipboardList className="w-5 h-5" />
-                                  <span>Synthesis Essay</span>
-                                </button>
+                                {SYNTHESIS_FIRST_COURSES.includes(course.code) ? (
+                                  <>
+                                    {/* FP0560 order: Synthesis Essay first, then Summary Writing */}
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setSelectedWritingType('synthesis'); }}
+                                      className={`flex-1 flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-4 py-4 text-sm font-medium transition-all duration-200 ios-press ${
+                                        selectedWritingType === 'synthesis'
+                                          ? 'border-[#c9a227] bg-[#c9a227]/10 text-[#c9a227]'
+                                          : 'border-muted-foreground/20 bg-white hover:border-muted-foreground/40 text-muted-foreground'
+                                      }`}
+                                    >
+                                      <ClipboardList className="w-5 h-5" />
+                                      <span>Synthesis Essay</span>
+                                    </button>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setSelectedWritingType('summary'); }}
+                                      className={`flex-1 flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-4 py-4 text-sm font-medium transition-all duration-200 ios-press ${
+                                        selectedWritingType === 'summary'
+                                          ? 'border-[#c9a227] bg-[#c9a227]/10 text-[#c9a227]'
+                                          : 'border-muted-foreground/20 bg-white hover:border-muted-foreground/40 text-muted-foreground'
+                                      }`}
+                                    >
+                                      <FileText className="w-5 h-5" />
+                                      <span>Summary Writing</span>
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    {/* LANC2160 order: Summary Writing first, then Synthesis Essay */}
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setSelectedWritingType('summary'); }}
+                                      className={`flex-1 flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-4 py-4 text-sm font-medium transition-all duration-200 ios-press ${
+                                        selectedWritingType === 'summary'
+                                          ? 'border-[#c9a227] bg-[#c9a227]/10 text-[#c9a227]'
+                                          : 'border-muted-foreground/20 bg-white hover:border-muted-foreground/40 text-muted-foreground'
+                                      }`}
+                                    >
+                                      <FileText className="w-5 h-5" />
+                                      <span>Summary Writing</span>
+                                    </button>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setSelectedWritingType('synthesis'); }}
+                                      className={`flex-1 flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-4 py-4 text-sm font-medium transition-all duration-200 ios-press ${
+                                        selectedWritingType === 'synthesis'
+                                          ? 'border-[#c9a227] bg-[#c9a227]/10 text-[#c9a227]'
+                                          : 'border-muted-foreground/20 bg-white hover:border-muted-foreground/40 text-muted-foreground'
+                                      }`}
+                                    >
+                                      <ClipboardList className="w-5 h-5" />
+                                      <span>Synthesis Essay</span>
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </div>
                           )}
@@ -401,54 +449,63 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
                             </div>
                           )}
 
-                          {/* Synthesis Assignment Selection */}
-                          {showSynthesisAssignment && (
-                            <div className="space-y-2">
-                              <p className="text-sm font-medium text-muted-foreground px-1">
-                                Select synthesis assignment:
-                              </p>
+                          {/* Synthesis Task Selection (LANC2160 assignments / FP0560 task texts) */}
+                          {showSynthesisAssignment && (() => {
+                            const courseSynthesisPool = course.code === '0560' ? FP0560_SYNTHESIS_TASKS : SYNTHESIS_ASSIGNMENTS;
+                            return (
                               <div className="space-y-2">
-                                {SYNTHESIS_ASSIGNMENTS.map((assignment) => {
-                                  const isSelected = selectedSourceTextId === assignment.id;
-                                  return (
-                                    <motion.div key={assignment.id} whileTap={{ scale: 0.98 }}>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); setSelectedSourceTextId(assignment.id); }}
-                                        className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
-                                          isSelected
-                                            ? 'border-[#c9a227] bg-[#c9a227]/5'
-                                            : 'border-muted-foreground/20 bg-white hover:border-[#c9a227]/30'
-                                        }`}
-                                      >
-                                        <div className="flex items-start gap-3">
-                                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                                            isSelected
-                                              ? 'bg-[#c9a227] text-white'
-                                              : 'bg-muted text-muted-foreground'
-                                          }`}>
-                                            <ClipboardList className="w-5 h-5" />
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <p className={`text-sm font-semibold leading-tight ${
-                                              isSelected ? 'text-[#c9a227]' : 'text-foreground'
-                                            }`}>
-                                              {assignment.title}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground mt-0.5">
-                                              {assignment.sources.length} sources &middot; {assignment.targetWordCount.min}&ndash;{assignment.targetWordCount.max} words
-                                            </p>
-                                            <p className="text-xs text-muted-foreground mt-0.5">
-                                              {assignment.expectedParagraphs} paragraphs expected
-                                            </p>
-                                          </div>
-                                        </div>
-                                      </button>
-                                    </motion.div>
-                                  );
-                                })}
+                                <p className="text-sm font-medium text-muted-foreground px-1">
+                                  {course.code === '0560' ? 'Select synthesis task text:' : 'Select synthesis assignment:'}
+                                </p>
+                                {courseSynthesisPool.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {courseSynthesisPool.map((assignment) => {
+                                      const isSelected = selectedSourceTextId === assignment.id;
+                                      return (
+                                        <motion.div key={assignment.id} whileTap={{ scale: 0.98 }}>
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setSelectedSourceTextId(assignment.id); }}
+                                            className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
+                                              isSelected
+                                                ? 'border-[#c9a227] bg-[#c9a227]/5'
+                                                : 'border-muted-foreground/20 bg-white hover:border-[#c9a227]/30'
+                                            }`}
+                                          >
+                                            <div className="flex items-start gap-3">
+                                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                                isSelected
+                                                  ? 'bg-[#c9a227] text-white'
+                                                  : 'bg-muted text-muted-foreground'
+                                              }`}>
+                                                <ClipboardList className="w-5 h-5" />
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <p className={`text-sm font-semibold leading-tight ${
+                                                  isSelected ? 'text-[#c9a227]' : 'text-foreground'
+                                                }`}>
+                                                  {assignment.title}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                  {assignment.sources.length} sources &middot; {assignment.targetWordCount.min}&ndash;{assignment.targetWordCount.max} words
+                                                </p>
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                  {assignment.expectedParagraphs} paragraphs expected
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </button>
+                                        </motion.div>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <div className="text-center py-6 px-4 text-muted-foreground text-sm">
+                                    No task texts uploaded yet. Your cause/effect synthesis essay will be assessed against the official FP0560 writing rubric (300 words expected, 250&ndash;350 accepted).
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                          )}
+                            );
+                          })()}
 
                           {/* Practice Test Selection for LANC1070 */}
                           {showPracticeTest && (

@@ -51,6 +51,14 @@ const LOCAL_RUBRIC_CRITERIA: Record<string, LocalRubricCriterion[]> = {
     { name: 'Lexical Resource', maxScore: 6, description: 'Range and accuracy of vocabulary, including word choice and spelling.' },
     { name: 'Grammatical Range and Accuracy', maxScore: 6, description: 'Range and accuracy of grammatical structures and punctuation.' },
   ],
+  // FP0560 synthesis essay — official "Writing Assessment Criteria — Levels
+  // 450S, 560S & 603S" rubric (cause OR effect essay from TWO texts).
+  fp0560Synthesis: [
+    { name: 'Task Response', maxScore: 6, description: 'How well the essay fulfils the synthesis task requirements (cause OR effect essay synthesizing TWO source texts), including audience, purpose, genre, topic development and paraphrasing.' },
+    { name: 'Coherence and Cohesion', maxScore: 6, description: 'Logical organization, paragraphing, referencing, and use of cohesive devices.' },
+    { name: 'Lexical Resource', maxScore: 6, description: 'Range and accuracy of academic vocabulary, word choice, word form, and spelling.' },
+    { name: 'Grammatical Range and Accuracy', maxScore: 6, description: 'Range and accuracy of grammatical structures and punctuation.' },
+  ],
   summary: [
     { name: 'Task Achievement', maxScore: 5, description: "How effectively the summary captures the main points of the source text using the student's own words." },
     { name: 'Coherence & Cohesion', maxScore: 5, description: 'How logically the summary is organized and how well ideas are linked together.' },
@@ -77,13 +85,18 @@ const LOCAL_RUBRIC_CRITERIA: Record<string, LocalRubricCriterion[]> = {
   ],
 };
 
-/** Foundation course codes that use the shared foundation rubric (FP0450, FP0560 and FP0603 reuse the FP0340 details). */
-const FOUNDATION_COURSE_CODES = ['0230', '0340', '0450', '0560', '0603'];
+/** Foundation course codes that use the shared foundation rubric (FP0450 and FP0603 reuse the FP0340 details). */
+const FOUNDATION_COURSE_CODES = ['0230', '0340', '0450', '0603'];
 
 /** Resolve the criteria set for a course — mirrors the server-side branching. */
 export function getLocalCriteria(courseCode?: string | null, writingType?: string | null): LocalRubricCriterion[] {
   const isFoundation = !!courseCode && FOUNDATION_COURSE_CODES.includes(courseCode);
   if (isFoundation) return LOCAL_RUBRIC_CRITERIA.foundation;
+  // FP0560 follows the LANC2160 writing-task flow (synthesis / summary);
+  // without a writingType it keeps the legacy foundation rubric.
+  if (courseCode === '0560' && writingType === 'summary') return LOCAL_RUBRIC_CRITERIA.summary;
+  if (courseCode === '0560' && writingType === 'synthesis') return LOCAL_RUBRIC_CRITERIA.fp0560Synthesis;
+  if (courseCode === '0560') return LOCAL_RUBRIC_CRITERIA.foundation;
   if (courseCode === 'LANC2160' && writingType === 'summary') return LOCAL_RUBRIC_CRITERIA.summary;
   if (courseCode === 'LANC2160' && writingType === 'synthesis') return LOCAL_RUBRIC_CRITERIA.synthesis;
   if (courseCode === 'LANC1070') return LOCAL_RUBRIC_CRITERIA.synthesis;
@@ -412,6 +425,31 @@ export async function resolveLocalAssessmentContext(params: {
       if (src) {
         base.options.sourceTexts = [{ title: src.title, content: src.originalText }];
         base.options.targetWordCount = { min: src.targetMin, max: src.targetMax, ideal: src.targetIdeal, label: `Summary of "${src.title}"` };
+      }
+    } else if (courseCode === '0560' && writingType === 'summary') {
+      // FP0560 summary writing copies the LANC2160 details.
+      const { SUMMARY_SOURCE_TEXTS } = await import('@/lib/store');
+      const src = SUMMARY_SOURCE_TEXTS.find((s) => s.id === sourceTextId);
+      if (src) {
+        base.options.sourceTexts = [{ title: src.title, content: src.originalText }];
+        base.options.targetWordCount = { min: src.targetMin, max: src.targetMax, ideal: src.targetIdeal, label: `Summary of "${src.title}"` };
+      }
+    } else if (courseCode === '0560' && writingType === 'synthesis') {
+      // FP0560 synthesis: cause OR effect essay from TWO texts, ~300 words
+      // (250-350 accepted). Task texts are uploaded one by one; without one
+      // the essay is assessed against the official FP0560 rubric only.
+      const { FP0560_SYNTHESIS_TASKS } = await import('@/lib/store');
+      const t = FP0560_SYNTHESIS_TASKS.find((x) => x.id === sourceTextId);
+      if (t) {
+        base.options.sourceTexts = t.sources.map((s) => ({ title: s.title, content: s.content }));
+        base.options.targetWordCount = {
+          min: t.targetWordCount.min || 250,
+          max: t.targetWordCount.max || 350,
+          ideal: t.targetWordCount.ideal || 300,
+          label: `Synthesis: "${t.title}"`,
+        };
+      } else {
+        base.options.targetWordCount = { min: 250, max: 350, ideal: 300, label: 'FP0560 Synthesis Essay' };
       }
     } else if (courseCode === 'LANC2160' && writingType === 'synthesis') {
       const { SYNTHESIS_ASSIGNMENTS } = await import('@/lib/store');

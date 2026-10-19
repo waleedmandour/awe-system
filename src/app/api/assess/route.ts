@@ -18,12 +18,15 @@ const FOUNDATION_WORD_COUNTS: Record<string, Record<string, { min: number; max: 
     'mid-semester': { min: 110, max: 150, ideal: 120, label: 'FP0340 Mid-semester Exam' },
     'final':        { min: 140, max: 220, ideal: 200, label: 'FP0340 Final Exam' },
   },
-  // FP0450, FP0560 and FP0603 currently reuse the FP0340 exam word-count
-  // targets until their own details are finalised.
+  // FP0450 and FP0603 currently reuse the FP0340 exam word-count targets
+  // until their own details are finalised.
   '0450': {
     'mid-semester': { min: 110, max: 150, ideal: 120, label: 'FP0450 Mid-semester Exam' },
     'final':        { min: 140, max: 220, ideal: 200, label: 'FP0450 Final Exam' },
   },
+  // FP0560 now follows the LANC2160 writing-task flow (synthesis/summary).
+  // These exam targets are kept only as a legacy fallback for stale PWA
+  // clients that still send the old exam-type request shape.
   '0560': {
     'mid-semester': { min: 110, max: 150, ideal: 120, label: 'FP0560 Mid-semester Exam' },
     'final':        { min: 140, max: 220, ideal: 200, label: 'FP0560 Final Exam' },
@@ -222,6 +225,72 @@ const SYNTHESIS_RUBRICS = {
       }
     },
   ],
+};
+
+/**
+ * Official FP0560 writing rubric — "Writing Assessment Criteria — Levels
+ * 450S, 560S & 603S" (last update: Fall 21). Used for the FP0560 synthesis
+ * essay (cause OR effect essay synthesizing TWO texts).
+ *
+ * Band mapping (half-marks from 3): Very Poor 0-2 | Unsatisfactory 3 |
+ * Satisfactory 3.5-4 | Good 4.5-5 | Excellent 5.5-6.
+ */
+const FP0560_SYNTHESIS_CRITERIA = [
+  { name: 'Task Response', maxScore: 6, description: 'How well the essay fulfils the synthesis task requirements (cause OR effect essay synthesizing TWO source texts), including audience, purpose, genre, topic development and paraphrasing.' },
+  { name: 'Coherence and Cohesion', maxScore: 6, description: 'Logical organization, paragraphing, referencing, and use of cohesive devices.' },
+  { name: 'Lexical Resource', maxScore: 6, description: 'Range and accuracy of academic vocabulary, word choice, word form, and spelling.' },
+  { name: 'Grammatical Range and Accuracy', maxScore: 6, description: 'Range and accuracy of grammatical structures and punctuation.' },
+];
+
+const FP0560_SYNTHESIS_TARGET = { min: 250, max: 350, ideal: 300, label: 'FP0560 Synthesis Essay' };
+
+const FP0560_SYNTHESIS_RUBRICS = {
+  criteria: [
+    {
+      name: 'Task Response', maxScore: 6,
+      rubric: {
+        '0-2': 'Very Poor: Text fails to fulfil any task requirements and shows no understanding of audience, purpose or genre. Length of text may be inappropriate (less than 150 words). No attempt of paraphrasing.',
+        '3': 'Unsatisfactory: Response does not adequately fulfil task requirements and shows little awareness of audience, purpose and genre. Little or no attempt at topic development. Length of text may be inappropriate (less than 200 words). Very little attempt at paraphrasing.',
+        '3.5-4': 'Satisfactory: Response fulfils most task requirements and shows adequate awareness of audience, purpose and genre. Topic development is attempted but may be limited, predictable, and/or irrelevant in places. Length of text may be inappropriate (less than 250 words). Attempted paraphrasing but used one or two strategies.',
+        '4.5-5': 'Good: Response fulfils specific task requirements. Little more could reasonably be expected for the level. Response shows a good level of awareness of audience, purpose and genre. Topic explored well, with relevant content and comment. Most of the information is paraphrased.',
+        '5.5-6': 'Excellent: Response fulfils all specific task requirements and exceeds expectations for this level. Response shows a high level of awareness of audience, purpose and genre. Topic fully explored, with insightful/pertinent content and comment. Well paraphrased using a range of strategies.',
+      }
+    },
+    {
+      name: 'Coherence and Cohesion', maxScore: 6,
+      rubric: {
+        '0-2': 'Very Poor: Very little control of organisational features. The text is largely confused and incoherent, making it challenging for the reader to process.',
+        '3': 'Unsatisfactory: Organisation is limited, compromising coherence. Some re-reading may be necessary. Ideas lack progression and may be repeated. There may be no paragraphs. Some simple cohesive devices are used but usually inaccurately and repetitively.',
+        '3.5-4': 'Satisfactory: Organisation provides an underlying coherence although progression may be inconsistent. Text may be stilted in places. Paragraphing is generally appropriate although ideas may not always be supported. Cohesive devices may be over or under used, or used mechanically in places. Text may be repetitive due to lack of referencing.',
+        '4.5-5': 'Good: Organisation of information and ideas makes text clear and easy to understand. Each paragraph has a main topic supported by some relevant details. Cohesive devices are usually used accurately both within and/or between sentences.',
+        '5.5-6': 'Excellent: Information and ideas are organised so effectively that text has a fluent progression throughout. Opening and closing sections are appropriate and fully developed. Each paragraph has a clear main topic supported by well-organised, relevant details. Accurate and appropriate use of a good range of cohesive devices for the level, both within and between sentences.',
+      }
+    },
+    {
+      name: 'Lexical Resource', maxScore: 6,
+      rubric: {
+        '0-2': 'Very Poor: Vocabulary is very limited and may be unrelated to the task or consists largely of inappropriate memorised chunks. Poor word choice, word form and spelling prevent the communication of ideas.',
+        '3': 'Unsatisfactory: Vocabulary is inadequate or inappropriate for the level and task and may be used repetitively. Errors in word choice, word form and spelling frequently affect communication.',
+        '3.5-4': 'Satisfactory: Text has a limited but adequate range of vocabulary for the level and task. Academic vocabulary is usually used accurately and appropriately. If there are attempts to extend beyond this range, there may be some inaccuracy or inappropriacy, which affects communication in places.',
+        '4.5-5': 'Good: Text has a good range of vocabulary for the level and task. Academic vocabulary is frequently used accurately and appropriately. If there are attempts to extend beyond this range, there may be a few inaccurate or inappropriate choices, although communication is not affected.',
+        '5.5-6': 'Excellent: Text has a significantly wider range of vocabulary than is expected for the level and task. Academic vocabulary is consistently used accurately and appropriately. There may be occasional errors in word choice and spelling where more complex/creative lexis is attempted but communication is not affected.',
+      }
+    },
+    {
+      name: 'Grammatical Range and Accuracy', maxScore: 6,
+      rubric: {
+        '0-2': 'Very Poor: Structures are inaccurate and errors predominate, preventing meaningful communication. Punctuation may be inadequate and/or inaccurate.',
+        '3': 'Unsatisfactory: Structures are very limited and inadequate for the level and task. Grammatical errors are noticeable and may often affect communication. Punctuation may be inadequate and/or inaccurate.',
+        '3.5-4': 'Satisfactory: Text has a limited but adequate range of structures for the level and task. Core structures for the level are usually used accurately and appropriately although they may sometimes be used mechanically. Grammatical errors may affect communication in places. Punctuation is generally effective.',
+        '4.5-5': 'Good: Text has a good range of structures for the level and task. Core structures for the level are frequently used accurately and appropriately. If there are attempts to extend beyond this range, there may be some inaccuracy or inappropriacy, although communication is not affected. Punctuation is well managed and effective.',
+        '5.5-6': 'Excellent: Text has a significantly wider range of structures than is expected for the level and task. Core structures for the level are consistently used accurately and appropriately. There may be occasional errors where more complex structures are attempted but communication is not affected. Most sentences are error-free and allow for the accurate expression of ideas. Punctuation is well managed and effective.',
+      }
+    },
+  ],
+  specialRules: [
+    'If the text is somewhat off-topic, give zero for Task Response AND deduct 50% of the marks given for Lexical Resource.',
+    'Give a completely off-topic text zero for Task Response (with the consent of the PC).',
+  ]
 };
 
 const LANC2146_CRITERIA = [
@@ -504,7 +573,8 @@ function buildSummaryPrompt(
   sourceText: string,
   sourceTitle: string,
   wordCount: number,
-  targetWordCount: { min: number; max: number; ideal: number }
+  targetWordCount: { min: number; max: number; ideal: number },
+  courseLabel: string = 'LANC2160'
 ): string {
   const rubrics = SUMMARY_RUBRICS;
   const sourceWordCount = sourceText.trim().split(/\s+/).filter(Boolean).length;
@@ -517,7 +587,7 @@ function buildSummaryPrompt(
     ? `NOTE: Word count (${wordCount}) exceeds ${targetWordCount.min}-${targetWordCount.max}. Do NOT deduct marks. Mention in feedback.`
     : `Word count (${wordCount}) is within ${targetWordCount.min}-${targetWordCount.max}.`;
 
-  return `You are an expert writing assessor for LANC2160 (Summary Writing) at Sultan Qaboos University. CEFR A2-B1 level.
+  return `You are an expert writing assessor for ${courseLabel} (Summary Writing) at Sultan Qaboos University. CEFR A2-B1 level.
 
 SOURCE TEXT:
 Title: "${sourceTitle}"
@@ -667,6 +737,99 @@ SCORING INSTRUCTIONS:
 6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
 
+/**
+ * FP0560 Synthesis Essay prompt (cause OR effect essay synthesizing TWO
+ * source texts). The source texts may not be available yet (the instructor
+ * uploads task texts one by one), in which case `sources` is empty and the
+ * assessor grades against the official FP0560 rubric only.
+ */
+function build0560SynthesisPrompt(
+  studentText: string,
+  sources: { title: string; content: string }[],
+  assignmentTitle: string | null,
+  assignmentDescription: string | null,
+  wordCount: number,
+  targetWordCount: { min: number; max: number; ideal: number; label?: string }
+): string {
+  const rubrics = FP0560_SYNTHESIS_RUBRICS;
+  const toleranceBelow = targetWordCount.min - 20;
+  const toleranceAbove = targetWordCount.max + 20;
+
+  const wordCountStatus = wordCount < toleranceBelow
+    ? `WARNING: Word count (${wordCount}) is SIGNIFICANTLY BELOW the acceptable range ${targetWordCount.min}-${targetWordCount.max} (more than 20 words below minimum). Follow the Task Response length ladder in the rubric (less than 250 / 200 / 150 words).`
+    : wordCount < targetWordCount.min
+    ? `NOTE: Word count (${wordCount}) is slightly below the acceptable range ${targetWordCount.min}-${targetWordCount.max} (within 20-word tolerance). Do NOT penalize.`
+    : wordCount > toleranceAbove
+    ? `NOTE: Word count (${wordCount}) significantly exceeds the acceptable range ${targetWordCount.min}-${targetWordCount.max}. Do NOT deduct marks. Mention in feedback.`
+    : wordCount > targetWordCount.max
+    ? `Word count (${wordCount}) is slightly above ${targetWordCount.min}-${targetWordCount.max} (within tolerance). Do NOT deduct marks.`
+    : `Word count (${wordCount}) is within the acceptable range ${targetWordCount.min}-${targetWordCount.max}.`;
+
+  const taskBlock = assignmentTitle
+    ? `TASK: The student read TWO source texts and wrote a cause OR effect synthesis essay.
+ASSIGNMENT: ${assignmentTitle}
+INSTRUCTIONS: ${assignmentDescription}`
+    : `TASK: The student was given TWO source texts in class and wrote a cause OR effect synthesis essay (approximately ${targetWordCount.ideal} words). The source texts themselves are not reproduced here — assess the essay on internal evidence only.`;
+
+  const sourceTextsBlock = sources.length > 0
+    ? `\n${sources.map((s, i) => {
+        const wc = s.content.trim().split(/\s+/).filter(Boolean).length;
+        return `SOURCE TEXT ${i + 1}: "${s.title}" (${wc} words)\n"""\n${s.content}\n"""`;
+      }).join('\n\n')}\n`
+    : '';
+
+  const synthesisRules = sources.length > 0
+    ? `1. The essay must be a CAUSE or EFFECT essay that synthesizes information from BOTH source texts. Check that ideas from each source are integrated (not two separate summaries).
+2. Use OWN WORDS (paraphrasing). Copied phrases/sentences lower Task Response and Lexical Resource per the rubric.
+3. Structure: introduction, body paragraph(s) developing the causes/effects, conclusion. Note paragraphing problems under Coherence and Cohesion.
+4. No personal opinions or new information beyond the sources.
+5. If the essay synthesizes from only ONE source (or neither), reflect this in the Task Response score.`
+    : `1. The essay must be a CAUSE or EFFECT essay synthesizing information from TWO source texts (not provided here). Judge from internal evidence: a clear cause/effect focus, ideas that appear drawn from source material, and paraphrasing effort.
+2. Paraphrasing is a scored expectation — copied chunks indicate copied source material.
+3. Structure: introduction, body paragraph(s) developing the causes/effects, conclusion. Note paragraphing problems under Coherence and Cohesion.`;
+
+  return `You are an expert writing assessor for FP0560 (English Language Foundation, Level 560S) at Sultan Qaboos University.
+
+${taskBlock}
+EXPECTED LENGTH: ${targetWordCount.min}-${targetWordCount.max} words (expected: ${targetWordCount.ideal}).
+${wordCountStatus}
+${sourceTextsBlock}
+STUDENT'S SYNTHESIS ESSAY:
+"""
+${studentText}
+"""
+
+ASSESSMENT RUBRICS (official "Writing Assessment Criteria — Levels 450S, 560S & 603S"):
+${buildCriteriaText(rubrics)}
+
+SPECIAL RULES (from the official rubric):
+${rubrics.specialRules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+SYNTHESIS RULES:
+${synthesisRules}
+${sources.length === 0 ? '6. Where the rubric mentions length expectations (less than 250/200/150 words), use them to guide the Task Response score alongside content quality.\n' : ''}
+BAND CALIBRATION (half-mark scale, 0-6):
+- 5.5-6 (Excellent): Fully meets the task with insightful content, well paraphrased using a range of strategies. Rare.
+- 4.5-5 (Good): Fulfils the task; topic explored well; most information paraphrased. Strong student.
+- 3.5-4 (Satisfactory): Fulfils most requirements; topic development attempted but limited in places; some paraphrasing strategies. Typical level-560 student.
+- 3 (Unsatisfactory): Little awareness of task; little topic development; very little paraphrasing.
+- 0-2 (Very Poor): Fails the task; no paraphrasing; possibly under 150 words.
+
+ERROR CLASSIFICATION (apply per criterion):
+1. Expected A2/B1 errors (articles, prepositions, subject-verb agreement, awkward paraphrase, minor spelling) → Do NOT lower the score on their own.
+2. Non-impeding errors → Minor impact only if frequent.
+3. Impeding errors (meaning breaks down, large-scale copying, task not met) → Significant impact.
+Rate each criterion on COMMUNICATION SUCCESS and task fulfilment, not raw error count.
+
+SCORING INSTRUCTIONS:
+1. Score each criterion 0-6 in 0.5 increments using the rubric bands above. Use the FULL range — do NOT default to middle scores.
+2. For each criterion: quote at least ONE exact phrase from the essay as evidence.
+3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
+5. overallFeedback (3-4 sentences): cause/effect focus, synthesis of the two texts (if evident), strongest/weakest criterion, one prioritized action item.
+6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
+}
+
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
 /**
@@ -776,11 +939,20 @@ export async function POST(request: NextRequest) {
 
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
 
-    const isFoundation = ['0230', '0340', '0450', '0560', '0603'].includes(courseCode);
-    const isSummaryWriting = courseCode === 'LANC2160' && writingType === 'summary';
+    const isFoundation = ['0230', '0340', '0450', '0603'].includes(courseCode);
+    // FP0560 follows the LANC2160 writing-task flow: a writingType of
+    // "synthesis" (cause OR effect essay from TWO texts, official FP0560
+    // rubric, 250-350 words) or "summary" (same details as LANC2160).
+    const is0560 = courseCode === '0560';
+    const is0560Summary = is0560 && writingType === 'summary';
+    const is0560Synthesis = is0560 && writingType === 'synthesis';
+    const isSummaryWriting = (courseCode === 'LANC2160' || is0560) && writingType === 'summary';
     const isSynthesisWriting = courseCode === 'LANC2160' && writingType === 'synthesis';
     const isLanc1070 = courseCode === 'LANC1070';
     const isLanc2146 = courseCode === 'LANC2146';
+    // Legacy fallback: a stale cached client may still send the old FP0560
+    // exam-type request (no writingType). Serve it with the foundation flow.
+    const is0560LegacyExam = is0560 && !writingType;
 
     if (courseCode === 'LANC2160' && !writingType) {
       return NextResponse.json(
@@ -800,7 +972,7 @@ export async function POST(request: NextRequest) {
     let prompt: string;
     let criteria: any[];
 
-    if (isFoundation) {
+    if (isFoundation || is0560LegacyExam) {
       const courseWordCounts = FOUNDATION_WORD_COUNTS[courseCode];
       const courseDefault = DEFAULT_FOUNDATION_WORD_COUNTS[courseCode];
       if (examType && courseWordCounts && courseWordCounts[examType]) {
@@ -822,7 +994,7 @@ export async function POST(request: NextRequest) {
         );
       }
       activeTargetWordCount = { min: sourceTextData.targetMin, max: sourceTextData.targetMax, ideal: sourceTextData.targetIdeal, label: `Summary of "${sourceTextData.title}"` };
-      prompt = buildSummaryPrompt(text, sourceTextData.originalText, sourceTextData.title, wordCount, activeTargetWordCount);
+      prompt = buildSummaryPrompt(text, sourceTextData.originalText, sourceTextData.title, wordCount, activeTargetWordCount, is0560 ? 'FP0560' : 'LANC2160');
       criteria = SUMMARY_CRITERIA;
     } else if (isSynthesisWriting) {
       const { SYNTHESIS_ASSIGNMENTS } = await import('@/lib/store');
@@ -836,6 +1008,33 @@ export async function POST(request: NextRequest) {
       activeTargetWordCount = { min: assignmentData.targetWordCount.min, max: assignmentData.targetWordCount.max, ideal: assignmentData.targetWordCount.ideal, label: `Synthesis: "${assignmentData.title}"` };
       prompt = buildSynthesisPrompt(text, assignmentData.sources.map(s => ({ title: s.title, content: s.content })), assignmentData.title, assignmentData.description, wordCount, activeTargetWordCount);
       criteria = SYNTHESIS_CRITERIA;
+    } else if (is0560Synthesis) {
+      // FP0560 synthesis: cause OR effect essay synthesizing TWO texts.
+      // Task texts are uploaded one by one; until then the essay is assessed
+      // against the official FP0560 rubric without source comparison.
+      const { FP0560_SYNTHESIS_TASKS } = await import('@/lib/store');
+      const taskData = sourceTextId
+        ? FP0560_SYNTHESIS_TASKS.find(t => t.id === sourceTextId)
+        : undefined;
+      if (sourceTextId && !taskData) {
+        return NextResponse.json(
+          { error: 'Synthesis task text not found. Please select a valid task text.', details: `No FP0560 synthesis task found for sourceTextId: ${sourceTextId}` },
+          { status: 400 }
+        );
+      }
+      if (taskData) {
+        activeTargetWordCount = {
+          min: taskData.targetWordCount.min || FP0560_SYNTHESIS_TARGET.min,
+          max: taskData.targetWordCount.max || FP0560_SYNTHESIS_TARGET.max,
+          ideal: taskData.targetWordCount.ideal || FP0560_SYNTHESIS_TARGET.ideal,
+          label: `Synthesis: "${taskData.title}"`,
+        };
+        prompt = build0560SynthesisPrompt(text, taskData.sources.map(s => ({ title: s.title, content: s.content })), taskData.title, taskData.description, wordCount, activeTargetWordCount);
+      } else {
+        activeTargetWordCount = { ...FP0560_SYNTHESIS_TARGET };
+        prompt = build0560SynthesisPrompt(text, [], null, null, wordCount, activeTargetWordCount);
+      }
+      criteria = FP0560_SYNTHESIS_CRITERIA;
     } else if (isLanc2146) {
       const { LANC2146_PRACTICE_TESTS } = await import('@/lib/store');
       const practiceData = LANC2146_PRACTICE_TESTS.find(t => t.id === sourceTextId);
@@ -870,7 +1069,9 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(apiKey);
 
     const systemInstruction = isSummaryWriting
-      ? 'You are an expert writing assessment AI for LANC2160 (Summary Writing) at Sultan Qaboos University. CEFR A2-B1 level. Quote exact words from the student summary as evidence. Justify every score against the rubric. List specific errors with quoted text.'
+      ? `You are an expert writing assessment AI for ${is0560 ? 'FP0560 Summary Writing' : 'LANC2160 (Summary Writing)'} at Sultan Qaboos University. CEFR A2-B1 level. Quote exact words from the student summary as evidence. Justify every score against the rubric. List specific errors with quoted text.`
+      : is0560Synthesis
+      ? 'You are an expert writing assessment AI for FP0560 (Synthesis Essay — cause OR effect essay synthesizing TWO source texts) at Sultan Qaboos University, Level 560S. Apply the official "Writing Assessment Criteria — Levels 450S, 560S & 603S" rubric with its special rules. Quote exact words as evidence. Justify every score against the rubric. List specific errors with quoted text.'
       : isSynthesisWriting
       ? 'You are an expert writing assessment AI for LANC2160 (Synthesis Essay) at Sultan Qaboos University. CEFR A2-B1 level. Compare the essay against ALL THREE source texts. Quote exact words as evidence. Justify every score against the rubric. List specific errors with quoted text.'
       : isLanc1070
@@ -878,7 +1079,7 @@ export async function POST(request: NextRequest) {
       : isLanc2146
       ? 'You are an expert writing assessment AI for LANC2146 (Report Writing) at Sultan Qaboos University. CEFR A2-B1 level. Evaluate Discussion (analysis/interpretation) and Conclusion (summary, recommendations). Quote exact words as evidence. Justify every score against the rubric. List specific errors with quoted text.'
       : isFoundation
-      ? 'You are an expert, encouraging writing assessor for Foundation courses (FP0230, FP0340, FP0450, FP0560, FP0603) at Sultan Qaboos University. CEFR A1-A2 level. Score relative to A1-A2 expectations — reward successful communication and only penalize impeding errors. Quote exact words as evidence for EVERY score.'
+      ? 'You are an expert, encouraging writing assessor for Foundation courses (FP0230, FP0340, FP0450, FP0603) at Sultan Qaboos University. CEFR A1-A2 level. Score relative to A1-A2 expectations — reward successful communication and only penalize impeding errors. Quote exact words as evidence for EVERY score.'
       : 'You are an expert writing assessment AI at Sultan Qaboos University. CEFR A2-B1 level. Quote exact words from the student essay as evidence. Justify every score against the rubric. List specific errors with quoted text.';
 
     // ── Generate with Structured Output + model fallback + rate-limit retry ──
@@ -1063,7 +1264,7 @@ export async function POST(request: NextRequest) {
         percentage,
         overallFeedback,
         wordCount,
-        targetWordCount: (isFoundation || isSummaryWriting || isSynthesisWriting || isLanc1070 || isLanc2146) ? activeTargetWordCount : null,
+        targetWordCount: (isFoundation || is0560LegacyExam || is0560Summary || is0560Synthesis || isSummaryWriting || isSynthesisWriting || isLanc1070 || isLanc2146) ? activeTargetWordCount : null,
         createdAt: new Date().toISOString(),
       }
     });

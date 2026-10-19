@@ -29,7 +29,8 @@ const defaultCourses = [
       { id: 'cr-8', name: 'Grammatical Range & Accuracy', maxScore: 6, description: 'Range and accuracy of grammar' },
     ]
   },
-  // FP0450, FP0560 and FP0603 currently reuse the FP0340 course details.
+  // FP0450 and FP0603 currently reuse the FP0340 course details.
+  // FP0560 follows the LANC2160 writing-task flow (synthesis + summary).
   {
     id: 'course-0450',
     code: '0450',
@@ -48,12 +49,12 @@ const defaultCourses = [
     code: '0560',
     name: 'English Language Foundation (FP0560)',
     program: 'foundation',
-    description: 'Foundation year English course focusing on basic writing skills',
+    description: 'Foundation year English course focusing on cause/effect synthesis essay writing and summary writing',
     criteria: [
-      { id: 'cr-21', name: 'Task Response', maxScore: 6, description: 'How well the essay addresses the given task' },
-      { id: 'cr-22', name: 'Coherence & Cohesion', maxScore: 6, description: 'Logical organization and linking of ideas' },
-      { id: 'cr-23', name: 'Lexical Resource', maxScore: 6, description: 'Range and accuracy of vocabulary' },
-      { id: 'cr-24', name: 'Grammatical Range & Accuracy', maxScore: 6, description: 'Range and accuracy of grammar' },
+      { id: 'cr-21', name: 'Task Response', maxScore: 6, description: 'Synthesis task fulfilment (cause OR effect essay synthesizing TWO source texts); audience, purpose, genre; topic development; paraphrasing' },
+      { id: 'cr-22', name: 'Coherence & Cohesion', maxScore: 6, description: 'Logical organization, paragraphing, referencing, and cohesive devices' },
+      { id: 'cr-23', name: 'Lexical Resource', maxScore: 6, description: 'Range and accuracy of academic vocabulary, word choice, word form, and spelling' },
+      { id: 'cr-24', name: 'Grammatical Range & Accuracy', maxScore: 6, description: 'Range and accuracy of grammatical structures and punctuation' },
     ]
   },
   {

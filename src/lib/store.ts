@@ -249,6 +249,21 @@ HFO-1234yf | 25 | None; uses existing HFC-134a systems | Very high recharge cost
   },
 ];
 
+/**
+ * FP0560 synthesis essay task texts (cause OR effect essay from TWO texts).
+ *
+ * Details copied from the LANC2160 writing-task flow, with FP0560-specific
+ * rules: the synthesis essay is a Cause OR Effect essay that synthesizes
+ * information from TWO source texts, targeting ~300 words (250-350 accepted).
+ *
+ * Task texts are uploaded one by one by the instructor — add a new
+ * SynthesisAssignment entry here (with exactly TWO sources) when each task
+ * text is ready. While this catalog is empty the app lets students submit
+ * their essay directly and assesses it against the official FP0560 writing
+ * rubric without source-text comparison.
+ */
+export const FP0560_SYNTHESIS_TASKS: SynthesisAssignment[] = [];
+
 // LANC1070 practice test interface (single source text, 4-paragraph essay)
 export interface PracticeTest {
   id: string;
@@ -648,7 +663,7 @@ const defaultCourses: Course[] = [
     code: '0560',
     name: 'English Language Foundation (FP0560)',
     program: 'foundation',
-    description: 'Foundation year English course focusing on basic writing skills.'
+    description: 'Foundation year English course focusing on cause/effect synthesis essay writing and summary writing.'
   },
   {
     id: 'course-0603',

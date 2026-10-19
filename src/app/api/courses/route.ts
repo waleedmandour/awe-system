@@ -29,6 +29,46 @@ const defaultCourses = [
       { id: 'cr-8', name: 'Grammatical Range & Accuracy', maxScore: 6, description: 'Range and accuracy of grammar' },
     ]
   },
+  // FP0450, FP0560 and FP0603 currently reuse the FP0340 course details.
+  {
+    id: 'course-0450',
+    code: '0450',
+    name: 'English Language Foundation (FP0450)',
+    program: 'foundation',
+    description: 'Foundation year English course focusing on basic writing skills',
+    criteria: [
+      { id: 'cr-17', name: 'Task Response', maxScore: 6, description: 'How well the essay addresses the given task' },
+      { id: 'cr-18', name: 'Coherence & Cohesion', maxScore: 6, description: 'Logical organization and linking of ideas' },
+      { id: 'cr-19', name: 'Lexical Resource', maxScore: 6, description: 'Range and accuracy of vocabulary' },
+      { id: 'cr-20', name: 'Grammatical Range & Accuracy', maxScore: 6, description: 'Range and accuracy of grammar' },
+    ]
+  },
+  {
+    id: 'course-0560',
+    code: '0560',
+    name: 'English Language Foundation (FP0560)',
+    program: 'foundation',
+    description: 'Foundation year English course focusing on basic writing skills',
+    criteria: [
+      { id: 'cr-21', name: 'Task Response', maxScore: 6, description: 'How well the essay addresses the given task' },
+      { id: 'cr-22', name: 'Coherence & Cohesion', maxScore: 6, description: 'Logical organization and linking of ideas' },
+      { id: 'cr-23', name: 'Lexical Resource', maxScore: 6, description: 'Range and accuracy of vocabulary' },
+      { id: 'cr-24', name: 'Grammatical Range & Accuracy', maxScore: 6, description: 'Range and accuracy of grammar' },
+    ]
+  },
+  {
+    id: 'course-0603',
+    code: '0603',
+    name: 'English Language Foundation (FP0603)',
+    program: 'foundation',
+    description: 'Foundation year English course focusing on basic writing skills',
+    criteria: [
+      { id: 'cr-25', name: 'Task Response', maxScore: 6, description: 'How well the essay addresses the given task' },
+      { id: 'cr-26', name: 'Coherence & Cohesion', maxScore: 6, description: 'Logical organization and linking of ideas' },
+      { id: 'cr-27', name: 'Lexical Resource', maxScore: 6, description: 'Range and accuracy of vocabulary' },
+      { id: 'cr-28', name: 'Grammatical Range & Accuracy', maxScore: 6, description: 'Range and accuracy of grammar' },
+    ]
+  },
   {
     id: 'course-lanc2160',
     code: 'LANC2160',

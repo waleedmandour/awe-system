@@ -330,9 +330,12 @@ async function runGeminiOCRWithModel(images: { base64: string; mimeType: string 
         temperature: 0.1,
         mediaResolution: 'MEDIA_RESOLUTION_HIGH',
         maxOutputTokens: 8192,
-        thinkingConfig: {
-          thinkingBudget: 0,  // Disable thinking — prevents thought tokens from consuming output budget or polluting OCR text
-        },
+        // Disable thinking ONLY on gemini-2.5* models, where thinkingBudget: 0
+        // is valid — it prevents thought tokens from consuming output budget.
+        // Gemini 3.x models use thinking LEVELS instead (minimal/low/medium/high)
+        // and reject thinkingBudget: 0, so they keep their defaults
+        // (gemini-3.5-flash-lite already defaults to "minimal" thinking).
+        ...(modelName.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
       } as any,
       safetySettings,
     });

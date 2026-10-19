@@ -22,13 +22,20 @@ import {
 } from 'lucide-react';
 import { PageTransition } from '@/lib/animations';
 
+/**
+ * Foundation courses that follow the FP0230/FP0340 exam flow: exam-type
+ * selection (Mid-semester / Final) plus an optional writing prompt.
+ * FP0450, FP0560 and FP0603 currently reuse the FP0340 details.
+ */
+const FOUNDATION_EXAM_COURSES = ['0230', '0340', '0450', '0560', '0603'];
+
 // Course Selection Screen
 const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onBack: () => void }) => {
   const { courses, selectedCourse, setSelectedCourse, selectedExamType, setSelectedExamType, selectedWritingType, setSelectedWritingType, selectedPracticeType, setSelectedPracticeType, selectedSourceTextId, setSelectedSourceTextId, writingPrompt, setWritingPrompt } = useAppStore();
   const [activeTab, setActiveTab] = useState<'foundation' | 'credit'>('foundation');
 
   // Whether the currently selected course requires an exam-type choice
-  const needsExamType = selectedCourse?.code === '0230' || selectedCourse?.code === '0340';
+  const needsExamType = !!selectedCourse && FOUNDATION_EXAM_COURSES.includes(selectedCourse.code);
 
   // Whether the currently selected course requires a writing-type choice
   const needsWritingType = selectedCourse?.code === 'LANC2160';
@@ -49,7 +56,7 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
     : [];
 
   // Whether Foundation Exam needs a writing prompt input (both mid-semester and final)
-  const needsWritingPrompt = (selectedCourse?.code === '0230' || selectedCourse?.code === '0340') && !!selectedExamType;
+  const needsWritingPrompt = !!selectedCourse && FOUNDATION_EXAM_COURSES.includes(selectedCourse.code) && !!selectedExamType;
 
   // Whether the Continue button should be enabled
   const canContinue = selectedCourse
@@ -152,12 +159,12 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
               const accentColor = activeTab === 'foundation' ? '#1a5f2a' : '#c9a227';
 
               // Check which children to show for this specific course
-              const showExamType = showChildren && (course.code === '0230' || course.code === '0340');
+              const showExamType = showChildren && FOUNDATION_EXAM_COURSES.includes(course.code);
               const showWritingType = showChildren && course.code === 'LANC2160';
               const showPracticeType = showChildren && (course.code === 'LANC1070' || course.code === 'LANC2146' || course.code === 'LANC2070');
               const showSourceText = showWritingType && selectedWritingType === 'summary';
               const showSynthesisAssignment = showWritingType && selectedWritingType === 'synthesis';
-              const showWritingPrompt = showChildren && (course.code === '0230' || course.code === '0340') && !!selectedExamType;
+              const showWritingPrompt = showChildren && FOUNDATION_EXAM_COURSES.includes(course.code) && !!selectedExamType;
               const showPracticeTest = showPracticeType && !!selectedPracticeType;
               const coursePracticeTests = showPracticeType && selectedPracticeType
                 ? course.code === 'LANC2146'

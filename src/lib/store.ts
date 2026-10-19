@@ -637,6 +637,27 @@ const defaultCourses: Course[] = [
     description: 'Foundation year English course focusing on basic writing skills.'
   },
   {
+    id: 'course-0450',
+    code: '0450',
+    name: 'English Language Foundation (FP0450)',
+    program: 'foundation',
+    description: 'Foundation year English course focusing on basic writing skills.'
+  },
+  {
+    id: 'course-0560',
+    code: '0560',
+    name: 'English Language Foundation (FP0560)',
+    program: 'foundation',
+    description: 'Foundation year English course focusing on basic writing skills.'
+  },
+  {
+    id: 'course-0603',
+    code: '0603',
+    name: 'English Language Foundation (FP0603)',
+    program: 'foundation',
+    description: 'Foundation year English course focusing on basic writing skills.'
+  },
+  {
     id: 'course-lanc1070',
     code: 'LANC1070',
     name: 'Academic English: Essay Writing (LANC1070)',

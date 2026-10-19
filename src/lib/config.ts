@@ -10,22 +10,35 @@
 
 export const MODEL_CONFIG = {
   /**
-   * Primary model. `gemini-2.5-flash-lite` is on the Google AI Studio FREE
-   * tier with better rate limits than `gemini-2.5-flash`
-   * (15 req/min & 1,000 req/day vs 10 req/min & 250 req/day) and lower
-   * latency, which suits the 10-second serverless cap on Vercel's free tier.
+   * Primary model. `gemini-3.5-flash-lite` is the most economical currently
+   * active Gemini model: it is FREE-tier eligible, defaults to "minimal"
+   * thinking (lowest latency — fits the 10-second serverless cap on Vercel's
+   * free tier), has the Flash-Lite lineage's generous free quotas, and the
+   * cheapest paid tier ($0.30 / $2.50 per 1M tokens) if a school ever upgrades.
+   *
+   * NOTE (Oct 2026): the previous primary `gemini-2.5-flash-lite` and fallbacks
+   * `gemini-2.5-flash` / `gemini-2.0-flash` are no longer viable for students —
+   * 2.5 access is restricted to accounts that used those models before (new
+   * student API keys get errors) and gemini-2.0-flash was shut down on
+   * June 1, 2026. The whole chain now runs on stable Gemini 3 models.
    */
-  current: 'gemini-2.5-flash-lite',
+  current: 'gemini-3.5-flash-lite',
   /** Fallback used when the primary model fails or is rate-limited. */
-  fallback: 'gemini-2.5-flash',
-  /** Last-resort legacy model (kept for extra resilience). */
-  legacyFallback: 'gemini-2.0-flash',
+  fallback: 'gemini-3.8-flash',
+  /** Last-resort model (kept for extra resilience) — previous-generation stable Flash. */
+  legacyFallback: 'gemini-3.6-flash',
 
-  /** Published Google AI Studio free-tier limits (per API key). */
+  /**
+   * Published Google AI Studio free-tier limits (per API key). Google no
+   * longer publishes a static per-model table — exact live limits are shown
+   * per project in AI Studio. The values below follow Google's documented
+   * free-tier pattern for the 2026 Flash/Flash-Lite generation
+   * (Flash-Lite: 15 req/min & 1,000 req/day; Flash: 10 req/min & 1,500 req/day).
+   */
   freeTierLimits: {
-    'gemini-2.5-flash': { requestsPerMinute: 10, requestsPerDay: 250 },
-    'gemini-2.5-flash-lite': { requestsPerMinute: 15, requestsPerDay: 1000 },
-    'gemini-2.0-flash': { requestsPerMinute: 15, requestsPerDay: 200 },
+    'gemini-3.5-flash-lite': { requestsPerMinute: 15, requestsPerDay: 1000 },
+    'gemini-3.8-flash': { requestsPerMinute: 10, requestsPerDay: 1500 },
+    'gemini-3.6-flash': { requestsPerMinute: 10, requestsPerDay: 1500 },
   } as Record<string, { requestsPerMinute: number; requestsPerDay: number }>,
 };
 

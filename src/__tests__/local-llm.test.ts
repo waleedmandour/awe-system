@@ -21,16 +21,16 @@ const FOUNDATION_CRITERIA = getLocalCriteria('0340');
 const CREDIT_CRITERIA = getLocalCriteria('LANC2165');
 
 describe('MODEL_CONFIG (cloud)', () => {
-  it('uses gemini-2.5-flash-lite as the primary model', () => {
-    expect(MODEL_CONFIG.current).toBe('gemini-2.5-flash-lite');
-    expect(MODEL_CONFIG.fallback).toBe('gemini-2.5-flash');
+  it('uses gemini-3.5-flash-lite as the primary (most economical) model', () => {
+    expect(MODEL_CONFIG.current).toBe('gemini-3.5-flash-lite');
+    expect(MODEL_CONFIG.fallback).toBe('gemini-3.8-flash');
   });
 
   it('orders tiers primary → fallback → legacy', () => {
     expect(CLOUD_ASSESSMENT_TIERS).toEqual([
-      'gemini-2.5-flash-lite',
-      'gemini-2.5-flash',
-      'gemini-2.0-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.8-flash',
+      'gemini-3.6-flash',
     ]);
   });
 
@@ -44,9 +44,9 @@ describe('MODEL_CONFIG (cloud)', () => {
       expect(MODEL_CONFIG.freeTierLimits[model]).toBeDefined();
       expect(MODEL_CONFIG.freeTierLimits[model].requestsPerDay).toBeGreaterThan(0);
     }
-    // flash-lite should have a higher daily quota than flash
-    expect(MODEL_CONFIG.freeTierLimits['gemini-2.5-flash-lite'].requestsPerDay).toBeGreaterThan(
-      MODEL_CONFIG.freeTierLimits['gemini-2.5-flash'].requestsPerDay
+    // flash-lite should have a higher per-minute quota than flash
+    expect(MODEL_CONFIG.freeTierLimits['gemini-3.5-flash-lite'].requestsPerMinute).toBeGreaterThan(
+      MODEL_CONFIG.freeTierLimits['gemini-3.8-flash'].requestsPerMinute
     );
   });
 
@@ -113,6 +113,10 @@ describe('getLocalCriteria', () => {
       'Lexical Resource',
       'Grammatical Range and Accuracy',
     ]);
+    // Every foundation exam course shares the same rubric
+    for (const code of ['0230', '0340', '0450', '0560', '0603']) {
+      expect(getLocalCriteria(code)).toEqual(FOUNDATION_CRITERIA);
+    }
   });
 
   it('uses the summary rubric for LANC2160 summary writing', () => {

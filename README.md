@@ -17,7 +17,7 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 - Receive AI-powered assessment based on course-specific rubrics aligned with CEFR levels
 - Choose between cloud (Gemini) and on-device (local LLM) assessment in Settings — on-device assessment works fully offline and keeps essays 100% private
 - Get detailed feedback with justifications, error identification, and improvement suggestions
-- Select exam type (Mid-semester or Final) for FP0230 and FP0340 with appropriate word count targets
+- Select exam type (Mid-semester or Final) for Foundation courses (FP0230, FP0340, FP0450, FP0560, FP0603) with appropriate word count targets
 - Enter an optional writing prompt for Foundation Final Exam to guide assessment
 - Practice summary writing and synthesis essay writing for LANC2160 with source texts
 - Practice 4-paragraph essay writing for LANC1070 with mid-semester and final tests
@@ -34,10 +34,15 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 |-------------|-------------|:------------:|------------|
 | FP0230 | English Language Foundation I | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
 | FP0340 | English Language Foundation II | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
+| FP0450 | English Language Foundation | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
+| FP0560 | English Language Foundation | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
+| FP0603 | English Language Foundation | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
 
-**FP0230 & FP0340 Special Features:**
+**Foundation Special Features (all courses above):**
 - Exam-type selection (Mid-semester or Final) with dynamic word count targets
 - Optional writing prompt input for Final Exam — if provided by the instructor, it is appended to the assessment criteria sent to Gemini, enabling more focused and context-aware feedback
+
+> **Note:** FP0450, FP0560 and FP0603 currently reuse the FP0340 course details (rubrics, word-count targets, exam flow) and will be updated separately.
 
 ### Post-Foundation Program
 
@@ -51,7 +56,7 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 
 ## Assessment Criteria
 
-### Foundation Courses (FP0230, FP0340)
+### Foundation Courses (FP0230, FP0340, FP0450, FP0560, FP0603)
 
 | Criterion | Scale | Description |
 |-----------|:-----:|-------------|
@@ -117,16 +122,16 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 
 ---
 
-## FP0340 Exam-Type Selection
+## Foundation Exam-Type Selection
 
-FP0340 (English Language Foundation II) supports two exam types with different word count targets:
+All Foundation courses (FP0230, FP0340, FP0450, FP0560, FP0603) support two exam types with different word count targets:
 
 | Exam Type | Target Word Count | Acceptable Range |
 |-----------|:-----------------:|:----------------:|
-| Mid-semester Exam | 120 words | 110-130 words |
-| Final Exam | 200 words | 190-210 words |
+| Mid-semester Exam | 120 words | 110-150 words |
+| Final Exam | 200 words | 140-220 words |
 
-When FP0340 is selected, students choose between "For Mid-semester Exam" and "For Final Exam." For the Final Exam, an optional writing prompt field appears — students can enter the essay topic or prompt provided by their instructor. If a writing prompt is entered, it is appended to the assessment criteria sent to Gemini, enabling the AI to evaluate the essay with awareness of the specific topic context.
+When a Foundation course is selected, students choose between "For Mid-semester Exam" and "For Final Exam." For the Final Exam, an optional writing prompt field appears — students can enter the essay topic or prompt provided by their instructor. If a writing prompt is entered, it is appended to the assessment criteria sent to Gemini, enabling the AI to evaluate the essay with awareness of the specific topic context.
 
 ---
 
@@ -135,7 +140,7 @@ When FP0340 is selected, students choose between "For Mid-semester Exam" and "Fo
 - **Frontend:** Next.js 16, React 19, TypeScript
 - **Styling:** Tailwind CSS 4, shadcn/ui
 - **State Management:** Zustand (persisted to localStorage)
-- **AI Assessment:** Google Gemini (gemini-2.5-flash-lite primary, with automatic fallback to gemini-2.5-flash → gemini-2.0-flash)
+- **AI Assessment:** Google Gemini (gemini-3.5-flash-lite primary, with automatic fallback to gemini-3.8-flash → gemini-3.6-flash)
 - **OCR:** Google Gemini + Google Cloud Vision API (DOCUMENT_TEXT_DETECTION)
 - **On-Device Assessment (optional):** MediaPipe LLM Inference for Web (Gemma / Qwen `.task` models), models stored in IndexedDB
 - **Animations:** Framer Motion
@@ -294,7 +299,7 @@ API keys are entered by each user inside the app and stored locally in their bro
 
 1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 2. Click "Get API Key"
-3. Free tier: 15 requests/minute (1,000 requests/day on gemini-2.5-flash-lite)
+3. Free tier: 15 requests/minute (1,000 requests/day on gemini-3.5-flash-lite)
 
 ### Google Vision OCR Key (Optional)
 
@@ -319,11 +324,13 @@ The assessment endpoint tries models in order and automatically falls back when 
 
 | Model | Free tier (per key) | Role |
 |-------|--------------------|------|
-| gemini-2.5-flash-lite | 15 req/min, 1,000 req/day | Primary — best quota, lowest latency |
-| gemini-2.5-flash | 10 req/min, 250 req/day | Automatic fallback |
-| gemini-2.0-flash | 15 req/min, 200 req/day | Last-resort fallback |
+| gemini-3.5-flash-lite | 15 req/min, 1,000 req/day | Primary — most economical, best quota, lowest latency (minimal thinking) |
+| gemini-3.8-flash | 10 req/min, 1,500 req/day | Automatic fallback |
+| gemini-3.6-flash | 10 req/min, 1,500 req/day | Last-resort fallback |
 
-Students can also pin a preferred cloud model (it is tried first, then the remaining tiers act as fallbacks). All tiers use structured JSON output with thinking disabled, and existing API keys continue to work unchanged.
+Students can also pin a preferred cloud model (it is tried first, then the remaining tiers act as fallbacks). All tiers use structured JSON output, and existing API keys continue to work unchanged.
+
+> **Note (Oct 2026):** The chain was migrated from the Gemini 2.5 generation — Google now restricts 2.5 models to accounts that used them before, and `gemini-2.0-flash` was shut down on June 1, 2026. The models above are the currently active, free-tier-eligible Gemini 3 models. Exact live rate limits are shown per project in Google AI Studio.
 
 ### On-Device Models (optional — works offline)
 
@@ -379,7 +386,7 @@ Then point the model's `downloadUrl` in `src/lib/config.ts` at `/models/<file>.t
 
 - **Mobile-First:** Optimized for iOS and Android with touch-friendly UI, safe area support, and iOS press effects
 - **Smooth Animations:** Framer Motion page transitions and micro-interactions
-- **SQU Branding:** Official green (#1a5f2a) and gold (#c9a227) color scheme throughout, supporting 5 courses
+- **SQU Branding:** Official green (#1a5f2a) and gold (#c9a227) color scheme throughout, supporting 8 courses
 - **Dark Mode:** Automatic theme detection (light/dark/system)
 - **PWA Features:** Offline support, install prompts, service worker caching
 - **Responsive:** Works seamlessly on phones, tablets, and desktop browsers

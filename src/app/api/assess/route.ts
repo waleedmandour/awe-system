@@ -18,11 +18,28 @@ const FOUNDATION_WORD_COUNTS: Record<string, Record<string, { min: number; max: 
     'mid-semester': { min: 110, max: 150, ideal: 120, label: 'FP0340 Mid-semester Exam' },
     'final':        { min: 140, max: 220, ideal: 200, label: 'FP0340 Final Exam' },
   },
+  // FP0450, FP0560 and FP0603 currently reuse the FP0340 exam word-count
+  // targets until their own details are finalised.
+  '0450': {
+    'mid-semester': { min: 110, max: 150, ideal: 120, label: 'FP0450 Mid-semester Exam' },
+    'final':        { min: 140, max: 220, ideal: 200, label: 'FP0450 Final Exam' },
+  },
+  '0560': {
+    'mid-semester': { min: 110, max: 150, ideal: 120, label: 'FP0560 Mid-semester Exam' },
+    'final':        { min: 140, max: 220, ideal: 200, label: 'FP0560 Final Exam' },
+  },
+  '0603': {
+    'mid-semester': { min: 110, max: 150, ideal: 120, label: 'FP0603 Mid-semester Exam' },
+    'final':        { min: 140, max: 220, ideal: 200, label: 'FP0603 Final Exam' },
+  },
 };
 
 const DEFAULT_FOUNDATION_WORD_COUNTS: Record<string, { min: number; max: number; ideal: number; label: string }> = {
   '0230': { min: 90, max: 130, ideal: 120, label: 'FP0230 Foundation Exam' },
   '0340': { min: 110, max: 150, ideal: 120, label: 'FP0340 Foundation Exam' },
+  '0450': { min: 110, max: 150, ideal: 120, label: 'FP0450 Foundation Exam' },
+  '0560': { min: 110, max: 150, ideal: 120, label: 'FP0560 Foundation Exam' },
+  '0603': { min: 110, max: 150, ideal: 120, label: 'FP0603 Foundation Exam' },
 };
 
 // ─── Rubric Data ─────────────────────────────────────────────────────────────
@@ -759,7 +776,7 @@ export async function POST(request: NextRequest) {
 
     const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
 
-    const isFoundation = ['0230', '0340'].includes(courseCode);
+    const isFoundation = ['0230', '0340', '0450', '0560', '0603'].includes(courseCode);
     const isSummaryWriting = courseCode === 'LANC2160' && writingType === 'summary';
     const isSynthesisWriting = courseCode === 'LANC2160' && writingType === 'synthesis';
     const isLanc1070 = courseCode === 'LANC1070';
@@ -861,7 +878,7 @@ export async function POST(request: NextRequest) {
       : isLanc2146
       ? 'You are an expert writing assessment AI for LANC2146 (Report Writing) at Sultan Qaboos University. CEFR A2-B1 level. Evaluate Discussion (analysis/interpretation) and Conclusion (summary, recommendations). Quote exact words as evidence. Justify every score against the rubric. List specific errors with quoted text.'
       : isFoundation
-      ? 'You are an expert, encouraging writing assessor for Foundation courses (FP0230, FP0340) at Sultan Qaboos University. CEFR A1-A2 level. Score relative to A1-A2 expectations — reward successful communication and only penalize impeding errors. Quote exact words as evidence for EVERY score.'
+      ? 'You are an expert, encouraging writing assessor for Foundation courses (FP0230, FP0340, FP0450, FP0560, FP0603) at Sultan Qaboos University. CEFR A1-A2 level. Score relative to A1-A2 expectations — reward successful communication and only penalize impeding errors. Quote exact words as evidence for EVERY score.'
       : 'You are an expert writing assessment AI at Sultan Qaboos University. CEFR A2-B1 level. Quote exact words from the student essay as evidence. Justify every score against the rubric. List specific errors with quoted text.';
 
     // ── Generate with Structured Output + model fallback + rate-limit retry ──

@@ -77,9 +77,12 @@ const LOCAL_RUBRIC_CRITERIA: Record<string, LocalRubricCriterion[]> = {
   ],
 };
 
+/** Foundation course codes that use the shared foundation rubric (FP0450, FP0560 and FP0603 reuse the FP0340 details). */
+const FOUNDATION_COURSE_CODES = ['0230', '0340', '0450', '0560', '0603'];
+
 /** Resolve the criteria set for a course — mirrors the server-side branching. */
 export function getLocalCriteria(courseCode?: string | null, writingType?: string | null): LocalRubricCriterion[] {
-  const isFoundation = courseCode === '0230' || courseCode === '0340';
+  const isFoundation = !!courseCode && FOUNDATION_COURSE_CODES.includes(courseCode);
   if (isFoundation) return LOCAL_RUBRIC_CRITERIA.foundation;
   if (courseCode === 'LANC2160' && writingType === 'summary') return LOCAL_RUBRIC_CRITERIA.summary;
   if (courseCode === 'LANC2160' && writingType === 'synthesis') return LOCAL_RUBRIC_CRITERIA.synthesis;

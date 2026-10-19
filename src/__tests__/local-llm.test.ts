@@ -16,6 +16,7 @@ import {
   getLocalModel,
 } from '@/lib/config';
 import { computeDeviceWarnings } from '@/lib/device-check';
+import { FP0560_SYNTHESIS_TASKS } from '@/lib/store';
 
 const FOUNDATION_CRITERIA = getLocalCriteria('0340');
 const CREDIT_CRITERIA = getLocalCriteria('LANC2165');
@@ -135,6 +136,30 @@ describe('getLocalCriteria', () => {
     expect(getLocalCriteria('0560', 'summary')).toEqual(getLocalCriteria('LANC2160', 'summary'));
     // Stale clients without a writingType keep the legacy foundation rubric
     expect(getLocalCriteria('0560')).toEqual(FOUNDATION_CRITERIA);
+  });
+
+  it('ships FP0560 synthesis tasks as two-source 250-350 word assignments', () => {
+    // Every FP0560 task synthesizes exactly TWO texts at the official length
+    for (const task of FP0560_SYNTHESIS_TASKS) {
+      expect(task.sources).toHaveLength(2);
+      expect(task.targetWordCount).toEqual({ min: 250, max: 350, ideal: 300 });
+      expect(task.expectedParagraphs).toBe(4);
+      for (const source of task.sources) {
+        expect(source.title.length).toBeGreaterThan(0);
+        expect(source.content.trim().split(/\s+/).length).toBeGreaterThan(50);
+      }
+    }
+    // First uploaded task: two positive effects of volcanoes (effect essay)
+    const volcanoes = FP0560_SYNTHESIS_TASKS.find((t) => t.id === 'volcanoes-positive-effects');
+    expect(volcanoes?.title).toBe('Two Positive Effects of Volcanoes');
+    expect(volcanoes?.description).toMatch(/two positive effects of volcanoes/i);
+    expect(volcanoes?.sources.map((s) => s.title)).toEqual([
+      'Text A: Can Volcanoes Be Beneficial?',
+      'Text B: Volcanoes – Destructive or Productive?',
+    ]);
+    // Both texts cover the positive-effect material students synthesize
+    expect(volcanoes?.sources[0].content).toMatch(/Soil Enrichment/);
+    expect(volcanoes?.sources[1].content).toMatch(/geothermal power/);
   });
 
   it('uses the summary rubric for LANC2160 summary writing', () => {

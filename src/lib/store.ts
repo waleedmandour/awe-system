@@ -257,12 +257,65 @@ HFO-1234yf | 25 | None; uses existing HFC-134a systems | Very high recharge cost
  * information from TWO source texts, targeting ~300 words (250-350 accepted).
  *
  * Task texts are uploaded one by one by the instructor — add a new
- * SynthesisAssignment entry here (with exactly TWO sources) when each task
- * text is ready. While this catalog is empty the app lets students submit
- * their essay directly and assesses it against the official FP0560 writing
- * rubric without source-text comparison.
+ * SynthesisAssignment entry here (with exactly TWO sources) when each new
+ * task is ready. The course screen and both assessment paths (cloud + local)
+ * pick entries up automatically; task selection becomes required once the
+ * catalog is non-empty, and the selected sources are embedded in the
+ * assessment prompt for source-text comparison.
  */
-export const FP0560_SYNTHESIS_TASKS: SynthesisAssignment[] = [];
+export const FP0560_SYNTHESIS_TASKS: SynthesisAssignment[] = [
+  {
+    id: 'volcanoes-positive-effects',
+    title: 'Two Positive Effects of Volcanoes',
+    description: 'Write a synthesis essay (4 paragraphs) based on the TWO source texts about volcanoes. This task is an EFFECT essay: synthesize information from both source texts to explain two positive effects of volcanoes. Use your own words and do not add information beyond the sources.',
+    cefrLevel: 'A2-B1',
+    expectedParagraphs: 4,
+    targetWordCount: {
+      min: 250,
+      max: 350,
+      ideal: 300,
+    },
+    sources: [
+      {
+        id: 'source-1-volcanoes-beneficial',
+        title: 'Text A: Can Volcanoes Be Beneficial?',
+        content: `Volcanoes are the most violent forces in nature. However, volcanoes are a part of the natural world and therefore have an important role to play in the planet's structure and development. Below are some of the benefits volcanoes can bring.
+Soil Enrichment: At first, the ash that falls to the ground from an erupting volcano is highly toxic and usually kills any living thing under it. However, this ash is also a natural fertiliser containing many nutrients and minerals that slowly mix with the soil over time. As a result, the soil becomes enriched and very fertile so plant life grows extremely well on it.
+Rain Formation: An erupting volcano releases many dangerous gases like sulphur dioxide and carbon dioxide. However, by far the most common volcanic gas is water vapour, huge amounts of which are sent high up into the atmosphere. As the water vapour rises, it begins to cool and then condenses, forming large rain clouds which provide water to many dry areas of the world.
+Energy Production: The heat that is produced below the surface in volcanic areas can now be turned into a source of energy. A good example is found in Iceland, a country which generates half of its electricity from geothermal power stations. Other countries which use volcanoes in this way include Indonesia, China and New Zealand.
+Creation of Minerals: Over time, the enormous heat and pressure produced by a volcano can create layers of important minerals which people can use.
+Increased Tourism: First of all, tourists love volcanoes. An example of this is the island of Hawaii which has large numbers of active volcanoes. As a result, tourists often come to watch eruptions and to see new islands being created by volcanoes erupting under the ocean. Secondly, volcanoes often create beautiful landscapes which tourists want to visit.`,
+      },
+      {
+        id: 'source-2-volcanoes-destructive',
+        title: 'Text B: Volcanoes – Destructive or Productive?',
+        content: `The Negatives:
+- The lava and ash produced by a volcano is a serious danger to all living things including people, animals and plants. The largest eruptions kill large numbers of people.
+
+Volcano | Location | Date | People killed
+Santa Maria | Guatemala | 1902 | 6,000
+Mount Pelee | Caribbean | 1902 | 33,000
+Mount Lamington | Papua New Guinea | 1951 | 2,942
+Mount Agung | Indonesia | 1963 | 1,584
+Mount St Helens | USA | 1980 | 57
+Nevado del Ruiz | Colombia | 1985 | 23,000
+Mount Pinatubo | The Philippines | 1991 | 847
+Figure 1: Largest volcanic eruptions since 1900
+Source: http://en.wikipedia.org/wiki/List_of_large_volcanic_eruptions_of_the_20th_century
+
+- Buildings, villages and towns are often destroyed, along with infrastructure such as roads and water supplies. Survivors are left homeless and without their basic needs.
+- Agricultural land is useless when covered with volcanic ash affecting food production.
+- The local economy can be very badly affected as normal life cannot continue. Factories and farms are destroyed, taking many people's jobs with them.
+
+The Positives:
+- Volcanoes provide important sources of essential minerals which are produced by the powerful forces at work within volcanoes. The most common minerals found are: diamonds, gold, copper.
+- The heat created inside volcanoes is an excellent source of renewable non-polluting energy. Wells are drilled into the rock and hot water is taken out. As this hot water reaches the surface it transforms into steam, which is then used to run turbines in power stations and produce electricity. This form of energy is called geothermal power.
+- Over time, volcanic ash is very good for the soil it falls on. This is due to the fact that it adds important amounts of organic carbon, nitrogen and water to it, which makes the soil excellent for agriculture. Some successful examples of this are: vegetable production around Mount Vesuvius in Italy; coffee growing on the volcanic Brazilian Plateau; fruit production around volcanoes in New Zealand.
+- Volcanoes can improve the economy through tourism. An erupting volcano is an exciting and amazing thing to experience, so it attracts tourists. Examples include: in Rustaq in Oman, hot underground rocks create hot springs attracting many visitors; in Iceland tourist numbers greatly increase when there is a big volcanic eruption.`,
+      },
+    ],
+  },
+];
 
 // LANC1070 practice test interface (single source text, 4-paragraph essay)
 export interface PracticeTest {

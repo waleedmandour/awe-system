@@ -54,9 +54,9 @@ const CourseSelectionScreen = ({ onSelect, onBack }: { onSelect: () => void; onB
   const needsSourceText = needsWritingType && selectedWritingType === 'summary';
   // Synthesis task pool for the selected course (0560 uses its own catalog)
   const synthesisPool = selectedCourse?.code === '0560' ? FP0560_SYNTHESIS_TASKS : SYNTHESIS_ASSIGNMENTS;
-  // A synthesis task must be chosen when the pool has entries. FP0560's
-  // catalog is empty until the instructor uploads the task texts, so the
-  // essay can be submitted without one and is assessed against the rubric.
+  // A synthesis task must be chosen when the pool has entries. If a pool is
+  // empty (e.g. FP0560 before the instructor uploads task texts), the essay
+  // can be submitted without one and is assessed against the rubric only.
   const needsSynthesisAssignment = needsWritingType && selectedWritingType === 'synthesis' && synthesisPool.length > 0;
 
   // Whether the currently selected course requires a practice-type choice (LANC1070 or LANC2146)

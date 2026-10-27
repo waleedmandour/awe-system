@@ -4,6 +4,9 @@ A Multimodal, LLM-based Automated Writing Evaluation (AWE) System for Formative 
 
 **For Foundation and Credit Course Students at Sultan Qaboos University**
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23649436.svg)](https://doi.org/10.5281/zenodo.23649436)
+[![CI](https://github.com/waleedmandour/awe-system/actions/workflows/build.yml/badge.svg)](https://github.com/waleedmandour/awe-system/actions/workflows/build.yml)
+
 ---
 
 ## Overview
@@ -434,28 +437,29 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 ## How to Cite
 
-If you use **awe-system** in your research, teaching, or publications, please cite it as follows:
+If you use **awe-system** in your research, teaching, or publications, please cite it as follows. The software is permanently archived on Zenodo: the DOI below is the *concept DOI* and always resolves to the latest version, and each release additionally receives its own versioned DOI.
 
 ### APA
 
-> Mandour, W. (2025). *awe-system: A Multimodal, LLM-based Automated Writing Evaluation System for Formative Assessment* (Version 1.0.0) [Computer software]. Sultan Qaboos University — Center for Preparatory Studies. https://github.com/waleedmandour/awe-system
+> Mandour, W., & Al Hosni, J. (2026). *AI-grounded Writing Evaluation System for SQU Students* (Version 1.0.1) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23649436
 
 ### BibTeX
 
 ```bibtex
-@software{mandour_awe_system_2025,
-  author    = {Mandour, Waleed},
-  title     = {{awe-system: A Multimodal, LLM-based Automated Writing Evaluation System for Formative Assessment}},
-  year      = {2025},
-  version   = {1.0.0},
-  publisher = {Sultan Qaboos University -- Center for Preparatory Studies},
-  url       = {https://github.com/waleedmandour/awe-system}
+@software{mandour_awe_system_2026,
+  author    = {Mandour, Waleed and Al Hosni, Jokha},
+  title     = {{AI-grounded Writing Evaluation System for SQU Students}},
+  year      = {2026},
+  version   = {1.0.1},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.23649436},
+  url       = {https://doi.org/10.5281/zenodo.23649436}
 }
 ```
 
 ### MLA
 
-> Mandour, Waleed. *awe-system: A Multimodal, LLM-based Automated Writing Evaluation System for Formative Assessment*. Version 1.0.0, Sultan Qaboos University — Center for Preparatory Studies, 2025, https://github.com/waleedmandour/awe-system.
+> Mandour, Waleed, and Jokha Al Hosni. *AI-grounded Writing Evaluation System for SQU Students*. Version 1.0.1, Zenodo, 2026, https://doi.org/10.5281/zenodo.23649436.
 
 > A machine-readable citation file ([`CITATION.cff`](CITATION.cff)) is also available in the repository root.
 

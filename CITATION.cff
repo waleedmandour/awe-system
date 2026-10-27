@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Mandour"
+  given-names: "Waleed"
+  orcid: "https://orcid.org/0000-0002-9262-5993"
+  affiliation: "Center for Preparatory Studies, Sultan Qaboos University"
+- family-names: "Al Hosni"
+  given-names: "Jokha"
+  orcid: "https://orcid.org/0000-0002-2148-4572"
+  affiliation: "Sultan Qaboos University"
+title: "AI-grounded Writing Evaluation System for SQU Students"
+version: 1.0.1
+doi: 10.5281/zenodo.23649436
+date-released: 2026-10-28
+url: "https://github.com/waleedmandour/awe-system"
+identifiers:
+- type: doi
+  value: 10.5281/zenodo.23649437
+  description: "Versioned DOI for release v1.0"
+keywords:
+- automated writing evaluation
+- language assessment
+- large language models
+- progressive web app
+- on-device AI
+- English as a foreign language
+license: MIT
+repository-code: "https://github.com/waleedmandour/awe-system"

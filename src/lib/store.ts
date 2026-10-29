@@ -315,6 +315,39 @@ The Positives:
       },
     ],
   },
+  {
+    id: 'titanic-sinking-causes',
+    title: 'Two Causes of Why the Titanic Sank',
+    description: 'Write a synthesis essay (4 paragraphs) based on the TWO source texts about the Titanic. This task is a CAUSE essay: synthesize information from both source texts to explain two causes of why the Titanic sank. Use your own words and do not add information beyond the sources.',
+    cefrLevel: 'A2-B1',
+    expectedParagraphs: 4,
+    targetWordCount: {
+      min: 250,
+      max: 350,
+      ideal: 300,
+    },
+    sources: [
+      {
+        id: 'source-1-titanic-sinking',
+        title: 'Text A: The Sinking of the Titanic',
+        content: `Everyone knows the Titanic hit an iceberg and sank on its first trip, leading to the death of 1,514 people. However, the designers and builders of the Titanic said the ship was so well-built that it was "unsinkable". In reality, the Titanic sank to the bottom of the Atlantic Ocean in less than 3 hours. So what went wrong on that terrible night in April 1912? The Titanic was certainly unlucky, but there were also many human errors that together caused the sinking. Here are 4 of them:
+1. The Titanic's designers made a big mistake. They said the ship was "unsinkable" because the bottom of the ship was made of 16 huge compartments (rooms). If water came in, each compartment could be closed to stop the water spreading out into the rest of the ship. When the iceberg hit the front of the ship, the front 6 compartments were immediately closed. However, the compartments could only be closed at the sides, not at the top. Therefore, as the heavier front part of the ship sank lower into the sea, the water in the front compartments went over the top of their walls into all the back compartments, pulling the ship down.
+2. The materials used to build the Titanic were unsuitable. To begin with, the steel sides of the ship were not strong enough. The steel had a very high sulphur content and this kind of steel breaks easily in low temperatures. In addition, the rivets which held the steel plates together were also of poor quality because there were not enough high-quality rivets available when the Titanic was built (see figure 2). Most of the rivets were weak and came out easily when hit.
+3. There were several crew members watching for icebergs that night. Surprisingly, these men did not have binoculars and therefore didn't see the iceberg until it was less than 400 metres away. This did not give the ship enough time to turn safely. All the binoculars were locked in a strong cupboard, and the officer who kept the keys had become ill and left the ship before it sailed, taking the only key with him.
+4. A final important factor was the speed that the ship was travelling. The Titanic's experienced captain ordered the ship to travel at maximum speed, at night, in a sea full of icebergs, even though he had received many warnings about icebergs in the area. Unfortunately, it seems that the captain was trying to break the record for the fastest crossing of the Atlantic.`,
+      },
+      {
+        id: 'source-2-titanic-causes-effects',
+        title: 'Text B: The Titanic Disaster – Causes and Effects',
+        content: `Cause | Effect | Source of Information
+Bad sailing conditions - very difficult weather in the North Atlantic that week. | The number of icebergs was much higher than usual in the area the Titanic sailed through. | Records kept by weather stations and other ships in the area.
+The ship was travelling much too fast. | Very short time to react after the iceberg was seen; the ship took a long time to turn. | Messages sent to other ships from the Titanic before the crash.
+After the iceberg was seen, the order was given to turn the ship left, but the order was misunderstood and the ship briefly turned right. | The mistake was quickly corrected but not quickly enough to avoid the iceberg. | This story was told by the most senior officer to survive.
+The ship was badly designed - the front part of the ship could not be totally closed to stop water spreading. | Water spread into the whole ship; if the compartments had been fully closed, the Titanic wouldn't have sunk for another six hours. | The Titanic's building plans.
+Poor-quality materials were used to build the sides of the ship. | When the iceberg hit, the sulphurous steel sides did not change shape, like metal, but broke into many pieces, like glass. This allowed the water to flood in very quickly; the rivets were weak and came out easily when hit. | In the 1990s tests were done on pieces of the Titanic's sides found at the bottom of the sea.`,
+      },
+    ],
+  },
 ];
 
 // LANC1070 practice test interface (single source text, 4-paragraph essay)

@@ -160,6 +160,18 @@ describe('getLocalCriteria', () => {
     // Both texts cover the positive-effect material students synthesize
     expect(volcanoes?.sources[0].content).toMatch(/Soil Enrichment/);
     expect(volcanoes?.sources[1].content).toMatch(/geothermal power/);
+
+    // Second uploaded task: two causes of why the Titanic sank (cause essay)
+    const titanic = FP0560_SYNTHESIS_TASKS.find((t) => t.id === 'titanic-sinking-causes');
+    expect(titanic?.title).toBe('Two Causes of Why the Titanic Sank');
+    expect(titanic?.description).toMatch(/two causes of why the Titanic sank/i);
+    expect(titanic?.sources.map((s) => s.title)).toEqual([
+      'Text A: The Sinking of the Titanic',
+      'Text B: The Titanic Disaster – Causes and Effects',
+    ]);
+    // Text A carries the four human errors; Text B is the causes/effects table
+    expect(titanic?.sources[0].content).toMatch(/unsinkable/);
+    expect(titanic?.sources[1].content).toMatch(/Cause \| Effect \| Source of Information/);
   });
 
   it('uses the summary rubric for LANC2160 summary writing', () => {

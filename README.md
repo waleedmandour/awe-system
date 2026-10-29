@@ -50,7 +50,7 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 
 **FP0560 — Writing-Task Flow (copied from LANC2160):**
 - Students choose the writing task after selecting the course: **Synthesis Essay** first, then **Summary Writing**
-- **Synthesis Essay:** a Cause OR Effect essay that synthesizes information from TWO source texts, expected ~300 words (250-350 accepted), assessed with the official "Writing Assessment Criteria — Levels 450S, 560S & 603S" rubric. Task texts are added by the instructor to `FP0560_SYNTHESIS_TASKS` in `src/lib/store.ts`; once a task is available students must select it and the two source texts are embedded in the assessment prompt. Available task: "Two Positive Effects of Volcanoes" (Text A: Can Volcanoes Be Beneficial? · Text B: Volcanoes – Destructive or Productive?)
+- **Synthesis Essay:** a Cause OR Effect essay that synthesizes information from TWO source texts, expected ~300 words (250-350 accepted), assessed with the official "Writing Assessment Criteria — Levels 450S, 560S & 603S" rubric. Task texts are added by the instructor to `FP0560_SYNTHESIS_TASKS` in `src/lib/store.ts`; once a task is available students must select it and the two source texts are embedded in the assessment prompt. Available tasks: "Two Positive Effects of Volcanoes" (Text A: Can Volcanoes Be Beneficial? · Text B: Volcanoes – Destructive or Productive?) and "Two Causes of Why the Titanic Sank" (Text A: The Sinking of the Titanic · Text B: The Titanic Disaster – Causes and Effects)
 - **Summary Writing:** same details as LANC2160 (source text + 0-5 summary rubric)
 
 ### Post-Foundation Program

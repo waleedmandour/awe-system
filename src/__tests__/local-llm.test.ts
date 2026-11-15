@@ -216,13 +216,13 @@ describe('buildLocalAssessmentPrompt', () => {
   it('includes source texts and the writing prompt when provided', () => {
     const prompt = buildLocalAssessmentPrompt('My summary.', CREDIT_CRITERIA, {
       topic: 'Summarise in your own words',
-      sourceTexts: [{ title: 'Salmon Cannon', content: 'Dams block migrating salmon…' }],
-      targetWordCount: { min: 160, max: 220, ideal: 200 },
+      sourceTexts: [{ title: 'Emma Smart', content: 'Smart carried out surveys of wadi habitats…' }],
+      targetWordCount: { min: 50, max: 70, ideal: 60 },
     });
-    expect(prompt).toContain('Salmon Cannon');
-    expect(prompt).toContain('Dams block migrating salmon…');
+    expect(prompt).toContain('Emma Smart');
+    expect(prompt).toContain('Smart carried out surveys of wadi habitats…');
     expect(prompt).toContain('Summarise in your own words');
-    expect(prompt).toContain('160-220 words');
+    expect(prompt).toContain('50-70 words');
   });
 
   it('forbids markdown and demands a strict JSON contract', () => {

@@ -113,7 +113,7 @@ Identical to the LANC2160 summary writing details (0-5 criteria, source-text pra
 | Lexical Resource | 0-5 | Range and accuracy of vocabulary used in the summary |
 | Grammatical Range & Accuracy | 0-5 | Range and accuracy of grammatical structures in the summary |
 
-**Total:** 20 marks | **Available Source Text:** "The Salmon Cannon" (613 words, target summary: 160-220 words)
+**Total:** 20 marks | **Available Source Text:** "Emma Smart and the 'Wadi Fish' Project" (190 words, target summary: 50-70 words). FP0560 summary writing uses the same rubric and the same single source text.
 
 ### LANC2160 — Synthesis Essay (2-Point Scale)
 

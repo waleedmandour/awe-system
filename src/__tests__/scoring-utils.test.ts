@@ -178,7 +178,7 @@ describe('parseFeedback', () => {
     const feedback = [
       'Strengths: Good use of topic sentences.',
       'Justification: The student demonstrates a clear understanding of summary writing techniques and effectively paraphrases the source text.',
-      'Mistakes found:\n  "salmon canoon" — Spelling error\n  "they went" — Subject-verb agreement',
+      'Mistakes found:\n  "enviroment" — Spelling error\n  "they went" — Subject-verb agreement',
       'Suggestions: Review irregular verb forms.',
     ].join('\n\n');
 
@@ -188,7 +188,7 @@ describe('parseFeedback', () => {
     expect(result.justification).toContain('clear understanding');
     expect(result.suggestions).toContain('Review irregular verb forms');
     expect(result.mistakes).toHaveLength(2);
-    expect(result.mistakes[0]).toEqual({ quote: 'salmon canoon', explanation: 'Spelling error' });
+    expect(result.mistakes[0]).toEqual({ quote: 'enviroment', explanation: 'Spelling error' });
     expect(result.mistakes[1]).toEqual({ quote: 'they went', explanation: 'Subject-verb agreement' });
   });
 
@@ -325,11 +325,11 @@ describe('parseFeedback', () => {
   });
 
   it('handles unicode smart quotes in mistake entries', () => {
-    const feedback = 'Mistakes:\n\u201Csalmon canoon\u201D — Spelling';
+    const feedback = 'Mistakes:\n\u201Cenviroment\u201D — Spelling';
     const result = parseFeedback(feedback);
 
     expect(result.mistakes).toHaveLength(1);
-    expect(result.mistakes[0].quote).toBe('salmon canoon');
+    expect(result.mistakes[0].quote).toBe('enviroment');
     expect(result.mistakes[0].explanation).toBe('Spelling');
   });
 });

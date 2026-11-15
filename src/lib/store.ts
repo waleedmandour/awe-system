@@ -57,7 +57,7 @@ export type WritingType = 'summary' | 'synthesis' | null;
 export type PracticeType = 'mid-semester' | 'final' | null;
 export type AppStep = 'welcome' | 'setup' | 'course' | 'upload' | 'processing' | 'review' | 'assessing' | 'results' | 'records';
 
-// Summary writing source texts for LANC2160
+// Summary writing source texts shared by LANC2160 and FP0560 summary writing (same 0-5 rubric; students summarize ONE source)
 export interface SummarySourceText {
   id: string;
   title: string;
@@ -71,25 +71,17 @@ export interface SummarySourceText {
 
 export const SUMMARY_SOURCE_TEXTS: SummarySourceText[] = [
   {
-    id: 'salmon-cannon',
-    title: 'The "Salmon Cannon" is the Latest Method for Transporting Fish over Dams',
-    originalText: `While hydroelectric dams are able to generate electricity without coal or oil, they act as obstacles for wildlife, and migrating salmon in particular. When salmon are ready to reproduce, they migrate from the sea back upstream into rivers, where they spawn on gravel beds. Swimming upstream requires the ability to fight against obstacles including rapids and up over drop-offs. Yet no matter how well salmon swim, these manmade barriers are often too massive for the fish to cross on their own.
+    id: 'emma-smart',
+    title: 'Emma Smart and the "Wadi Fish" Project',
+    originalText: `Smart has had an interest in freshwater fish conservation for over 10 years. She first became interested when she was a volunteer at Chester Zoo Aquarium in the UK. She became involved in the breeding of endangered species at the zoo. Smart studied for a degree in Marine Biology at the University of Liverpool and graduated with honours. She also won the Ellis award for Freshwater Biology. Smart's postgraduate research was at the University of St. Andrews. It involved conservation and environmental survey work on endangered freshwater fish species and their habitats in central Mexico.
 
-Typically, dams have manmade fish ladders to help fish swim upstream. Water flows over a series of steps, and the determined fish leap up repeatedly, climbing up the steps until they exit into the river at the top of the dam. Unfortunately, at a certain point, some dams are too high and ladders aren't a practical solution. In addition, fish may turn around if the water in a fish ladder is too warm.
+Smart has spent two years working in Dubai. She worked there as Scientific Advisor and Production Manager on Arabia's first wildlife documentary series 'The Cycle of Life'. This involved planning filming and research expeditions. She spent over 10 months travelling across Oman, Saudi Arabia, Jordan, Yemen and the United Arab Emirates.
 
-Wildlife departments and public utilities already do impractical things to divert salmon past manmade barriers. These include putting them on trucks, loading them onto barges, and in a few cases, lifting them by helicopter. However, the aptly-named company Whooshh Innovations was inspired to solve this problem by looking at their own existing technology invented to transport delicate produce, like ripe tomatoes or apples. The Whooshh system sucks up produce through pressurized tubes and transfers them onto trucks without damage.
-
-If Whooshh tubes could send apples flying over long distances without damaging them, maybe, an employee thought, they could suck fish up and over the dams blocking a river. \"So we put a tilapia in the fruit tube,\" Whooshh's VP Todd Deligan said. \"It went flying, and we were like, 'Huh, check that out.'\" They were able to modify their system to safely give fish a boost, and thus, the salmon cannon was born.
-
-Though the name \"cannon\" is catchy, the device doesn't actually operate like one. Instead, it acts a little like a vacuum cleaner. As a fish enters the system, it immediately whizzes up the tube because the pressure in front of it is lower than the pressure behind it. This differential pressure generates a seal around the fish's middle, holding it steady as the fish speeds along. As the seal lets go of the fish toward the tube's end, the fish slows down. Friction, gravity, and increased water help it decelerate too as it is released into the water.
-
-It took a few years to tweak the design, but Whooshh has developed a system that enables salmon and trout to easily load themselves into the device. The company has also developed a scanner that can automatically sort fish to prevent unwanted species or other objects from travelling through the system. The fish can travel at a speed of 24-35 km/h (15-22 mph) along a track that is misted in order to keep them wet throughout the journey. The current system can transport up to 40 fish per minute.
-
-The tube doesn't appear to increase short-term stress on the fish, according to a 2013 U.S. Geological Survey study, published in the North American Journal of Fisheries Management, that examined the fishes' cortisol levels. Deligan also points out that the cannon speeds up the fish's journey and saves them energy. \"That should translate to a higher return rate of the fish at the spawning grounds,\" he said. So far, Whooshh's cannons have been installed to help fish navigate dams on several rivers in Washington and Oregon. The company hopes that, with continued success, it can expand its business to assist spawning fish in rivers around the globe.`,
-    wordCount: 613,
-    targetMin: 160,
-    targetMax: 220,
-    targetIdeal: 200,
+Throughout this time Smart carried out surveys of wadi habitats and their freshwater fish populations. It was this research and a passion for Arabia that resulted in starting the 'Wadi Fish' project. It was the project that led to the discovery of Garra Smarti.`,
+    wordCount: 190,
+    targetMin: 50,
+    targetMax: 70,
+    targetIdeal: 60,
   },
 ];
 

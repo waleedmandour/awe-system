@@ -83,6 +83,19 @@ Throughout this time Smart carried out surveys of wadi habitats and their freshw
     targetMax: 70,
     targetIdeal: 60,
   },
+  {
+    id: 'hydroponic-farming',
+    title: 'Hydroponic Farming',
+    originalText: `Hydroponic farming is a special way of growing plants without using soil. Instead, the plants grow with their roots in water. This method is really interesting because it has a lot of benefits for the environment and for people too. One big benefit is that hydroponic farming saves space. When plants grow in soil, their roots need to spread out to find water and nutrients. But with hydroponics, the water already has all the nutrients the plants need, so the roots don't have to spread out as much. That means we can plant more crops in a smaller space.
+
+Another benefit of hydroponic farming is that it saves water. In traditional farming, a lot of water is used to grow crops. But with hydroponics, the water is recycled and used again and again. This helps us use less water and protect our precious resources. Hydroponic farming also helps us grow food faster. The plants in hydroponic systems grow faster because they get all the nutrients they need right away. This means we can have more food in less time.
+
+Hydroponic farming is also good for the environment. It doesn't use pesticides and herbicides like traditional farming does. These chemicals can be harmful to the environment and to us. With hydroponics, we don't need to use these chemicals because the plants are grown in a controlled environment. This is better for the plants and for us too. Hydroponic farming is a really great way to grow food. It saves space, saves water, and helps us grow food faster. It's good for the environment and good for us. So next time you eat some fresh veggies, remember that they might have been grown using hydroponics!`,
+    wordCount: 283,
+    targetMin: 70,
+    targetMax: 110,
+    targetIdeal: 90,
+  },
 ];
 
 // Synthesis essay assignment interface (multiple source texts)

@@ -60,6 +60,7 @@ const CRITERION_LABELS: Record<string, string> = {
   'Coherence and Cohesion': 'الترابط والتماسك (Coherence & Cohesion)',
   'Coherence & Cohesion': 'الترابط والتماسك (Coherence & Cohesion)',
   'Lexical Resource': 'المفردات (Lexical Resource)',
+  'Language': 'اللغة (Language)',
   'Grammatical Range and Accuracy': 'القواعد والدقة (Grammar & Accuracy)',
   'Grammatical Range & Accuracy': 'القواعد والدقة (Grammar & Accuracy)',
   'Grammar & Accuracy': 'القواعد والدقة (Grammar & Accuracy)',

@@ -39,7 +39,7 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 | FP0230 | English Language Foundation I | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
 | FP0340 | English Language Foundation II | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
 | FP0450 | English Language Foundation | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
-| FP0560 | English Language Foundation | 0-6 per criterion (450S/560S/603S rubric) | Synthesis Essay (250-350 words) / Summary Writing |
+| FP0560 | English Language Foundation | 0-6 per criterion (synthesis: 450S/560S/603S rubric · summary: FPEL0560/0603 rubric) | Synthesis Essay (250-350 words) / Summary Writing |
 | FP0603 | English Language Foundation | 0-6 per criterion | Mid-semester (120 words) / Final (200 words) |
 
 **Foundation Special Features (exam-type courses):**
@@ -51,7 +51,7 @@ This Progressive Web App (PWA) enables students to upload photos of handwritten 
 **FP0560 — Writing-Task Flow (copied from LANC2160):**
 - Students choose the writing task after selecting the course: **Synthesis Essay** first, then **Summary Writing**
 - **Synthesis Essay:** a Cause OR Effect essay that synthesizes information from TWO source texts, expected ~300 words (250-350 accepted), assessed with the official "Writing Assessment Criteria — Levels 450S, 560S & 603S" rubric. Task texts are added by the instructor to `FP0560_SYNTHESIS_TASKS` in `src/lib/store.ts`; once a task is available students must select it and the two source texts are embedded in the assessment prompt. Available tasks: "Two Positive Effects of Volcanoes" (Text A: Can Volcanoes Be Beneficial? · Text B: Volcanoes – Destructive or Productive?) and "Two Causes of Why the Titanic Sank" (Text A: The Sinking of the Titanic · Text B: The Titanic Disaster – Causes and Effects)
-- **Summary Writing:** same details as LANC2160 (source text + 0-5 summary rubric)
+- **Summary Writing:** official Foundation summary rubric (FPEL0560 & FPEL0603) — three criteria (Task Achievement, Coherence and Cohesion, Language), each marked out of 6, half marks allowed (18 marks total); students summarize ONE selected source text
 
 ### Post-Foundation Program
 
@@ -89,9 +89,17 @@ Cause OR Effect essay synthesizing information from TWO source texts. Expected l
 
 **Total:** 24 marks | **Special Rules (official rubric):** Somewhat off-topic → Task Response 0 and deduct 50% of Lexical Resource marks. Completely off-topic → zero (with the consent of the PC). Half-mark scoring from 3.
 
-### FP0560 — Summary Writing
+### FP0560 — Summary Writing (Official Foundation Rubric: FPEL0560 & FPEL0603)
 
-Identical to the LANC2160 summary writing details (0-5 criteria, source-text practice). See the LANC2160 summary section below.
+| Criterion | Scale | Description |
+|-----------|:-----:|-------------|
+| Task Achievement | 0-6 | Main ideas, accuracy, relevance, understanding of purpose and genre, own words/paraphrasing, word count |
+| Coherence and Cohesion | 0-6 | Organization, coherence, cohesive devices |
+| Language | 0-6 | Range and accuracy of vocabulary and structures, spelling, punctuation |
+
+**Total:** 18 marks | **Half marks allowed** | **Bands:** Very Poor 0-2 · Unsatisfactory 3 · Satisfactory 4 · Good 5 · Excellent 6
+
+**Word-count rule (official rubric):** exceeding the maximum word count by 10% or more caps Task Achievement at Unsatisfactory (3); exceeding it by up to 10% caps it at Satisfactory (4). Credit courses (LANC2160) keep the separate 0-5 summary rubric.
 
 ### LANC1070 — 4-Paragraph Essay Rubric
 
@@ -113,7 +121,7 @@ Identical to the LANC2160 summary writing details (0-5 criteria, source-text pra
 | Lexical Resource | 0-5 | Range and accuracy of vocabulary used in the summary |
 | Grammatical Range & Accuracy | 0-5 | Range and accuracy of grammatical structures in the summary |
 
-**Total:** 20 marks | **Available Source Text:** "Emma Smart and the 'Wadi Fish' Project" (190 words, target summary: 50-70 words). FP0560 summary writing uses the same rubric and the same single source text.
+**Total:** 20 marks | **Available Source Texts:** "Emma Smart and the 'Wadi Fish' Project" (190 words, target summary: 50-70 words) and "Hydroponic Farming" (283 words, target summary: 70-110 words). FP0560 summary writing uses its own official Foundation rubric (see the FP0560 section above) over the same source texts.
 
 ### LANC2160 — Synthesis Essay (2-Point Scale)
 

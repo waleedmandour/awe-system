@@ -59,9 +59,17 @@ const LOCAL_RUBRIC_CRITERIA: Record<string, LocalRubricCriterion[]> = {
     { name: 'Lexical Resource', maxScore: 6, description: 'Range and accuracy of academic vocabulary, word choice, word form, and spelling.' },
     { name: 'Grammatical Range and Accuracy', maxScore: 6, description: 'Range and accuracy of grammatical structures and punctuation.' },
   ],
+  // FP0560 summary writing — official Foundation summary rubric (FPEL0560 &
+  // FPEL0603): THREE criteria, each marked out of 6; half marks are allowed.
+  // Credit courses (LANC2160) keep the 4-criterion 0-5 rubric below.
+  fp0560Summary: [
+    { name: 'Task Achievement', maxScore: 6, description: "How well the summary includes the main ideas accurately and relevantly, shows understanding of the text's purpose and genre, uses the student's own words, and observes the word count. Exceeding the maximum word count by 10% or more caps this criterion at 3; exceeding it by up to 10% caps it at 4." },
+    { name: 'Coherence and Cohesion', maxScore: 6, description: 'How clearly the summary is organized and easy to follow, and how accurately and appropriately cohesive devices are used.' },
+    { name: 'Language', maxScore: 6, description: 'The range and accuracy of vocabulary and structures, including spelling and punctuation.' },
+  ],
   summary: [
     { name: 'Task Achievement', maxScore: 5, description: "How effectively the summary captures the main points of the source text using the student's own words." },
-    { name: 'Coherence & Cohesion', maxScore: 5, description: 'How logically the summary is organized and how well ideas are linked together.' },
+    { name: 'Coherence and Cohesion', maxScore: 5, description: 'How logically the summary is organized and how well ideas are linked together.' },
     { name: 'Lexical Resource', maxScore: 5, description: 'The range and accuracy of vocabulary used, including paraphrasing ability.' },
     { name: 'Grammar & Accuracy', maxScore: 5, description: 'The range and accuracy of grammatical structures, sentence variety, and punctuation.' },
   ],
@@ -94,7 +102,9 @@ export function getLocalCriteria(courseCode?: string | null, writingType?: strin
   if (isFoundation) return LOCAL_RUBRIC_CRITERIA.foundation;
   // FP0560 follows the LANC2160 writing-task flow (synthesis / summary);
   // without a writingType it keeps the legacy foundation rubric.
-  if (courseCode === '0560' && writingType === 'summary') return LOCAL_RUBRIC_CRITERIA.summary;
+  // Summary writing uses the official Foundation summary rubric
+  // (FPEL0560 & FPEL0603): three criteria, each marked out of 6.
+  if (courseCode === '0560' && writingType === 'summary') return LOCAL_RUBRIC_CRITERIA.fp0560Summary;
   if (courseCode === '0560' && writingType === 'synthesis') return LOCAL_RUBRIC_CRITERIA.fp0560Synthesis;
   if (courseCode === '0560') return LOCAL_RUBRIC_CRITERIA.foundation;
   if (courseCode === 'LANC2160' && writingType === 'summary') return LOCAL_RUBRIC_CRITERIA.summary;
@@ -135,7 +145,7 @@ export function buildLocalAssessmentPrompt(essayText: string, criteria: LocalRub
   const topicBlock = options.topic ? `\nWRITING PROMPT GIVEN TO THE STUDENT: ${options.topic}\n` : '';
 
   const wordCountBlock = target
-    ? `\nWORD COUNT: The essay has ${wordCount} words. Target range: ${target.min}-${target.max} words. If it is 10%+ below the minimum, lower the Task criterion score. Do NOT deduct marks if it exceeds the target.\n`
+    ? `\nWORD COUNT: The essay has ${wordCount} words. Target range: ${target.min}-${target.max} words. If it is 10%+ below the minimum, lower the Task criterion score. If it exceeds the maximum, apply the word-count rule stated in the criteria (some official rubrics cap the score when the text is over length).\n`
     : '';
 
   return `You are an expert English writing assessor for Sultan Qaboos University. Evaluate the student's essay against EVERY criterion below. Quote exact phrases from the essay as evidence.

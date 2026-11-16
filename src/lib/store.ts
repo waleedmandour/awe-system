@@ -57,7 +57,8 @@ export type WritingType = 'summary' | 'synthesis' | null;
 export type PracticeType = 'mid-semester' | 'final' | null;
 export type AppStep = 'welcome' | 'setup' | 'course' | 'upload' | 'processing' | 'review' | 'assessing' | 'results' | 'records';
 
-// Summary writing source texts shared by LANC2160 and FP0560 summary writing (same 0-5 rubric; students summarize ONE source)
+// Summary writing source texts shared by LANC2160 (credit 0-5 rubric) and
+// FP0560 (official FPEL0560/FPEL0603 summary rubric, 3 criteria x 6 marks — see route.ts); students summarize ONE source
 export interface SummarySourceText {
   id: string;
   title: string;

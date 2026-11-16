@@ -121,7 +121,7 @@ const CREDIT_CRITERIA = [
 
 const SUMMARY_CRITERIA = [
   { name: 'Task Achievement', maxScore: 5, description: 'How effectively the summary captures the main points of the source text using the student\'s own words.' },
-  { name: 'Coherence & Cohesion', maxScore: 5, description: 'How logically the summary is organized and how well ideas are linked together.' },
+  { name: 'Coherence and Cohesion', maxScore: 5, description: 'How logically the summary is organized and how well ideas are linked together.' },
   { name: 'Lexical Resource', maxScore: 5, description: 'The range and accuracy of vocabulary used, including paraphrasing ability.' },
   { name: 'Grammar & Accuracy', maxScore: 5, description: 'The range and accuracy of grammatical structures, sentence variety, and punctuation.' },
 ];
@@ -174,6 +174,75 @@ const SUMMARY_RUBRICS = {
     },
   ],
 };
+
+// Official Foundation summary writing rubric (FPEL0560 & FPEL0603).
+// THREE criteria, each marked out of 6 — half marks are allowed (0.5 steps).
+// Credit courses (LANC2160) keep the separate 4-criterion 0-5 rubric above.
+const FOUNDATION_SUMMARY_CRITERIA = [
+  { name: 'Task Achievement', maxScore: 6, description: 'How well the summary includes the main ideas accurately and relevantly, shows understanding of the text\'s purpose and genre, uses the student\'s own words, and observes the word count. Exceeding the maximum word count by 10% or more caps this criterion at 3; exceeding it by up to 10% caps it at 4.' },
+  { name: 'Coherence and Cohesion', maxScore: 6, description: 'How clearly the summary is organized and easy to follow, and how accurately and appropriately cohesive devices are used.' },
+  { name: 'Language', maxScore: 6, description: 'The range and accuracy of vocabulary and structures, including spelling and punctuation.' },
+];
+
+const FOUNDATION_SUMMARY_RUBRICS = {
+  criteria: [
+    {
+      name: 'Task Achievement', maxScore: 6,
+      rubric: {
+        '0-2': 'Very Poor: Main ideas are mostly missing or inaccurate. Details are irrelevant, showing no understanding of the text\'s purpose or genre. The summary is completely composed of copied text, or it exceeds the maximum word count by 10% or more.',
+        '3': 'Unsatisfactory: Some main ideas are missing or inaccurate. Irrelevant details suggest a limited understanding of the text\'s purpose and genre. There is a noticeable reliance on copied chunks of language, with little understanding of their meaning. Exceeds the maximum word count by 10% or more.',
+        '4': 'Satisfactory: Most main ideas are present and generally accurate. Some irrelevant details, but the text shows an overall understanding of the text\'s purpose and genre. The summary is often in the student\'s own words, showing an adequate ability to paraphrase. May exceed the maximum word count by up to 10%.',
+        '5': 'Good: Main ideas are present, meaning is mostly accurate, and most details are relevant. The text shows a clear understanding of the original text\'s purpose and genre. The summary is primarily in the student\'s own words, showing good paraphrasing ability. Stays within the word count.',
+        '6': 'Excellent: All main ideas are included, meaning is accurate, and details are relevant. Clear understanding of the text\'s purpose and genre. The summary is entirely in the student\'s own words, showcasing superior paraphrasing skills. Stays within the word count.',
+      }
+    },
+    {
+      name: 'Coherence and Cohesion', maxScore: 6,
+      rubric: {
+        '0-2': 'Very Poor: The text lacks organization and coherence.',
+        '3': 'Unsatisfactory: The text is largely disjointed and incoherent, making it challenging for the reader to process. Organization and coherence is limited and some re-reading may be necessary. Most cohesive devices are simple and may be used inaccurately and mechanically in most places.',
+        '4': 'Satisfactory: Organization and coherence is often adequate, but supporting ideas may be limited and the text may be stilted in places. Cohesive devices attempted are sometimes inaccurate and repetitive and may be over- or under-used.',
+        '5': 'Good: Organization of information and ideas makes the text clear and easy to understand. Cohesive devices attempted are almost always used accurately and appropriately.',
+        '6': 'Excellent: Organization of information and ideas is effective and there is a logical flow throughout. A good range of cohesive devices are used accurately and appropriately.',
+      }
+    },
+    {
+      name: 'Language', maxScore: 6,
+      rubric: {
+        '0-2': 'Very Poor: An extremely limited range of vocabulary and structures is used. Core vocabulary and structures are almost always used inaccurately, causing severe communication breakdowns. Spelling errors are pervasive and consistently hinder understanding. Punctuation is consistently inaccurate, making the text difficult to follow.',
+        '3': 'Unsatisfactory: A very limited range of vocabulary and structures is used. Core vocabulary and structures are often used inaccurately, and these errors significantly impact communication. Spelling errors are frequent and often impede understanding. Punctuation is frequently inaccurate, making the text difficult to follow.',
+        '4': 'Satisfactory: A limited but adequate range of vocabulary and structures is used, with some inaccuracies, and these errors may occasionally affect communication. Spelling is generally correct, with some occasional inaccuracies. Punctuation is sometimes inaccurate and may hinder clarity in places.',
+        '5': 'Good: A good range of vocabulary and structures for the level. Core vocabulary and structures are frequently used accurately. There may be some inaccuracy, but communication is not affected. Spelling is mostly correct. Punctuation is mostly error-free.',
+        '6': 'Excellent: A wider range of vocabulary and structures exceeding task expectations. Core vocabulary and structures are used accurately. There might be minor errors in more complex attempts, but they do not affect communication. Spelling is accurate. Punctuation is effective.',
+      }
+    },
+  ],
+};
+
+const FOUNDATION_SUMMARY_HUMANIZATION = `
+BAND CALIBRATION FOR FPEL0560/FPEL0603 SUMMARY WRITING (official bands — 6 marks per criterion, HALF MARKS ARE ALLOWED):
+- 6/6 (Excellent): All main ideas, accurate meaning, relevant details, entirely in the student's own words, within the word count. Very rare at this level.
+- 5/6 (Good): Clear understanding, good paraphrasing, within the word count. Strong performance.
+- 4/6 (Satisfactory): Overall understanding, adequate paraphrasing; some irrelevant details or up to 10% over the word count. Most foundation students score here.
+- 3/6 (Unsatisfactory): Limited understanding, noticeable copying, or more than 10% over the word count.
+- 0-2/6 (Very Poor): Main ideas mostly missing or inaccurate, fully copied text, or severe communication breakdown. Reserve for genuine failures.
+
+ERROR CLASSIFICATION (apply per criterion — this is critical):
+1. Expected A2/B1 errors (missing articles a/an/the, wrong prepositions in/on/at, subject-verb agreement for 3rd person singular, awkward paraphrasing from sources, limited sentence variety, minor spelling) → Do NOT lower the score. These are normal developmental errors at this level.
+2. Non-impeding errors (meaning still clear; repetitive vocabulary, minor punctuation, occasional awkward phrasing) → Only minor score impact if frequent.
+3. Impeding errors (reader cannot understand; large-scale copying without paraphrasing; task fundamentally not met) → Significant score impact.
+Rate each criterion based primarily on COMMUNICATION SUCCESS and IMPEDING errors, not total error count.
+
+SPECIAL RULES:
+1. Reward successful communication of ideas. Do not be overly harsh on A2/B1 grammatical/spelling errors if the overall meaning is clear.
+2. For error listings: classify each error as expected, non-impeding, or impeding. Do NOT provide corrections.
+
+SCORING FLOW (follow in this order):
+Step 1 — Identify what the student communicated successfully (strengths first).
+Step 2 — Determine the overall CEFR demonstrated level.
+Step 3 — Score each criterion 0-6 (0.5 increments, half marks allowed) relative to A2-B1 expectations, not B2+ standards.
+Step 4 — Only deduct for errors that genuinely impede meaning or show a gap below A2 level.
+`;
 
 const SYNTHESIS_CRITERIA = [
   { name: 'Task Achievement', maxScore: 5, description: 'How effectively the synthesis essay fulfils the task requirements, synthesizes information from all source texts, and addresses the assignment prompt.' },
@@ -574,9 +643,20 @@ function buildSummaryPrompt(
   sourceTitle: string,
   wordCount: number,
   targetWordCount: { min: number; max: number; ideal: number },
-  courseLabel: string = 'LANC2160'
+  courseLabel: string = 'LANC2160',
+  isFoundationSummary: boolean = false
 ): string {
-  const rubrics = SUMMARY_RUBRICS;
+  // Foundation (FPEL0560 & FPEL0603) uses the official 3-criterion 6-mark
+  // rubric; credit courses (LANC2160) keep the 4-criterion 0-5 rubric.
+  const rubrics = isFoundationSummary ? FOUNDATION_SUMMARY_RUBRICS : SUMMARY_RUBRICS;
+  const maxPerCriterion = isFoundationSummary ? 6 : 5;
+  const humanization = isFoundationSummary ? FOUNDATION_SUMMARY_HUMANIZATION : CREDIT_HUMANIZATION;
+  const copiedLanguageRule = isFoundationSummary
+    ? '2. Student must use OWN WORDS (paraphrasing). Copied phrases lower the Task Achievement and Language scores.'
+    : '2. Student must use OWN WORDS (paraphrasing). Copied phrases lower TA and LR scores.';
+  const overMaxNote = isFoundationSummary
+    ? `NOTE: Word count (${wordCount}) exceeds ${targetWordCount.min}-${targetWordCount.max}. Per the official rubric, exceeding the maximum word count by 10% or more caps Task Achievement at Unsatisfactory (3/6); exceeding it by up to 10% caps it at Satisfactory (4/6).`
+    : `NOTE: Word count (${wordCount}) exceeds ${targetWordCount.min}-${targetWordCount.max}. Do NOT deduct marks. Mention in feedback.`;
   const sourceWordCount = sourceText.trim().split(/\s+/).filter(Boolean).length;
 
   const wordCountStatus = wordCount < 20
@@ -584,10 +664,10 @@ function buildSummaryPrompt(
     : wordCount < targetWordCount.min
     ? `WARNING: Word count (${wordCount}) is BELOW ${targetWordCount.min}-${targetWordCount.max}. This should lower the Task Achievement score.`
     : wordCount > targetWordCount.max
-    ? `NOTE: Word count (${wordCount}) exceeds ${targetWordCount.min}-${targetWordCount.max}. Do NOT deduct marks. Mention in feedback.`
+    ? overMaxNote
     : `Word count (${wordCount}) is within ${targetWordCount.min}-${targetWordCount.max}.`;
 
-  return `You are an expert writing assessor for ${courseLabel} (Summary Writing) at Sultan Qaboos University. CEFR A2-B1 level.
+  return `You are an expert writing assessor for ${courseLabel} (Summary Writing) at Sultan Qaboos University. CEFR A2-B1 level.${isFoundationSummary ? '\nUse the official Foundation summary rubric below (FPEL0560 & FPEL0603): THREE criteria, each marked out of 6 — half marks are allowed.' : ''}
 
 SOURCE TEXT:
 Title: "${sourceTitle}"
@@ -608,12 +688,12 @@ ${buildCriteriaText(rubrics)}
 
 SUMMARY RULES:
 1. Capture MAIN IDEAS only. No personal opinions or new information.
-2. Student must use OWN WORDS (paraphrasing). Copied phrases lower TA and LR scores.
+${copiedLanguageRule}
 3. Off-topic summary = Task Achievement 0. Large-scale copying = low TA and LR.
 
-${CREDIT_HUMANIZATION}
+${humanization}
 SCORING INSTRUCTIONS:
-1. Score each criterion 0-5 (0.5 increments). Use the FULL range — do NOT default to middle scores.
+1. Score each criterion 0-${maxPerCriterion} (0.5 increments). Use the FULL range — do NOT default to middle scores.
 2. For each criterion: quote at least ONE exact phrase from the summary as evidence.
 3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
 4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
@@ -994,8 +1074,8 @@ export async function POST(request: NextRequest) {
         );
       }
       activeTargetWordCount = { min: sourceTextData.targetMin, max: sourceTextData.targetMax, ideal: sourceTextData.targetIdeal, label: `Summary of "${sourceTextData.title}"` };
-      prompt = buildSummaryPrompt(text, sourceTextData.originalText, sourceTextData.title, wordCount, activeTargetWordCount, is0560 ? 'FP0560' : 'LANC2160');
-      criteria = SUMMARY_CRITERIA;
+      prompt = buildSummaryPrompt(text, sourceTextData.originalText, sourceTextData.title, wordCount, activeTargetWordCount, is0560 ? 'FP0560' : 'LANC2160', is0560);
+      criteria = is0560 ? FOUNDATION_SUMMARY_CRITERIA : SUMMARY_CRITERIA;
     } else if (isSynthesisWriting) {
       const { SYNTHESIS_ASSIGNMENTS } = await import('@/lib/store');
       const assignmentData = SYNTHESIS_ASSIGNMENTS.find(a => a.id === sourceTextId);
@@ -1069,7 +1149,7 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(apiKey);
 
     const systemInstruction = isSummaryWriting
-      ? `You are an expert writing assessment AI for ${is0560 ? 'FP0560 Summary Writing' : 'LANC2160 (Summary Writing)'} at Sultan Qaboos University. CEFR A2-B1 level. Quote exact words from the student summary as evidence. Justify every score against the rubric. List specific errors with quoted text.`
+      ? `You are an expert writing assessment AI for ${is0560 ? 'FP0560 Summary Writing (official FPEL0560/FPEL0603 summary rubric: three criteria, each marked out of 6, half marks allowed)' : 'LANC2160 (Summary Writing)'} at Sultan Qaboos University. CEFR A2-B1 level. Quote exact words from the student summary as evidence. Justify every score against the rubric. List specific errors with quoted text.`
       : is0560Synthesis
       ? 'You are an expert writing assessment AI for FP0560 (Synthesis Essay — cause OR effect essay synthesizing TWO source texts) at Sultan Qaboos University, Level 560S. Apply the official "Writing Assessment Criteria — Levels 450S, 560S & 603S" rubric with its special rules. Quote exact words as evidence. Justify every score against the rubric. List specific errors with quoted text.'
       : isSynthesisWriting
@@ -1189,6 +1269,28 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Process and normalize scores (deterministic TypeScript math) ──────────
+
+    // Deterministic criteria normalization: keep exactly the criteria defined
+    // for this assessment path (one entry each, authoritative maxScore) so a
+    // model cannot inflate or distort totals with unexpected criteria or
+    // wrong maxima. Names are matched case-insensitively and rewritten to the
+    // canonical spelling.
+    const definedCriteria = new Map(criteria.map(c => [c.name.toLowerCase(), c]));
+    const normName = (s: any): string => (typeof s?.criterionName === 'string' ? s.criterionName.trim().toLowerCase() : '');
+    const seenNames = new Set<string>();
+    assessment.scores = assessment.scores.filter((s: any) => {
+      const key = normName(s);
+      if (!key || !definedCriteria.has(key) || seenNames.has(key)) return false;
+      seenNames.add(key);
+      return true;
+    });
+    assessment.scores.forEach((s: any) => {
+      const crit = definedCriteria.get(normName(s));
+      if (crit) {
+        s.criterionName = crit.name;
+        s.maxScore = Math.round(Number(crit.maxScore) || 0);
+      }
+    });
 
     // Ensure all criteria are assessed (pad missing ones with zeros)
     const assessedNames = assessment.scores.map((s: any) => s.criterionName);

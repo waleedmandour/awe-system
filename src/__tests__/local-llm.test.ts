@@ -132,8 +132,15 @@ describe('getLocalCriteria', () => {
     ]);
     expect(synthesis[0].description).toMatch(/cause OR effect/i);
     expect(synthesis[0].description).toMatch(/TWO source texts/i);
-    // Summary writing copies the LANC2160 summary details
-    expect(getLocalCriteria('0560', 'summary')).toEqual(getLocalCriteria('LANC2160', 'summary'));
+    // Summary writing uses the official Foundation summary rubric
+    // (FPEL0560 & FPEL0603): three criteria, each marked out of 6
+    const fpSummary = getLocalCriteria('0560', 'summary');
+    expect(fpSummary.map((c) => c.maxScore)).toEqual([6, 6, 6]);
+    expect(fpSummary.map((c) => c.name)).toEqual([
+      'Task Achievement',
+      'Coherence and Cohesion',
+      'Language',
+    ]);
     // Stale clients without a writingType keep the legacy foundation rubric
     expect(getLocalCriteria('0560')).toEqual(FOUNDATION_CRITERIA);
   });
@@ -174,11 +181,12 @@ describe('getLocalCriteria', () => {
     expect(titanic?.sources[1].content).toMatch(/Cause \| Effect \| Source of Information/);
   });
 
-  it('uses the summary rubric for LANC2160 summary writing', () => {
+  it('keeps the 4-criterion 0-5 summary rubric for LANC2160 summary writing (credit)', () => {
     const criteria = getLocalCriteria('LANC2160', 'summary');
+    expect(criteria.map((c) => c.maxScore)).toEqual([5, 5, 5, 5]);
     expect(criteria.map((c) => c.name)).toEqual([
       'Task Achievement',
-      'Coherence & Cohesion',
+      'Coherence and Cohesion',
       'Lexical Resource',
       'Grammar & Accuracy',
     ]);

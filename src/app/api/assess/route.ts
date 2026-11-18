@@ -538,9 +538,9 @@ ${CREDIT_HUMANIZATION}
 SCORING INSTRUCTIONS:
 1. Score each criterion 0-5 (0.5 increments). Use the FULL range — do NOT default to middle scores.
 2. For each criterion: quote at least ONE exact phrase from the student text as evidence in your justification.
-3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
-4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
-5. overallFeedback (3-4 sentences): strongest/weakest criterion, Discussion analysis quality, Conclusion adequacy, one prioritized action item.
+3. List up to 2 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1 specific strength and 1 actionable suggestion per criterion.
+5. overallFeedback (2-3 sentences): strongest/weakest criterion, Discussion analysis quality, Conclusion adequacy, one prioritized action item.
 6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
 
@@ -604,9 +604,9 @@ Step 2 — Determine the overall CEFR demonstrated level from the essay.
 Step 3 — Score each criterion 0-6 (0.5 increments) relative to A1-A2 expectations, not B2+ academic standards.
 Step 4 — Only deduct for errors that genuinely impede meaning or show a gap below A1 level.
 Step 5 — For each criterion: quote at least ONE exact phrase from the essay as evidence in your justification.
-Step 6 — List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Classify each as expected, non-impeding, or impeding. Do NOT provide corrections.
-Step 7 — Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
-Step 8 — overallFeedback (3-4 sentences): strongest/weakest criterion, what the student communicated well, one prioritized action item.
+Step 6 — List up to 2 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Classify each as expected, non-impeding, or impeding. Do NOT provide corrections.
+Step 7 — Write 1 specific strength and 1 actionable suggestion per criterion.
+Step 8 — overallFeedback (2-3 sentences): strongest/weakest criterion, what the student communicated well, one prioritized action item.
 Step 9 — For Task Response: address topic adherence and essay structure. If the word count exceeds the target, mention it but do NOT deduct marks.
 Step 10 — Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
@@ -631,9 +631,9 @@ ${CREDIT_HUMANIZATION}
 SCORING INSTRUCTIONS:
 1. Score each criterion 0-5 (0.5 increments). Use the FULL range — do NOT default to middle scores.
 2. For each criterion: quote at least ONE exact phrase from the essay as evidence in your justification.
-3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
-4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
-5. overallFeedback (3-4 sentences): strongest/weakest criterion, one prioritized action item.
+3. List up to 2 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1 specific strength and 1 actionable suggestion per criterion.
+5. overallFeedback (2-3 sentences): strongest/weakest criterion, one prioritized action item.
 6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
 
@@ -695,9 +695,9 @@ ${humanization}
 SCORING INSTRUCTIONS:
 1. Score each criterion 0-${maxPerCriterion} (0.5 increments). Use the FULL range — do NOT default to middle scores.
 2. For each criterion: quote at least ONE exact phrase from the summary as evidence.
-3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
-4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
-5. overallFeedback (3-4 sentences): which main ideas were captured/missed, strongest/weakest criterion, paraphrasing quality, one prioritized action item.
+3. List up to 2 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1 specific strength and 1 actionable suggestion per criterion.
+5. overallFeedback (2-3 sentences): which main ideas were captured/missed, strongest/weakest criterion, paraphrasing quality, one prioritized action item.
 6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
 
@@ -749,9 +749,9 @@ ${CREDIT_HUMANIZATION}
 SCORING INSTRUCTIONS:
 1. Score each criterion 0-5 (0.5 increments). Use the FULL range — do NOT default to middle scores.
 2. For each criterion: quote at least ONE exact phrase from the essay as evidence.
-3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
-4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
-5. overallFeedback (3-4 sentences): strongest/weakest criterion, discussion points addressed, paraphrasing quality, one prioritized action item.
+3. List up to 2 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1 specific strength and 1 actionable suggestion per criterion.
+5. overallFeedback (2-3 sentences): strongest/weakest criterion, discussion points addressed, paraphrasing quality, one prioritized action item.
 6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
 
@@ -811,9 +811,9 @@ ${CREDIT_HUMANIZATION}
 SCORING INSTRUCTIONS:
 1. Score each criterion 0-5 (0.5 increments). Use the FULL range — do NOT default to middle scores.
 2. For each criterion: quote at least ONE exact phrase from the essay as evidence.
-3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
-4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
-5. overallFeedback (3-4 sentences): which sources were used (all 3?), strongest/weakest criterion, paraphrasing/copied text %, one prioritized action item.
+3. List up to 2 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1 specific strength and 1 actionable suggestion per criterion.
+5. overallFeedback (2-3 sentences): which sources were used (all 3?), strongest/weakest criterion, paraphrasing/copied text %, one prioritized action item.
 6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
 
@@ -904,9 +904,9 @@ Rate each criterion on COMMUNICATION SUCCESS and task fulfilment, not raw error 
 SCORING INSTRUCTIONS:
 1. Score each criterion 0-6 in 0.5 increments using the rubric bands above. Use the FULL range — do NOT default to middle scores.
 2. For each criterion: quote at least ONE exact phrase from the essay as evidence.
-3. List up to 3 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
-4. Write 1-2 specific strengths and 1-2 actionable suggestions per criterion.
-5. overallFeedback (3-4 sentences): cause/effect focus, synthesis of the two texts (if evident), strongest/weakest criterion, one prioritized action item.
+3. List up to 2 specific errors per criterion as { "quote": "[exact text]", "explanation": "[why wrong]" }. Do NOT provide corrections.
+4. Write 1 specific strength and 1 actionable suggestion per criterion.
+5. overallFeedback (2-3 sentences): cause/effect focus, synthesis of the two texts (if evident), strongest/weakest criterion, one prioritized action item.
 6. Do NOT calculate totalScore or percentage — those are computed automatically.`;
 }
 
@@ -937,8 +937,18 @@ const safetySettings = [
   { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
 ];
 
-const RATE_LIMIT_RETRIES = 3;
-const RATE_LIMIT_DELAYS = [5000, 15000, 30000];
+// Retry budget: this function runs under a serverless time cap (60 s on
+// Hobby, 10 s on the free tier), so long in-request sleeps only guarantee
+// the function is killed mid-retry and the student sees a failure anyway.
+// Keep waits short; the client already auto-retries after 30 s, which is
+// the right place to wait out a per-minute quota window.
+const RATE_LIMIT_RETRIES = 2;
+const RATE_LIMIT_DELAYS = [1500, 4000];
+
+// Never START a new generation attempt once the request is older than this.
+// Return the generic failure instead and let the client retry — attempts
+// launched near the end of the window cannot finish and would waste quota.
+const REQUEST_DEADLINE_MS = 45_000;
 
 /**
  * Strip markdown residue from Gemini-returned strings.
@@ -1167,6 +1177,7 @@ export async function POST(request: NextRequest) {
     let parsedOk = false;
 
     const MODEL_TIERS = resolveModelTiers(modelId);
+    const requestDeadline = Date.now() + REQUEST_DEADLINE_MS;
 
     modelTierLoop: for (let modelTierIndex = 0; modelTierIndex < MODEL_TIERS.length; modelTierIndex++) {
       const modelName = MODEL_TIERS[modelTierIndex];
@@ -1176,12 +1187,24 @@ export async function POST(request: NextRequest) {
         generationConfig: {
           responseMimeType: 'application/json',
           responseSchema: ASSESSMENT_SCHEMA,
-          // Disable thinking for gemini-2.5* models to skip 3-8s reasoning overhead
-          ...(modelName.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+          // Gemini 2.5 models accept thinkingBudget: 0 (thinking fully off).
+          // Gemini 3 models use thinking LEVELS instead (minimal/low/medium/high)
+          // and reject thinkingBudget, so request 'low' explicitly — otherwise
+          // the Flash fallbacks run long dynamic-thinking phases inside the
+          // short serverless window.
+          ...(modelName.startsWith('gemini-2.5')
+            ? { thinkingConfig: { thinkingBudget: 0 } }
+            : modelName.startsWith('gemini-3')
+            ? { thinkingConfig: { thinkingLevel: 'low' } as any }
+            : {}),
         },
       });
 
       for (let rateLimitAttempt = 0; rateLimitAttempt < RATE_LIMIT_RETRIES; rateLimitAttempt++) {
+        if (Date.now() > requestDeadline) {
+          console.warn('Assessment request deadline reached — stopping model attempts.');
+          break modelTierLoop;
+        }
         try {
           const result = await model.generateContent({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
@@ -1190,7 +1213,11 @@ export async function POST(request: NextRequest) {
               maxOutputTokens: 8192,
               responseMimeType: 'application/json',
               responseSchema: ASSESSMENT_SCHEMA,
-              ...(modelName.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+              ...(modelName.startsWith('gemini-2.5')
+                ? { thinkingConfig: { thinkingBudget: 0 } }
+                : modelName.startsWith('gemini-3')
+                ? { thinkingConfig: { thinkingLevel: 'low' } as any }
+                : {}),
             } as any,
             safetySettings,
           });

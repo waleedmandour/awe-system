@@ -168,11 +168,11 @@ GRADING STRICTNESS (apply before scoring):
 SCORING RULES:
 - Score each criterion from 0 to its maximum, in 0.5 steps. Use the full range; do not default to middle scores.
 - For each criterion quote at least ONE exact phrase from the essay.
-- List up to 3 specific errors as { "quote", "explanation" }. Do NOT provide corrections.
-- overallFeedback must be 3-4 sentences.
+- List up to 2 specific errors as { "quote", "explanation" }. Do NOT provide corrections.
+- overallFeedback must be 2-3 sentences.
 
 Respond with ONLY valid JSON in EXACTLY this format. Start your response with { and end with } — no markdown, no code fences, no thinking aloud, no text outside the JSON:
-{"scores":[{"criterionName":"<exact criterion name>","score":<number>,"justification":"<2-3 sentences with quoted evidence>","strengths":"<1-2 specific strengths>","mistakes":[{"quote":"<exact text>","explanation":"<why it is wrong>"}],"suggestions":"<1-2 actionable suggestions>"}],"overallFeedback":"<3-4 sentences>"}`;
+{"scores":[{"criterionName":"<exact criterion name>","score":<number>,"justification":"<1-2 sentences with quoted evidence>","strengths":"<1 specific strength>","mistakes":[{"quote":"<exact text>","explanation":"<why it is wrong>"}],"suggestions":"<1 actionable suggestion>"}],"overallFeedback":"<2-3 sentences>"}`;
 }
 
 // ─── Response parsing (pure & testable) ──────────────────────────────────────

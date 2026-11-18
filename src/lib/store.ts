@@ -830,7 +830,12 @@ export const useAppStore = create<AppState>()(
       writingPrompt: '',
       setWritingPrompt: (prompt) => set({ writingPrompt: prompt }),
       selectedWritingType: null,
-      setSelectedWritingType: (writingType) => set({ selectedWritingType: writingType }),
+      // Clear the selected source text too: summary and synthesis draw from
+      // DIFFERENT catalogs (SUMMARY_SOURCE_TEXTS vs SYNTHESIS_ASSIGNMENTS /
+      // FP0560_SYNTHESIS_TASKS), so keeping the old id across a writing-type
+      // switch makes /api/assess fail with a deterministic 400 that the
+      // client would then retry forever.
+      setSelectedWritingType: (writingType) => set({ selectedWritingType: writingType, selectedSourceTextId: null }),
       selectedPracticeType: null as PracticeType,
       setSelectedPracticeType: (practiceType) => set({ selectedPracticeType: practiceType, selectedSourceTextId: null }),
       selectedSourceTextId: null as string | null,

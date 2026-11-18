@@ -47,10 +47,14 @@ export default function AWEApp() {
 
   const goBack = () => {
     setDirection('left');
-    const stepOrder = ['welcome', 'setup', 'course', 'upload', 'processing', 'review', 'assessing', 'results', 'records'];
-    const currentIndex = stepOrder.indexOf(currentStep);
+    // Transient screens (processing, assessing) must never be a back target:
+    // "back" from review lands on upload (processing auto-redirects and has
+    // no exit), and "back" from results lands on review (returning to
+    // assessing would re-run the assessment and save a duplicate record).
+    const backOrder = ['welcome', 'setup', 'course', 'upload', 'review', 'results', 'records'];
+    const currentIndex = backOrder.indexOf(currentStep);
     if (currentIndex > 0) {
-      setStep(stepOrder[currentIndex - 1] as any);
+      setStep(backOrder[currentIndex - 1] as any);
     }
   };
 
@@ -72,6 +76,12 @@ export default function AWEApp() {
     const pageCount = images.length;
     setProcessing(true, `Extracting text from ${pageCount} page${pageCount > 1 ? 's' : ''}...`);
 
+    // Guard the OCR request with a hard client-side timeout: without it a
+    // hung request would leave the processing screen at 90% forever (its
+    // bottom nav is hidden and it has no exit button).
+    const controller = new AbortController();
+    const ocrTimeout = setTimeout(() => controller.abort(), 75_000);
+
     try {
       // Call the OCR API endpoint with array of images (processed in order)
       const response = await fetch('/api/ocr', {
@@ -84,6 +94,7 @@ export default function AWEApp() {
           geminiApiKey: geminiApiKey || undefined,
           useGemini: true,
         }),
+        signal: controller.signal,
       });
 
       const result = await response.json();
@@ -114,12 +125,17 @@ export default function AWEApp() {
     } catch (error) {
       console.error('OCR processing error:', error);
       setProcessing(false);
+      const timedOut = error instanceof DOMException && error.name === 'AbortError';
       toast({
-        title: 'OCR Failed',
-        description: error instanceof Error ? error.message : 'Failed to extract text from image.',
+        title: timedOut ? 'OCR Timed Out' : 'OCR Failed',
+        description: timedOut
+          ? 'Text extraction took too long. Please check your connection and try again (clearer or smaller photos help).'
+          : error instanceof Error ? error.message : 'Failed to extract text from image.',
         variant: 'destructive',
       });
       setStep('upload');
+    } finally {
+      clearTimeout(ocrTimeout);
     }
   };
 

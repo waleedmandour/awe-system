@@ -23,6 +23,10 @@ import {
 
 // Auto-retry configuration
 const RETRY_DELAY_SECONDS = 30;
+// Cap automatic retries: every retry burns API quota, so an unrecoverable
+// error (bad key, exhausted quota, invalid selection) must not retry forever.
+// The manual "Retry Now" button always remains available.
+const MAX_AUTO_RETRIES = 3;
 
 // Animation variants
 const slideInRight = {
@@ -207,7 +211,10 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
 
       toast({
         title: 'Assessment Failed',
-        description: `Auto-retrying in ${RETRY_DELAY_SECONDS} seconds... (Attempt ${retryCountRef.current})`,
+        description:
+          retryCountRef.current >= MAX_AUTO_RETRIES
+            ? 'Automatic retries paused to protect your API quota. Check your key or quota in Settings, then tap Retry Now.'
+            : `Auto-retrying in ${RETRY_DELAY_SECONDS} seconds... (Attempt ${retryCountRef.current}/${MAX_AUTO_RETRIES})`,
         variant: 'destructive',
       });
     }
@@ -237,9 +244,15 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
     return () => clearTimeout(timer);
   }, [retryCountdown]);
 
-  // Auto-retry trigger — when countdown reaches 0 and there's still an error
+  // Auto-retry trigger — when countdown reaches 0 and there are attempts left
   useEffect(() => {
-    if (retryCountdown === 0 && error !== null && !completedRef.current && retryCountRef.current > 0) {
+    if (
+      retryCountdown === 0 &&
+      error !== null &&
+      !completedRef.current &&
+      retryCountRef.current > 0 &&
+      retryCountRef.current < MAX_AUTO_RETRIES
+    ) {
       performAssessment();
     }
   }, [retryCountdown, error, performAssessment]);
@@ -282,9 +295,13 @@ const AssessmentScreen = ({ onComplete }: { onComplete: (assessment: Assessment)
             </div>
             <h2 className="text-xl font-semibold mb-2">Assessment Failed</h2>
             <p className="text-muted-foreground text-sm mb-2">{error}</p>
-            {retryCountdown > 0 ? (
+            {retryCountdown > 0 && retryCount < MAX_AUTO_RETRIES ? (
               <p className="text-sm font-medium text-amber-600 mb-6">
-                Auto-retrying in {retryCountdown}s... (Attempt {retryCount})
+                Auto-retrying in {retryCountdown}s... (Attempt {retryCount}/{MAX_AUTO_RETRIES})
+              </p>
+            ) : retryCount >= MAX_AUTO_RETRIES ? (
+              <p className="text-sm font-medium text-amber-600 mb-6">
+                Automatic retries paused to protect your API quota. Check your API key or quota in Settings, then tap Retry Now.
               </p>
             ) : (
               <p className="text-sm text-muted-foreground mb-6">

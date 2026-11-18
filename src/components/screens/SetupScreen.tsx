@@ -223,7 +223,7 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
             <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
               <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <AlertDescription className="text-sm text-blue-700 dark:text-blue-300">
-                Your API keys are stored locally on your device and never sent to our servers.
+                Your API keys are stored locally on your device. Requests are sent through our server proxy only to call Google's APIs — keys are never stored on our servers.
               </AlertDescription>
             </Alert>
 
@@ -443,7 +443,7 @@ const SetupScreen = ({ onComplete }: { onComplete: () => void }) => {
               <div className="text-sm">
                 <p className="font-medium mb-1">Your data is secure</p>
                 <p className="text-muted-foreground text-xs">
-                  All API keys are stored in your browser's local storage and encrypted. They are only used to communicate directly with Google's servers.
+                  All API keys are stored in your browser's local storage (in plain text, like all browser local storage). They are only used to communicate with Google's APIs through our server proxy, and are never logged or saved anywhere else.
                 </p>
               </div>
             </div>

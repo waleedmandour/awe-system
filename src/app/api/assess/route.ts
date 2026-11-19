@@ -916,7 +916,7 @@ SCORING INSTRUCTIONS:
  * Resolve the ordered cloud model tiers for this request.
  *
  * Default order comes from MODEL_CONFIG in `src/lib/config.ts`
- * (gemini-2.5-flash-lite → gemini-2.5-flash → gemini-2.0-flash). If the client
+ * (gemini-3.5-flash-lite → gemini-3.8-flash → gemini-3.6-flash). If the client
  * explicitly requests a model via `modelId` (chosen in Settings), that model is
  * moved to the front of the queue and the remaining tiers act as fallbacks.
  */
